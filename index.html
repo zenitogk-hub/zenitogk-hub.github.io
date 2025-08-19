@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест по первой помощи (86 вопросов)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .questions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .question-card {
+            background-color: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .question-image {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .question-image img {
+            width: 300px;
+            height: 300px;
+            object-fit: contain;
+            border: 1px solid #eee;
+        }
+
+        .no-image {
+            width: 300px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .question-text {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        .answer {
+            background-color: #27ae60;
+            color: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .answer:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 1200px) {
+            .questions-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .questions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Тест по первой помощи</h1>
+            <p>Всего вопросов: 86</p>
+        </div>
+        
+        <div class="questions-grid">
+            
+            <!-- Вопрос N01 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="aptechka.jpg" alt="aptechka.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Для чего предназначен нашатырный спирт, находящийся в аптечке?
+                </div>
+                <div class="answer">
+                    Для применения при обморочных состояниях.
+                </div>
+            </div>
+
+            <!-- Вопрос N02 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="aptechka.jpg" alt="aptechka.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Для чего предназначена борная кислота, находящаяся в аптечке?
+                </div>
+                <div class="answer">
+                    Для приготовления растворов для промывания глаз  и  кожи,  полоскания рта при ожогах щелочью, для примочек на глаза при ожоге их вольтовой дугой.
+                </div>
+            </div>
+
+            <!-- Вопрос N03 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="glass.jpg" alt="glass.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Каково назначение раствора питьевой соды?
+                </div>
+                <div class="answer">
+                    Для промывания мест, пораженных кислотами.
+                </div>
+            </div>
+
+            <!-- Вопрос N04 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="aptechka.jpg" alt="aptechka.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Для чего предназначены валериановые капли, находящиеся в аптечке?
+                </div>
+                <div class="answer">
+                    Для успокоения нервной системы.
+                </div>
+            </div>
+
+            <!-- Вопрос N05 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="pills.jpg" alt="pills.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Для чего предназначен валидол и нитроглицерин, находящийся в аптечке?
+                </div>
+                <div class="answer">
+                    Для приема при сильных болях в области сердца и за грудиной.
+                </div>
+            </div>
+
+            <!-- Вопрос N06 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="puls0.jpg" alt="puls0.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    В каком месте шеи прощупывают пульс на сонной артерии?
+                </div>
+                <div class="answer">
+                    Между кадыком и кивательной мышцей.
+                </div>
+            </div>
+
+            <!-- Вопрос N07 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="ran-pal.jpg" alt="ran-pal.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что нужно сделать при оказании первой помощи при ранении?
+                </div>
+                <div class="answer">
+                    Осторожно снять грязь с кожи вокруг раны, очищая ее от краев раны наружу, очищенный участок кожи нужно смазать йодом и наложить повязку.
+                </div>
+            </div>
+
+            <!-- Вопрос N08 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="Needle.jpg" alt="Needle.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что нужно сделать во время оказания первой помощи при ранении, если рана загрязнена землей?
+                </div>
+                <div class="answer">
+                    Срочно обратиться к врачу для введения противостолбнячной сыворотки.
+                </div>
+            </div>
+
+            <!-- Вопрос N09 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="noga2.JPG" alt="noga2.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Разрешается ли касаться руками той части повязки, которая должна быть наложена непосредственно на рану?
+                </div>
+                <div class="answer">
+                    Не разрешается.
+                </div>
+            </div>
+
+            <!-- Вопрос N10 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="ruka3.JPG" alt="ruka3.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Разрешается ли накладывать вату непосредственно на рану?
+                </div>
+                <div class="answer">
+                    Не разрешается.
+                </div>
+            </div>
+
+            <!-- Вопрос N11 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="p103.jpg" alt="p103.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Как поступать в случае, когда из раны выпадает какая-либо ткань или орган (мозг, кишечник)?
+                </div>
+                <div class="answer">
+                    Повязку наложить сверху, не пытаясь вправить ткань или орган внутрь раны.
+                </div>
+            </div>
+
+            <!-- Вопрос N12 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="noga2.JPG" alt="noga2.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Как поступать перед перевязкой раны при отсутствии чистой воды для мытья рук?
+                </div>
+                <div class="answer">
+                    Смазать пальцы настойкой йода.
+                </div>
+            </div>
+
+            <!-- Вопрос N13 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="ruka3.JPG" alt="ruka3.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Каким образом следует попытаться остановить кровотечение, если оно не останавливается после наложения давящей повязки? А - сдавить кровеносные сосуды, питающие раненую область, пальцами; Б - сдавить кровеносные сосуды, питающие раненую область, жгутом или закруткой; В - согнуть конечности в суставах.
+                </div>
+                <div class="answer">
+                    А, Б, В.
+                </div>
+            </div>
+
+            <!-- Вопрос N14 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi.jpg" alt="bolnoi.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что нужно сделать, оказывая первую помощь работнику при внутреннем кровотечении?
+                </div>
+                <div class="answer">
+                    Выполнить все, что указано в других ответах.
+                </div>
+            </div>
+
+            <!-- Вопрос N15 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="ruka.JPG" alt="ruka.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Какие кровяные сосуды и как следует прижать пальцами для остановки кровотечения при ранении кисти руки?
+                </div>
+                <div class="answer">
+                    Две артерии (лучевую и локтевую) в нижней трети предплечья у кисти.
+                </div>
+            </div>
+
+            <!-- Вопрос N16 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="Hourglas.jpg" alt="Hourglas.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    На какое максимальное время может быть наложен жгут или закрутка для прекращения кровотечения?
+                </div>
+                <div class="answer">
+                    Не более 1,5-2,0 часов.
+                </div>
+            </div>
+
+            <!-- Вопрос N17 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="ruka2.JPG" alt="ruka2.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Как следует проверять правильность наложения жгута?
+                </div>
+                <div class="answer">
+                    По пульсу. Если он прощупывается, то жгут наложен неправильно.
+                </div>
+            </div>
+
+            <!-- Вопрос N18 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="ruka2.JPG" alt="ruka2.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что необходимо сделать после наложения жгута или закрутки для остановки кровотечения?
+                </div>
+                <div class="answer">
+                    Написать записку с указанием времени их наложения и вложить ее в повязку под бинт или жгут или написать время наложения жгута на коже конечности.
+                </div>
+            </div>
+
+            <!-- Вопрос N19 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="nos.jpg" alt="nos.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что нужно сделать, оказывая первую помощь работнику при кровотечении из носа?
+                </div>
+                <div class="answer">
+                    Усадить работника в положение полусидя, наклонив голову слегка вперед, расстегнуть ворот, положить на переносицу холодную примочку, сжать ноздри пальцами на 4-5 минут. Можно ввести в нос тампон, смоченный 3% раствором перекиси водорода.
+                </div>
+            </div>
+
+            <!-- Вопрос N20 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi.JPG" alt="bolnoi.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Каковы особенности наложения шины при закрытом переломе?
+                </div>
+                <div class="answer">
+                    С пострадавшего не снимается одежда и шина накладывается поверх одежды.
+                </div>
+            </div>
+
+            <!-- Вопрос N21 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi3.jpg" alt="bolnoi3.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что необходимо сделать с пострадавшим при повреждении головы (перелом черепа, сотрясение мозга)?
+                </div>
+                <div class="answer">
+                    Уложить на спину, наложить на голову тугую повязку, положить холод, обеспечить полный покой до прибытия врача.
+                </div>
+            </div>
+
+            <!-- Вопрос N22 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi3.jpg" alt="bolnoi3.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что необходимо сделать с пострадавшим при повреждении позвоночника?
+                </div>
+                <div class="answer">
+                    Осторожно, не поднимая пострадавшего, подсунуть под его спину широкую доску (дверь, снятую с петель) или повернуть пострадавшего лицом вниз, следя, чтобы при поворачивании его туловище не прогибалось. Транспортировать на доске или в положении лицом вниз.
+                </div>
+            </div>
+
+            <!-- Вопрос N23 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi.JPG" alt="bolnoi.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что необходимо сделать с пострадавшим при переломе костей таза?
+                </div>
+                <div class="answer">
+                    Под спину пострадавшего подсунуть широкую доску, согнуть ноги в коленях и развести в стороны, а стопы сдвинуть вместе. Под колени положить валик из одежды.
+                </div>
+            </div>
+
+            <!-- Вопрос N24 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi.JPG" alt="bolnoi.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что необходимо сделать с пострадавшим при переломе ключицы?
+                </div>
+                <div class="answer">
+                    Положить в подмышечную впадину небольшой комок ваты, прибинтовать к туловищу руку, согнутую в локте под прямым углом. Подвесить руку к шее бинтом или косынкой.
+                </div>
+            </div>
+
+            <!-- Вопрос N25 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi.JPG" alt="bolnoi.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Имеются ли отличия в оказании первой помощи при вывихе и при переломе костей конечностей?
+                </div>
+                <div class="answer">
+                    Нет. Для оказания первой помощи несущественно, вывих это или перелом.
+                </div>
+            </div>
+
+            <!-- Вопрос N26 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="rebro.jpg" alt="rebro.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Каковы признаки перелома ребер и какая при этом должна оказываться помощь?
+                </div>
+                <div class="answer">
+                    Боль при дыхании, кашле и движении, необходимо наложить тугую повязку на грудь во время выдоха.
+                </div>
+            </div>
+
+            <!-- Вопрос N27 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="noga2.jpg" alt="noga2.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Какой из перечисленных методов оказания первой помощи при ушибах является правильным?
+                </div>
+                <div class="answer">
+                    Охладить место ушиба и затем наложить тугую повязку, создание покоя.
+                </div>
+            </div>
+
+            <!-- Вопрос N28 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="nosilk.jpg" alt="nosilk.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Какие из перечисленных мер оказания первой помощи при растяжении связок являются правильными?
+                </div>
+                <div class="answer">
+                    Охладить место растяжения, наложить тугой бинт, приподнять конечность.
+                </div>
+            </div>
+
+            <!-- Вопрос N29 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="glaza1.jpg" alt="glaza1.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Каким образом следует удалять инородное тело из глаза?
+                </div>
+                <div class="answer">
+                    Промыванием струей воды из стакана, с ватки или марли, с питьевого фонтанчика, направляя струю воды от виска к носу.
+                </div>
+            </div>
+
+            <!-- Вопрос N30 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bedro.jpg" alt="bedro.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Произошел несчастный случай, при котором на одном из работников загорелась одежда. Каким образом может быть потушена одежда на пострадавшем?
+                </div>
+                <div class="answer">
+                    Способами, указанными в других ответах.
+                </div>
+            </div>
+
+            <!-- Вопрос N31 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="iskr.jpg" alt="iskr.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что должно быть сделано при ожогах глаз электрической дугой?
+                </div>
+                <div class="answer">
+                    Холодные примочки из раствора борной кислоты, затем направление к врачу.
+                </div>
+            </div>
+
+            <!-- Вопрос N32 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="gel.jpg" alt="gel.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Чем следует смазать обожженный участок кожи при оказании первой помощи пострадавшему, получившему ожог третьей степени?
+                </div>
+                <div class="answer">
+                    Смазывать ожог нельзя.
+                </div>
+            </div>
+
+            <!-- Вопрос N33 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="MEDICINE.jpg" alt="MEDICINE.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что из указанного в вариантах ответа нельзя делать при ожогах?
+                </div>
+                <div class="answer">
+                    Все, что указано в других вариантах ответа.
+                </div>
+            </div>
+
+            <!-- Вопрос N34 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="Halfcup.jpg" alt="Halfcup.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Какая из перечисленных мер должна применяться при ожогах кожи кислотой?
+                </div>
+                <div class="answer">
+                    Промывка раствором питьевой соды (1 чайная ложка на стакан воды).
+                </div>
+            </div>
+
+            <!-- Вопрос N35 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="glass.jpg" alt="glass.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Какие меры оказания первой помощи необходимо применить при ожоге кожи щелочью?
+                </div>
+                <div class="answer">
+                    Промыть обожженное место и сделать примочки (повязки) раствором борной кислоты (1 чайная ложка кислоты на стакан воды) или слабым раствором уксусной кислоты (столовый уксус, наполовину разбавленный водой).
+                </div>
+            </div>
+
+            <!-- Вопрос N36 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="Ligtning.jpg" alt="Ligtning.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Какой из перечисленных видов ожогов от действия электрического тока относится ко второй степени?
+                </div>
+                <div class="answer">
+                    Водяные пузыри.
+                </div>
+            </div>
+
+            <!-- Вопрос N37 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="Snowman.jpg" alt="Snowman.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что необходимо сделать в первую очередь при обморожении в случае появления на коже признаков омертвения тканей?
+                </div>
+                <div class="answer">
+                    Наложить на место обморожения теплоизолирующую повязку, обеспечить неподвижность переохлажденных пальцев рук, ног, согреть пострадавшего горячим чаем и отправить его в больницу.
+                </div>
+            </div>
+
+            <!-- Вопрос N38 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="Snowman3.jpg" alt="Snowman3.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    В чем заключается первая помощь при общем переохлаждении с потерей сознания?
+                </div>
+                <div class="answer">
+                    Наложить на зону обморожения теплоизолирующую повязку до внесения в помещение. Срочно госпитализировать. Обувь не снимать, ноги утеплить.
+                </div>
+            </div>
+
+            <!-- Вопрос N39 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi.jpg" alt="bolnoi.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Укажите возможные симптомы обморока:
+                </div>
+                <div class="answer">
+                    Обильный пот, холодеют конечности, пульс частый и слабый, дыхание поверхностное, кожные покровы бледные.
+                </div>
+            </div>
+
+            <!-- Вопрос N40 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="Getwell.jpg" alt="Getwell.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Как оказать первую помощь при обмороке?
+                </div>
+                <div class="answer">
+                    Уложить пострадавшего, опустить его голову ниже туловища, расстегнуть одежду, обеспечить приток свежего воздуха, лицо обрызгать холодной водой и дать ему понюхать ватку, смоченную в нашатырном спирте.
+                </div>
+            </div>
+
+            <!-- Вопрос N41 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="Sunface5.jpg" alt="Sunface5.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Каковы признаки теплового и солнечного ударов?
+                </div>
+                <div class="answer">
+                    Внезапная слабость, ощущение сильного жара, покраснение кожи, обильное потоотделение, учащенное сердцебиение, головная боль, возникает рвота, дыхание становится поверхностным.
+                </div>
+            </div>
+
+            <!-- Вопрос N42 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="g-SMERT.jpg" alt="g-SMERT.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Каковы меры оказания первой помощи при отравлении газом?
+                </div>
+                <div class="answer">
+                    Все меры, перечисленные в других ответах.
+                </div>
+            </div>
+
+            <!-- Вопрос N43 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="tok.jpg" alt="tok.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Как снимается напряжение с электроустановки для освобождения пострадавшего?
+                </div>
+                <div class="answer">
+                    Немедленно выключателем, рубильником или другим отключающим аппаратом, а также путем снятия предохранителей, разъема штепсельного соединения, создания искусственного короткого замыкания на воздушной линии набросом.
+                </div>
+            </div>
+
+            <!-- Вопрос N44 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="tok.jpg" alt="tok.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что необходимо сделать в первую очередь при освобождении пострадавшего от действия электрического тока?
+                </div>
+                <div class="answer">
+                    Отключить ту часть электроустановки, которой касается пострадавший.
+                </div>
+            </div>
+
+            <!-- Вопрос N45 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="tok.jpg" alt="tok.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Как освобождать пострадавшего от электрического тока при напряжении до 1000 В при невозможности отключения электроустановки?
+                </div>
+                <div class="answer">
+                    С помощью любых изолирующих подручных средств (сухие доски и др.).
+                </div>
+            </div>
+
+            <!-- Вопрос N46 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="+el-tok-n.jpg" alt="+el-tok-n.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Как освобождать пострадавшего от электрического тока при напряжении до 1000 В при невозможности отключения электроустановки?
+                </div>
+                <div class="answer">
+                    Любым из способов, указанных в других ответах.
+                </div>
+            </div>
+
+            <!-- Вопрос N47 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="el-tok-b.jpg" alt="el-tok-b.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Каким способом можно обезопасить себя от поражения электрическим током при освобождении пострадавшего от действия электрического тока при напряжении до 1000 В при невозможности отключения электроустановки и отсутствии средств индивидуальной защиты?
+                </div>
+                <div class="answer">
+                    Любым из способов, указанных в других вариантах ответа.
+                </div>
+            </div>
+
+            <!-- Вопрос N48 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="el-tok-b.jpg" alt="el-tok-b.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Как освобождать пострадавшего от электрического тока при напряжении выше 1000 В при невозможности отключения электроустановки?
+                </div>
+                <div class="answer">
+                    Любым из способов, указанных в других ответах.
+                </div>
+            </div>
+
+            <!-- Вопрос N49 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="puls1.jpg" alt="puls1.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что необходимо делать с пострадавшим от воздействия электрического тока, если у него отсутствуют дыхание и пульс?
+                </div>
+                <div class="answer">
+                    Проводить искусственное дыхание и наружный массаж сердца.
+                </div>
+            </div>
+
+            <!-- Вопрос N50 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="AMBULANC.jpg" alt="AMBULANC.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Оказание первой помощи при поражении электрическим током требует быстрых действий. Какие действия не рекомендуется делать, чтобы не терять драгоценное время?
+                </div>
+                <div class="answer">
+                    Прикладывать к носу и рту зеркало для определения наличия дыхания.
+                </div>
+            </div>
+
+            <!-- Вопрос N51 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="AMBULANC.jpg" alt="AMBULANC.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Оказание первой помощи при поражении электрическим током требует быстрых действий. Какие действия не рекомендуется делать, чтобы не терять драгоценное время?
+                </div>
+                <div class="answer">
+                    Раздевать пострадавшего.
+                </div>
+            </div>
+
+            <!-- Вопрос N52 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="sister.jpg" alt="sister.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что из указанного в вариантах ответа нельзя делать с пострадавшим от действия электрического тока?
+                </div>
+                <div class="answer">
+                    Зарывать пострадавшего в землю, оставляя ему возможность для дыхания.
+                </div>
+            </div>
+
+            <!-- Вопрос N53 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="tok1.jpg" alt="tok1.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Пострадавший от действия электрического тока после оказания первой доврачебной помощи прекрасно себя чувствует. У него отсутствуют какие либо внешние признаки электротравмы или болезненного состояния. В каком случае он может начинать двигаться и возобновлять свою работу?
+                </div>
+                <div class="answer">
+                    Только с разрешения врача.
+                </div>
+            </div>
+
+            <!-- Вопрос N54 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="nosilk.JPG" alt="nosilk.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    В каком случае пострадавшего от электрического тока следует переносить с места происшествия в другое место для оказания первой помощи?
+                </div>
+                <div class="answer">
+                    Только если ему или лицу, оказывающему помощь, угрожает опасность или когда оказание первой помощи на месте происшествия невозможно, например, если пострадавший находится на опоре линии электропередачи.
+                </div>
+            </div>
+
+            <!-- Вопрос N55 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="p103.jpg" alt="p103.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    К пострадавшему от электрического тока невозможно вызвать врача и его требуется доставить в лечебное учреждение. В каком из вариантов ответа его нельзя транспортировать и необходимо продолжать оказывать первую помощь на месте происшествия?
+                </div>
+                <div class="answer">
+                    У пострадавшего неустойчивый пульс и неудовлетворительное дыхание.
+                </div>
+            </div>
+
+            <!-- Вопрос N56 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi.jpg" alt="bolnoi.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Какой из перечисленных признаков свидетельствует о резком ухудшении кровообращения мозга при отсутствии дыхания и пульса у пострадавшего от электротока?
+                </div>
+                <div class="answer">
+                    Расширение зрачков, нарастание синюшности кожи и слизистых оболочек.
+                </div>
+            </div>
+
+            <!-- Вопрос N57 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="Medical.jpg" alt="Medical.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Нужно ли вызывать врача во всех случаях поражения электрическим током?
+                </div>
+                <div class="answer">
+                    Нужно всегда.
+                </div>
+            </div>
+
+            <!-- Вопрос N58 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="isk-dix.JPG" alt="isk-dix.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    В каких случаях необходимо делать искусственное дыхание пострадавшему от электрического тока?
+                </div>
+                <div class="answer">
+                    Когда он не дышит, дышит очень плохо или дыхание постоянно ухудшается.
+                </div>
+            </div>
+
+            <!-- Вопрос N59 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="isk-dix2.JPG" alt="isk-dix2.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Какой должна быть частота вдувания воздуха пострадавшему при проведении искусственного дыхания методами "изо рта в рот" и "изо рта в нос", если у пострадавшего хорошо определяется пульс и требуется проводить только искусственное дыхание?
+                </div>
+                <div class="answer">
+                    12 раз в минуту (через 5 секунд).
+                </div>
+            </div>
+
+            <!-- Вопрос N60 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="dix.jpg" alt="dix.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что необходимо сделать в первую очередь перед тем, как начать искусственное дыхание?
+                </div>
+                <div class="answer">
+                    Обеспечить проходимость верхних дыхательных путей пострадавшего.
+                </div>
+            </div>
+
+            <!-- Вопрос N61 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="puls0.jpg" alt="puls0.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Как следует расположить голову пострадавшего при проведении ему искусственного дыхания?
+                </div>
+                <div class="answer">
+                    Максимально запрокинуть назад.
+                </div>
+            </div>
+
+            <!-- Вопрос N62 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="dix.jpg" alt="dix.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    При проведении искусственного дыхания необходимо следить, чтобы воздух не попал в желудок пострадавшего. Что свидетельствует о попадании воздуха в желудок?
+                </div>
+                <div class="answer">
+                    Вздутие живота.
+                </div>
+            </div>
+
+            <!-- Вопрос N63 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="dix.jpg" alt="dix.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    При проведении искусственного дыхания необходимо следить, чтобы воздух не попал в желудок пострадавшего. Что делать, если воздух попал в желудок?
+                </div>
+                <div class="answer">
+                    Осторожно надавить ладонью на живот между грудиной и пупком, при возникновении рвоты повернуть голову и плечи пострадавшего на бок.
+                </div>
+            </div>
+
+            <!-- Вопрос N64 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="dix.jpg" alt="dix.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что делать, если в процессе искусственного дыхания "изо рта в рот" после вдувания грудная клетка не расправляется?
+                </div>
+                <div class="answer">
+                    Выдвинуть нижнюю челюсть пострадавшего вперед.
+                </div>
+            </div>
+
+            <!-- Вопрос N65 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="ser-mass.JPG" alt="ser-mass.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    В каких случаях необходимо производить наружный массаж сердца пострадавшему от электротока?
+                </div>
+                <div class="answer">
+                    При отсутствии пульса на сонной артерии и дыхания.
+                </div>
+            </div>
+
+            <!-- Вопрос N66 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="isk-ser.JPG" alt="isk-ser.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Какое минимальное количество вдуваний воздуха и нажатий на грудную клетку необходимо сделать за 1 минуту в случае, когда искусственное дыхание и наружный массаж сердца выполняет один человек?
+                </div>
+                <div class="answer">
+                    12 вдуваний, 60 нажатий.
+                </div>
+            </div>
+
+            <!-- Вопрос N67 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="mas1.jpg" alt="mas1.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что из ниже перечисленного определяет собой эффективность искусственного дыхания и закрытого массажа сердца?
+                </div>
+                <div class="answer">
+                    Порозовение кожных покровов и слизистых оболочек, сужение зрачков, восстановление самостоятельного дыхания, выход из бессознательного состояния.
+                </div>
+            </div>
+
+            <!-- Вопрос N68 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="mas2.jpg" alt="mas2.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Каковы признаки эффективности массажа сердца (кроме появления пульса)? В вариантах ответа обозначено: А - уменьшение синюшности кожи и слизистых оболочек; Б - расширение зрачков; В - сужение зрачков; Г - появление самостоятельного дыхания.
+                </div>
+                <div class="answer">
+                    А, В и Г.
+                </div>
+            </div>
+
+            <!-- Вопрос N69 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="mas3.jpg" alt="mas3.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что нужно делать, если при проведении реанимационных мероприятий (искусственного дыхания и закрытого массажа сердца) у пострадавшего восстановится сердечная деятельность и будет хорошо определяться пульс, но самостоятельное дыхание еще слабо?
+                </div>
+                <div class="answer">
+                    Массаж сердца необходимо прекратить, а искусственное дыхание продолжать, стараясь, чтобы естественный и искусственный вдохи совпали.
+                </div>
+            </div>
+
+            <!-- Вопрос N70 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="mas3.jpg" alt="mas3.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Следует ли продолжать делать искусственное дыхание и массаж сердца при оказании первой помощи, если у пострадавшего появились признаки жизни, но сердечная деятельность или самостоятельное дыхание еще не восстановились?
+                </div>
+                <div class="answer">
+                    Искусственное дыхание и массаж сердца необходимо продолжать до прибытия медицинского работника.
+                </div>
+            </div>
+
+            <!-- Вопрос N71 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="mas5.jpg" alt="mas5.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Где следует располагать на теле пострадавшего ладонь руки при проведении наружного массажа сердца?
+                </div>
+                <div class="answer">
+                    На нижней половине грудины, отступив на два пальца выше ее нижнего края.
+                </div>
+            </div>
+
+            <!-- Вопрос N72 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="mas5.jpg" alt="mas5.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Как следует располагать руки при проведении наружного массажа сердца?
+                </div>
+                <div class="answer">
+                    Выпрямленными в локтевых суставах.
+                </div>
+            </div>
+
+            <!-- Вопрос N73 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi.JPG" alt="bolnoi.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Куда необходимо вынести пострадавшего от отравления аммиаком?
+                </div>
+                <div class="answer">
+                    На свежий воздух или в чистое теплое помещение.
+                </div>
+            </div>
+
+            <!-- Вопрос N74 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="GETWELL.jpg" alt="GETWELL.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    В каком из вариантов ответа указаны правильные действия с пострадавшим от аммиака?
+                </div>
+                <div class="answer">
+                    Во всех других вариантах ответа указаны правильные действия.
+                </div>
+            </div>
+
+            <!-- Вопрос N75 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="GETWELL.jpg" alt="GETWELL.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    В каком из вариантов ответа указаны правильные действия с пострадавшим от аммиака?
+                </div>
+                <div class="answer">
+                    Пострадавшему сделали ингаляцию теплым паром (через бумажную трубочку) из чайника, содержащего 1-2%-ный раствор лимонной кислоты в горячей воде.
+                </div>
+            </div>
+
+            <!-- Вопрос N76 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="BEAKER.jpg" alt="BEAKER.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    В каком из вариантов ответа указаны неправильные действия с пострадавшим от аммиака?
+                </div>
+                <div class="answer">
+                    Пострадавшему дали выпить 50 г водки, коньяка или 40%-ного раствора медицинского этилового спирта.
+                </div>
+            </div>
+
+            <!-- Вопрос N77 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="kislorod.jpg" alt="kislorod.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Рекомендуется ли вдыхать кислород пострадавшему от аммиака?
+                </div>
+                <div class="answer">
+                    Во всех случаях рекомендуется в течение 30-45 минут.
+                </div>
+            </div>
+
+            <!-- Вопрос N78 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="sogrev.jpg" alt="sogrev.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Рекомендуется ли согревать пострадавшего от аммиака?
+                </div>
+                <div class="answer">
+                    Рекомендуется во всех случаях.
+                </div>
+            </div>
+
+            <!-- Вопрос N79 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi1.jpg" alt="bolnoi1.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    В процессе использования грелок для согрева пострадавшего от аммиака, находящегося в состоянии глубокого сна, требуется соблюдать осторожность. С чем это связано?
+                </div>
+                <div class="answer">
+                    С возможным снижением болевой чувствительности пострадавшего и опасностью нанесения ему ожогов грелками.
+                </div>
+            </div>
+
+            <!-- Вопрос N80 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="GLASS.JPG" alt="GLASS.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Чем рекомендуется полоскать носоглотку при наличии явлений раздражения носоглотки парами аммиака?
+                </div>
+                <div class="answer">
+                    2%-ным раствором соды.
+                </div>
+            </div>
+
+            <!-- Вопрос N81 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="bolnoi2.jpg" alt="bolnoi2.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Как следует транспортировать в медпункт пострадавшего от аммиака в случае наличия у него удушья, кашля?
+                </div>
+                <div class="answer">
+                    В лежачем положении.
+                </div>
+            </div>
+
+            <!-- Вопрос N82 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="glaza.jpg" alt="glaza.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Чем следует промывать глаза при попадании в них аммиака?
+                </div>
+                <div class="answer">
+                    Чистой водой.
+                </div>
+            </div>
+
+            <!-- Вопрос N83 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="glaza1.jpg" alt="glaza1.jpg" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    В каком из вариантов ответа до прибытия врача выполнены неправильные действия с пострадавшим, которому аммиак попал в глаза?
+                </div>
+                <div class="answer">
+                    Пострадавшему после промывки глаз забинтовали глаза (надели повязку).
+                </div>
+            </div>
+
+            <!-- Вопрос N84 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="noga2.JPG" alt="noga2.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    В каком из вариантов ответа выполнены неправильные действия с пострадавшим, имеющим на коже ожог от аммиака?
+                </div>
+                <div class="answer">
+                    После промывки кожи место ожога высушено полотенцем путем тщательного растирания.
+                </div>
+            </div>
+
+            <!-- Вопрос N85 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="noga2.JPG" alt="noga2.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Что можно использовать вместо мази Вишневского или пенициллиновой мази при ожогах аммиаком?
+                </div>
+                <div class="answer">
+                    Несоленое сливочное масло или подсолнечное масло.
+                </div>
+            </div>
+
+            <!-- Вопрос N86 -->
+            <div class="question-card">
+                <div class="question-image">
+                    <img src="noga2.JPG" alt="noga2.JPG" onerror="this.parentNode.innerHTML='<div class=\'no-image\'>БЕЗ КАРТИНКИ</div>'">
+                </div>
+                <div class="question-text">
+                    Требуется ли вскрывать пузыри на коже при ожогах аммиаком?
+                </div>
+                <div class="answer">
+                    Не требуется. Это вообще нельзя делать.
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
