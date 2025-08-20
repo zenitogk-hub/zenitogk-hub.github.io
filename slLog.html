@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>СЛ LogViewer Web</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px; /* Уменьшенный базовый шрифт */
+            margin: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100; /* Высокий z-index для закрепления */
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background-color: #e9e9e9;
+            border-bottom: 1px solid #ccc; /* Визуальное отделение */
+        }
+        .header > * {
+            flex-shrink: 0;
+        }
+        #fileInput {
+            display: none;
+        }
+        #fileLabel {
+            display: inline-block;
+            padding: 6px 10px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            border: none;
+        }
+        #fileLabel:hover {
+            background-color: #0056b3;
+        }
+        #fileNameDisplay {
+            margin-left: 10px;
+            font-weight: bold;
+            color: #333;
+            font-size: 12px;
+        }
+        #saveButton {
+            padding: 6px 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        #saveButton:hover {
+            background-color: #218838;
+        }
+        #chartButton {
+            padding: 6px 10px;
+            background-color: #ffc107; /* Желтый */
+            color: black;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        #chartButton:hover {
+            background-color: #e0a800;
+        }
+        #refreshButton {
+            padding: 6px 10px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        #refreshButton:hover {
+            background-color: #5a6268;
+        }
+        #statusBar {
+            margin-top: 5px; /* Уменьшено */
+            padding: 4px; /* Уменьшено */
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        #errorDisplay {
+            margin-top: 5px; /* Уменьшено */
+            padding: 8px; /* Уменьшено */
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-size: 11px;
+        }
+        #tableView {
+            margin-top: 5px; /* Уменьшено */
+            overflow-x: auto;
+            /* Высота таблицы занимает оставшееся пространство */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        #tableContainer {
+            overflow-y: auto; /* Разрешаем вертикальную прокрутку таблицы */
+            flex-grow: 1;
+            position: relative;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Уменьшена тень */
+            font-size: 11px; /* Уменьшенный шрифт в таблице */
+        }
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 50; /* Выше чем columnFilters, но ниже header */
+            background-color: #f2f2f2; /* Фон для закрепленного заголовка */
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px 4px; /* Уменьшены отступы */
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        th {
+            cursor: pointer;
+            position: relative; /* Для позиционирования фильтров */
+        }
+        /* Стили для чекбоксов в заголовке и строках */
+        th.checkbox-header, td.checkbox-cell {
+            width: 30px; /* Фиксированная ширина для столбца чекбоксов */
+            text-align: center;
+            padding: 0;
+        }
+        th.checkbox-header input, td.checkbox-cell input {
+            margin: 0 auto;
+            display: block;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        /* Цвета строк */
+        tr.selected {
+            background-color: #b3d9ff !important;
+        }
+        tr.error-critical {
+            background-color: #ffccbb !important;
+        }
+        tr.error-resetting {
+            background-color: #ffe5cc !important;
+        }
+        tr.warning {
+            background-color: #cce5ff !important;
+        }
+        tr.engine-start {
+            background-color: #ccffcc !important;
+        }
+        tr.engine-stop {
+            background-color: #ffcccc !important;
+        }
+
+        /* Стили для фильтров по колонкам */
+        #columnFilters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 5px;
+            background-color: #e9ecef;
+            border-bottom: 1px solid #ccc;
+            position: sticky;
+            top: 0;
+            z-index: 30; /* Ниже thead */
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 80px; /* Минимальная ширина группы фильтра */
+        }
+        .filter-label {
+            font-size: 10px; /* Очень маленький шрифт для подписей */
+            margin-bottom: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .filter-select {
+            padding: 2px; /* Уменьшены отступы */
+            font-size: 11px; /* Шрифт как в таблице */
+        }
+
+        /* Стили для поиска ошибок */
+        .error-search-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px; /* Уменьшено */
+        }
+        #errorSearchInput {
+            padding: 4px; /* Уменьшено */
+            font-size: 12px;
+            width: 100px;
+        }
+        #errorSearchButton {
+             padding: 4px 8px; /* Уменьшено */
+             background-color: #17a2b8;
+             color: white;
+             border: none;
+             border-radius: 4px;
+             cursor: pointer;
+             font-size: 12px;
+        }
+        #errorSearchButton:hover {
+             background-color: #138496;
+        }
+
+        /* Стили для графика */
+        #chartContainer {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 500px; /* Фиксированная ширина */
+            max-height: calc(100vh - 40px); /* Максимальная высота с отступами */
+            background-color: white;
+            padding: 10px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000; /* Высокий z-index */
+            overflow-y: auto; /* Прокрутка внутри контейнера графика */
+        }
+        #chartTitle {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        #myChart {
+            width: 100% !important;
+            height: 350px !important; /* Фиксированная высота холста */
+        }
+        #closeChartBtn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #999;
+        }
+        #closeChartBtn:hover {
+            color: #333;
+        }
+
+        /* Стили для выделения диапазона чекбоксов */
+        .checkbox-range-selection {
+            background-color: #ffffcc !important;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .header > * {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            #columnFilters {
+                flex-direction: column;
+            }
+            #tableView {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            table {
+                min-width: 800px; /* Минимальная ширина для таблицы на мобильных */
+            }
+            #chartContainer {
+                width: 90%;
+                left: 5%;
+                right: 5%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <input type="file" id="fileInput" accept=".csv" multiple>
+        <label for="fileInput" id="fileLabel">Открыть CSV логи</label>
+        <span id="fileNameDisplay"></span>
+        <button id="saveButton">Сохранить в файл</button>
+        <select id="dateFilter">
+            <option value="Все даты">Все даты</option>
+        </select>
+        <select id="errorFilter">
+            <option value="">Все ошибки</option>
+        </select>
+        <button id="chartButton">График</button>
+        <button id="refreshButton">Обновить</button>
+		<input type="text" id="errorSearchInput" placeholder="Код ошибки" maxlength="4">
+        <button id="errorSearchButton">Поиск</button>
+    </div>
+
+    <div id="statusBar">Количество строк: 0</div>
+
+    <div id="errorDisplay"></div>
+
+    <!-- Контейнер для фильтров по колонкам -->
+    <div id="columnFilters"></div>
+
+    <div id="tableView">
+        <div id="tableContainer">
+        <table id="logTable">
+            <thead>
+                <tr id="tableHeader">
+                    <!-- Заголовки будут заполнены скриптом -->
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Данные будут заполнены скриптом -->
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- Контейнер для графика -->
+    <div id="chartContainer">
+        <button id="closeChartBtn">&times;</button>
+        <div id="chartTitle">График изменения скорости</div>
+        <canvas id="myChart"></canvas>
+    </div>
+
+    <!-- Подключаем Chart.js для построения графика -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // --- Глобальные переменные ---
+        let allRows = [];
+        let filteredRows = [];
+        let errorDatabase = {}; // База данных ошибок
+        let currentFilters = {};
+        let columnNames = [];
+        const FIXED_COLS = 17;
+        let chartInstance = null;
+        let isSelectingRange = false; // Флаг для выделения диапазона
+        let lastCheckedIndex = -1; // Индекс последнего кликнутого чекбокса
+        let firstCheckedIndex = -1; // Индекс первого отмеченного чекбокса для диапазона
+
+        // --- Инициализация ---
+        document.addEventListener('DOMContentLoaded', function() {
+            loadErrorDatabase(); // Автоматически загружаем базу ошибок
+            setupEventListeners();
+        });
+
+        // --- Загрузка базы ошибок из файла err.csv ---
+        function loadErrorDatabase() {
+            fetch('err.csv')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Файл err.csv не найден');
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    try {
+                        const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+                        const db = {};
+                        let currentError = null;
+                        let insideBlock = false;
+
+                        for (const line of lines) {
+                            if (line.includes("{{")) {
+                                currentError = { code: "", description: "", causes: [], solutions: [] };
+                                insideBlock = true;
+                                continue;
+                            }
+                            if (line.includes("}}")) {
+                                if (currentError && currentError.code) {
+                                    db[currentError.code] = currentError;
+                                }
+                                insideBlock = false;
+                                continue;
+                            }
+                            if (insideBlock && line.trim() !== "") {
+                                // Простой парсинг CSV с учетом кавычек
+                                const parts = [];
+                                let part = '';
+                                let inQuotes = false;
+                                for (let i = 0; i < line.length; i++) {
+                                    const char = line[i];
+                                    if (char === '"') {
+                                        inQuotes = !inQuotes;
+                                    } else if (char === ';' && !inQuotes) {
+                                        parts.push(part.trim());
+                                        part = '';
+                                    } else {
+                                        part += char;
+                                    }
+                                }
+                                parts.push(part.trim()); // Добавляем последнюю часть
+
+                                if (currentError.code === "" && parts[0] && parts[0].length === 4) {
+                                    let isValidCode = true;
+                                    for (let i = 0; i < 4; i++) {
+                                        if (!(/[0-9X]/.test(parts[0][i]))) {
+                                            isValidCode = false;
+                                            break;
+                                        }
+                                    }
+                                    if (isValidCode) {
+                                        currentError.code = parts[0];
+                                        if (parts[1]) currentError.description = parts[1];
+                                    }
+                                }
+                                if (parts[2]) currentError.causes.push(parts[2]);
+                                if (parts[3]) currentError.solutions.push(parts[3]);
+                            }
+                        }
+                        errorDatabase = db;
+                        console.log("База ошибок загружена:", errorDatabase);
+                    } catch (err) {
+                        console.error("Ошибка при парсинге err.csv:", err);
+                    }
+                })
+                .catch(error => {
+                    console.error("Ошибка при загрузке err.csv:", error);
+                });
+        }
+
+        // --- Настройка обработчиков событий ---
+        function setupEventListeners() {
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            document.getElementById('saveButton').addEventListener('click', saveToFile);
+            document.getElementById('chartButton').addEventListener('click', showChart);
+            document.getElementById('refreshButton').addEventListener('click', refreshData);
+            document.getElementById('dateFilter').addEventListener('change', applyFilters);
+            document.getElementById('errorFilter').addEventListener('change', selectErrorRow);
+            document.getElementById('errorSearchButton').addEventListener('click', performErrorSearch);
+            document.getElementById('errorSearchInput').addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    performErrorSearch();
+                }
+            });
+            document.getElementById('closeChartBtn').addEventListener('click', closeChart);
+        }
+
+        // --- Функция для извлечения даты из имени файла ---
+        function extractDateFromFileName(fileName) {
+            // Ищем первые 8 цифр в имени файла (YYYYMMDD)
+            const match = fileName.match(/(\d{8})/);
+            if (match) {
+                const dateStr = match[1];
+                if (dateStr.length === 8) {
+                    const year = dateStr.substring(0, 4);
+                    const month = dateStr.substring(4, 6);
+                    const day = dateStr.substring(6, 8);
+                    
+                    // Проверяем валидность даты
+                    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                    if (date.getFullYear() == year && 
+                        date.getMonth() == parseInt(month) - 1 && 
+                        date.getDate() == day) {
+                        return `${day}.${month}.${year}`;
+                    }
+                }
+            }
+            return null;
+        }
+
+        // --- Обработка выбора файлов логов ---
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+
+            const fileNames = files.map(f => f.name).join(', ');
+            document.getElementById('fileNameDisplay').textContent = `Выбраны файлы: ${fileNames}`;
+
+            resetData();
+            parseFiles(files)
+                .then(() => {
+                    console.log("Все строки загружены:", allRows);
+                    populateDateFilter();
+                    populateEventCheckboxes();
+                    createTableHeaders();
+                    createColumnFilters();
+                    initializeFilters();
+                    applyFilters();
+                })
+                .catch(error => {
+                    console.error("Ошибка при парсинге файлов:", error);
+                    alert("Ошибка при загрузке файлов. Проверьте консоль браузера.");
+                });
+        }
+
+        // --- Парсинг файлов логов ---
+        function parseFiles(files) {
+            return Promise.all(files.map(file => parseCSV(file)))
+                .then(results => {
+                    allRows = [];
+                    
+                    // Обрабатываем каждый файл
+                    files.forEach((file, fileIndex) => {
+                        const fileRows = results[fileIndex];
+                        const fileDate = extractDateFromFileName(file.name);
+                        
+                        if (fileDate) {
+                            // Добавляем строку с датой в начало данных файла
+                            allRows.push([`Дата: ${fileDate}`, "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
+                        }
+                        
+                        // Добавляем все строки из файла
+                        allRows = allRows.concat(fileRows);
+                    });
+                });
+        }
+
+        // --- Парсинг одного CSV файла ---
+        function parseCSV(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const text = e.target.result;
+                        const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+                        const rows = lines.map(line => {
+                            // Простой парсинг CSV (без учёта кавычек и экранирования)
+                            return line.split(';').map(cell => cell.trim());
+                        });
+                        resolve(rows);
+                    } catch (err) {
+                        reject(new Error("Ошибка парсинга CSV: " + file.name));
+                    }
+                };
+                reader.onerror = function(e) {
+                    reject(new Error("Ошибка чтения файла: " + file.name));
+                };
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        // --- Сброс данных ---
+        function resetData() {
+            allRows = [];
+            filteredRows = [];
+            currentFilters = {};
+            firstCheckedIndex = -1;
+            lastCheckedIndex = -1;
+            document.getElementById('tableBody').innerHTML = '';
+            document.getElementById('statusBar').textContent = 'Количество строк: 0';
+            document.getElementById('errorDisplay').textContent = '';
+            document.getElementById('columnFilters').innerHTML = '';
+            closeChart(); // Закрываем график при сбросе
+        }
+
+        // --- Извлечение уникальных дат ---
+        function populateDateFilter() {
+            const dateSelect = document.getElementById('dateFilter');
+            dateSelect.innerHTML = '<option value="Все даты">Все даты</option>';
+            
+            // Извлекаем даты из строк "Дата: ..."
+            const uniqueDates = [...new Set(
+                allRows
+                    .filter(row => row[0] && row[0].startsWith("Дата: "))
+                    .map(row => row[0].replace("Дата: ", ""))
+            )];
+
+            // Сортируем даты в хронологическом порядке
+            uniqueDates.sort((a, b) => {
+                const dateA = new Date(a.split('.').reverse().join('-'));
+                const dateB = new Date(b.split('.').reverse().join('-'));
+                return dateA - dateB;
+            });
+
+            uniqueDates.forEach(date => {
+                const option = document.createElement('option');
+                option.value = date;
+                option.textContent = date;
+                dateSelect.appendChild(option);
+            });
+        }
+
+        // --- Извлечение уникальных событий (заглушка для чекбоксов) ---
+        function populateEventCheckboxes() {
+            // В этом примере фильтрация по событиям через чекбоксы не реализована полностью,
+            // но можно заполнить список уникальных событий здесь.
+            console.log("Заполнение чекбоксов событий (заглушка)");
+        }
+
+        // --- Создание заголовков таблицы ---
+        function createTableHeaders() {
+            const headerRow = document.getElementById('tableHeader');
+            headerRow.innerHTML = '';
+
+            // Добавляем заголовок для столбца чекбоксов
+            const checkboxHeader = document.createElement('th');
+            checkboxHeader.className = 'checkbox-header';
+            const selectAllCheckbox = document.createElement('input');
+            selectAllCheckbox.type = 'checkbox';
+            selectAllCheckbox.id = 'selectAllCheckbox';
+            selectAllCheckbox.addEventListener('change', toggleSelectAll);
+            checkboxHeader.appendChild(selectAllCheckbox);
+            headerRow.appendChild(checkboxHeader);
+
+            // Определяем имена колонок
+            if (allRows.length > 0 && allRows[0][0] !== "ВРЕМЯ") {
+                columnNames = ["ВРЕМЯ", "СОБЫТИЕ", "СООБЩЕНИЕ", "РЕЖИМ", "ЭТАЖ ТЕКУЩ.", "НАПРАВЛ.", "ЭТАЖ НАПРАВ.", "ДТО", "ЦБ", "ВЕС", "СКОРОСТЬ", "М/С", "ЭНКОД.", "ДВЕРЬ 1", "ДВЕРЬ 2"];
+                while(columnNames.length < FIXED_COLS) columnNames.push(`Доп.${columnNames.length - 14}`);
+            } else if (allRows.length > 0) {
+                columnNames = [...allRows[0]]; // Копируем заголовки
+                allRows.shift(); // Удаляем строку заголовков из данных
+            } else {
+                columnNames = ["ВРЕМЯ", "СОБЫТИЕ", "СООБЩЕНИЕ", "РЕЖИМ", "ЭТАЖ ТЕКУЩ.", "НАПРАВЛ.", "ЭТАж НАПРАВ.", "ДТО", "ЦБ", "ВЕС", "СКОРОСТЬ", "М/С", "ЭНКОД.", "ДВЕРЬ 1", "ДВЕРЬ 2"];
+                while(columnNames.length < FIXED_COLS) columnNames.push(`Доп.${columnNames.length - 14}`);
+            }
+
+            columnNames.forEach((name, index) => {
+                const th = document.createElement('th');
+                th.textContent = name;
+                th.dataset.colIndex = index;
+                th.addEventListener('click', () => sortTable(index));
+                headerRow.appendChild(th);
+            });
+        }
+
+        // --- Создание фильтров по колонкам ---
+        function createColumnFilters() {
+            const filterRow = document.getElementById('columnFilters');
+            filterRow.innerHTML = '';
+
+            columnNames.forEach((name, index) => {
+                // Пропускаем фильтр для времени (колонка 0)
+                if (index === 0) return;
+
+                const uniqueValues = [...new Set(
+                    allRows
+                        .filter(row => row[index] !== undefined && row[index] !== "")
+                        .map(row => row[index])
+                )];
+                if (uniqueValues.length === 0) return;
+
+                const filterGroup = document.createElement('div');
+                filterGroup.className = 'filter-group';
+
+                const label = document.createElement('span');
+                label.className = 'filter-label';
+                label.textContent = name;
+                label.title = name; // Для полного отображения при наведении
+                filterGroup.appendChild(label);
+
+                const select = document.createElement('select');
+                select.className = 'filter-select';
+                select.dataset.colIndex = index;
+
+                const optionAll = document.createElement('option');
+                optionAll.value = "Все";
+                optionAll.textContent = `[Все ${uniqueValues.length}]`;
+                select.appendChild(optionAll);
+
+                uniqueValues.forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value.length > 15 ? value.substring(0, 12) + "..." : value; // Ограничиваем длину
+                    option.title = value; // Полный текст при наведении
+                    select.appendChild(option);
+                });
+
+                select.addEventListener('change', function() {
+                    currentFilters[index] = this.value;
+                    applyFilters();
+                });
+
+                filterGroup.appendChild(select);
+                filterRow.appendChild(filterGroup);
+            });
+        }
+
+        // --- Инициализация фильтров ---
+        function initializeFilters() {
+            for(let i = 0; i < FIXED_COLS; i++) {
+                currentFilters[i] = "Все";
+            }
+        }
+
+        // --- Применение фильтров ---
+        function applyFilters() {
+            const selectedDate = document.getElementById('dateFilter').value;
+
+            filteredRows = allRows.filter(row => {
+                // Если выбрана конкретная дата, показываем только строки для этой даты
+                if (selectedDate !== "Все даты") {
+                    // Показываем строку с датой
+                    if (row[0] && row[0].startsWith("Дата: ") && row[0].includes(selectedDate)) {
+                        return true;
+                    }
+                    // Показываем строки данных только если предыдущая строка даты соответствует выбранной
+                    const currentIndex = allRows.indexOf(row);
+                    let shouldShow = false;
+                    for (let i = currentIndex - 1; i >= 0; i--) {
+                        if (allRows[i][0] && allRows[i][0].startsWith("Дата: ")) {
+                            shouldShow = allRows[i][0].includes(selectedDate);
+                            break;
+                        }
+                    }
+                    if (!shouldShow) return false;
+                }
+                
+                // Если это строка с датой, всегда показываем её
+                if(row[0] && row[0].startsWith("Дата: ")) return true;
+
+                // Применяем фильтры по колонкам
+                for (let i = 1; i < FIXED_COLS; i++) {
+                    const filterValue = currentFilters[i];
+                    if (filterValue && filterValue !== "Все" && row[i] !== filterValue) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            renderTable();
+            populateErrorFilter();
+            updateStatusBar();
+            updateSelectAllCheckboxState(); // Обновляем состояние "выделить все"
+        }
+
+        // --- Рендер таблицы ---
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            filteredRows.forEach((row, rowIndex) => {
+                const tr = document.createElement('tr');
+                tr.dataset.rowIndex = rowIndex;
+
+                // Добавляем чекбокс
+                const checkboxCell = document.createElement('td');
+                checkboxCell.className = 'checkbox-cell';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.dataset.rowIndex = rowIndex;
+                checkbox.addEventListener('click', handleRowCheckboxClick); // Используем click
+                checkboxCell.appendChild(checkbox);
+                tr.appendChild(checkboxCell);
+
+                // Добавляем классы для цветового кодирования
+                if (row[1]) {
+                    if (row[1] === "ERROR C" || row[1] === "ERROR") {
+                        tr.classList.add('error-critical');
+                    } else if (row[1] === "ERROR R") {
+                        tr.classList.add('error-resetting');
+                    } else if (row[1] === "WARNING") {
+                        tr.classList.add('warning');
+                    } else if (row[1] === "ENGINE" && row[2] === "START") {
+                        tr.classList.add('engine-start');
+                    } else if (row[1] === "ENGINE" && row[2] === "STOP") {
+                        tr.classList.add('engine-stop');
+                    }
+                }
+
+                // Добавляем ячейки данных
+                for (let i = 0; i < FIXED_COLS; i++) {
+                    const td = document.createElement('td');
+                    td.textContent = row[i] !== undefined ? row[i] : "";
+                    tr.appendChild(td);
+                }
+
+                // Обработчик клика для выделения строки
+                tr.addEventListener('click', function(event) {
+                    // Игнорируем клик, если он был по чекбоксу
+                    if (event.target.type === 'checkbox') return;
+
+                    document.querySelectorAll('#tableBody tr').forEach(r => r.classList.remove('selected'));
+                    this.classList.add('selected');
+
+                    const clickedRowIndex = parseInt(this.dataset.rowIndex);
+                    const clickedRow = filteredRows[clickedRowIndex];
+                    if (clickedRow && clickedRow.length >= 3) {
+                        let errorCode = clickedRow[1];
+                        if ((clickedRow[1].includes("ERROR") || clickedRow[1].includes("WARNING")) &&
+                            !["ERROR CLEAR", "WARNING CLEAR", "ERROR C CLEAR", "ERROR R CLEAR"].includes(clickedRow[1])) {
+                            const potentialCodeMatch = clickedRow[2].match(/\b[A-Za-z0-9]{4}\b/);
+                            if (potentialCodeMatch) {
+                                errorCode = potentialCodeMatch[0];
+                            }
+                        }
+                        displayErrorInfo(errorCode);
+                    } else {
+                        document.getElementById('errorDisplay').textContent = '';
+                    }
+                    updateStatusBarWithDelta(); // Пересчитываем Δt при клике
+                });
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Обработчик клика по чекбоксу строки ---
+        function handleRowCheckboxClick(event) {
+            event.stopPropagation(); // Останавливаем всплытие, чтобы не сработал клик по строке
+            const checkbox = event.target;
+            const rowIndex = parseInt(checkbox.dataset.rowIndex, 10);
+            const checkboxes = Array.from(document.querySelectorAll('#tableBody input[type="checkbox"]'));
+
+            // Логика для автоматического выбора диапазона для графика
+            if (checkbox.checked) {
+                if (firstCheckedIndex === -1) {
+                    // Первый выбранный чекбокс
+                    firstCheckedIndex = rowIndex;
+                } else if (firstCheckedIndex !== rowIndex) {
+                    // Второй выбранный чекбокс - выбираем весь диапазон между ними
+                    const start = Math.min(firstCheckedIndex, rowIndex);
+                    const end = Math.max(firstCheckedIndex, rowIndex);
+                    
+                    // Снимаем все остальные выделения
+                    checkboxes.forEach(cb => cb.checked = false);
+                    
+                    // Выделяем диапазон
+                    for (let i = start; i <= end; i++) {
+                        if (checkboxes[i]) {
+                            checkboxes[i].checked = true;
+                        }
+                    }
+                    
+                    // Визуально подсвечиваем диапазон
+                    highlightRangeRows(start, end);
+                    
+                    lastCheckedIndex = rowIndex;
+                } else {
+                    // Тот же чекбокс снова - оставляем как есть
+                    lastCheckedIndex = rowIndex;
+                }
+            } else {
+                // Если снимаем выделение с первого чекбокса, сбрасываем весь диапазон
+                if (rowIndex === firstCheckedIndex) {
+                    checkboxes.forEach(cb => cb.checked = false);
+                    firstCheckedIndex = -1;
+                    lastCheckedIndex = -1;
+                    clearRangeHighlight();
+                } else if (event.shiftKey && lastCheckedIndex !== -1) {
+                    // Стандартная логика для Shift+клик
+                    const start = Math.min(lastCheckedIndex, rowIndex);
+                    const end = Math.max(lastCheckedIndex, rowIndex);
+                    for (let i = start; i <= end; i++) {
+                        checkboxes[i].checked = checkbox.checked;
+                    }
+                }
+            }
+
+            updateStatusBarWithDelta(); // Пересчитываем Δt при изменении выделения
+            updateSelectAllCheckboxState(); // Обновляем "выделить все"
+        }
+
+        // --- Подсветка диапазона строк ---
+        function highlightRangeRows(start, end) {
+            clearRangeHighlight();
+            const rows = document.querySelectorAll('#tableBody tr');
+            for (let i = start; i <= end; i++) {
+                if (rows[i]) {
+                    rows[i].classList.add('checkbox-range-selection');
+                }
+            }
+        }
+
+        // --- Очистка подсветки диапазона ---
+        function clearRangeHighlight() {
+            document.querySelectorAll('#tableBody tr').forEach(row => {
+                row.classList.remove('checkbox-range-selection');
+            });
+        }
+
+        // --- Переключение "Выделить все" ---
+        function toggleSelectAll() {
+            const isChecked = document.getElementById('selectAllCheckbox').checked;
+            document.querySelectorAll('#tableBody input[type="checkbox"]').forEach(cb => {
+                cb.checked = isChecked;
+            });
+            firstCheckedIndex = -1; // Сбрасываем индексы
+            lastCheckedIndex = -1;
+            clearRangeHighlight();
+            updateStatusBarWithDelta();
+        }
+
+        // --- Обновление состояния "Выделить все" ---
+        function updateSelectAllCheckboxState() {
+            const checkboxes = document.querySelectorAll('#tableBody input[type="checkbox"]');
+            const checkedCount = document.querySelectorAll('#tableBody input[type="checkbox"]:checked').length;
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            if (checkedCount === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCount === checkboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+
+
+        // --- Вычисление разницы времени Δt ---
+        function calculateTimeDifference() {
+             const selectedCheckboxes = document.querySelectorAll('#tableBody input[type="checkbox"]:checked');
+             if (selectedCheckboxes.length < 2) return "";
+
+             const selectedIndices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.rowIndex, 10));
+             const firstIndex = Math.min(...selectedIndices);
+             const lastIndex = Math.max(...selectedIndices);
+
+             if (firstIndex >= filteredRows.length || lastIndex >= filteredRows.length) return "";
+
+             const firstRow = filteredRows[firstIndex];
+             const lastRow = filteredRows[lastIndex];
+
+             if (!firstRow[0] || firstRow[0].startsWith("Дата:") || !lastRow[0] || lastRow[0].startsWith("Дата:")) return "";
+
+             const firstTime = firstRow[0];
+             const lastTime = lastRow[0];
+
+             const parseTime = (timeStr) => {
+                 if (timeStr.length < 12) return 0;
+                 try {
+                     const hours = parseInt(timeStr.substr(0, 2), 10);
+                     const minutes = parseInt(timeStr.substr(3, 2), 10);
+                     const seconds = parseInt(timeStr.substr(6, 2), 10);
+                     const milliseconds = parseInt(timeStr.substr(9, 3), 10);
+                     return (hours * 3600 + minutes * 60 + seconds) * 1000 + milliseconds;
+                 } catch (e) {
+                     return 0;
+                 }
+             };
+
+             try {
+                 const firstMs = parseTime(firstTime);
+                 const lastMs = parseTime(lastTime);
+                 const diffMs = lastMs - firstMs;
+
+                 if (diffMs < 0) return "";
+
+                 const totalSeconds = Math.floor(diffMs / 1000);
+                 const ms = diffMs % 1000;
+                 const minutes = Math.floor(totalSeconds / 60);
+                 const seconds = totalSeconds % 60;
+
+                 return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+             } catch (e) {
+                 console.error("Ошибка при вычислении Δt:", e);
+                 return "";
+             }
+        }
+
+        // --- Обновление строки состояния с Δt ---
+        function updateStatusBarWithDelta() {
+             const baseStatus = document.getElementById('statusBar').textContent.split(' | Δt:')[0];
+             const timeDiff = calculateTimeDifference();
+             let newStatus = baseStatus;
+             if (timeDiff) newStatus += ` | Δt: ${timeDiff}`;
+             document.getElementById('statusBar').textContent = newStatus;
+        }
+
+
+        // --- Обновление строки состояния ---
+        function updateStatusBar() {
+            const displayedCount = filteredRows.filter(row => !row[0] || !row[0].startsWith("Дата:")).length;
+            let errorCount = 0, criticalCount = 0, resettingCount = 0, warnCount = 0;
+            filteredRows.forEach(row => {
+                 if (row[1]) {
+                     if (row[1] === "ERROR C") { criticalCount++; errorCount++; }
+                     else if (row[1] === "ERROR R") { resettingCount++; errorCount++; }
+                     else if (row[1] === "WARNING") { warnCount++; errorCount++; }
+                     else if (row[1] === "ERROR") { errorCount++; }
+                 }
+            });
+            const statusText = `СТРОК: ${displayedCount} | ОШИБОК: ${errorCount} | КРИТИЧЕСКИХ: ${criticalCount} | САМОСБРАСЫВАЮЩИЕСЯ: ${resettingCount} | ПРЕДУПРЕЖДЕНИЙ: ${warnCount}`;
+            document.getElementById('statusBar').textContent = statusText; // Δt будет добавлен в updateStatusBarWithDelta
+        }
+
+        // --- Заполнение фильтра ошибок ---
+        function populateErrorFilter() {
+            const errorSelect = document.getElementById('errorFilter');
+            errorSelect.innerHTML = '<option value="">Все ошибки</option>';
+
+            const errorEntries = [];
+            filteredRows.forEach((row, rowIndex) => {
+                 if (row[1] && (row[1].includes("ERROR") || row[1].includes("WARNING"))) {
+                     let date = "Неизвестная дата";
+                     for(let i=rowIndex-1; i>=0; i--) {
+                         if(filteredRows[i][0] && filteredRows[i][0].startsWith("Дата: ")) {
+                             date = filteredRows[i][0].replace("Дата: ", "");
+                             break;
+                         }
+                     }
+                     const type = row[1];
+                     const message = row[2] || "";
+                     const time = row[0] || "";
+                     errorEntries.push({date, type, message, time, rowIndex});
+                 }
+            });
+
+            errorEntries.forEach(entry => {
+                const option = document.createElement('option');
+                option.value = entry.rowIndex;
+                const displayMessage = entry.message.length > 50 ? entry.message.substring(0, 47) + "..." : entry.message;
+                option.textContent = `${entry.date} | ${entry.type} | ${displayMessage} | ${entry.time}`;
+                errorSelect.appendChild(option);
+            });
+        }
+
+        // --- Выбор строки по ошибке в комбобоксе ---
+        function selectErrorRow() {
+            const selectedIndex = document.getElementById('errorFilter').value;
+            if (selectedIndex === "") return;
+
+            const rowIndex = parseInt(selectedIndex, 10);
+            if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= filteredRows.length) return;
+
+            const tableBody = document.getElementById('tableBody');
+            const rows = tableBody.querySelectorAll('tr');
+            rows.forEach((row, index) => {
+                const rowIdx = parseInt(row.dataset.rowIndex, 10);
+                if (rowIdx === rowIndex) {
+                    // Прокручиваем к строке и выделяем её
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    document.querySelectorAll('#tableBody tr').forEach(r => r.classList.remove('selected'));
+                    row.classList.add('selected');
+
+                    // Отмечаем чекбокс
+                    const checkbox = row.querySelector('input[type="checkbox"]');
+                    if (checkbox) checkbox.checked = true;
+                    updateSelectAllCheckboxState();
+
+                    // Отображаем информацию об ошибке
+                    const clickedRow = filteredRows[rowIndex];
+                     if (clickedRow && clickedRow.length >= 3) {
+                         let errorCode = clickedRow[1];
+                         if ((clickedRow[1].includes("ERROR") || clickedRow[1].includes("WARNING")) &&
+                             !["ERROR CLEAR", "WARNING CLEAR", "ERROR C CLEAR", "ERROR R CLEAR"].includes(clickedRow[1])) {
+                             const potentialCodeMatch = clickedRow[2].match(/\b[A-Za-z0-9]{4}\b/);
+                             if (potentialCodeMatch) {
+                                 errorCode = potentialCodeMatch[0];
+                             }
+                         }
+                         displayErrorInfo(errorCode);
+                     }
+                     updateStatusBarWithDelta(); // Обновляем Δt
+                }
+            });
+        }
+
+        // --- Сортировка таблицы ---
+        let sortDirection = {};
+        function sortTable(columnIndex) {
+            const isAscending = sortDirection[columnIndex] !== 'asc';
+            sortDirection = {};
+            sortDirection[columnIndex] = isAscending ? 'asc' : 'desc';
+
+            filteredRows.sort((a, b) => {
+                if (a[0] && a[0].startsWith("Дата:")) return 0;
+                if (b[0] && b[0].startsWith("Дата:")) return 0;
+
+                let valA = a[columnIndex] || '';
+                let valB = b[columnIndex] || '';
+
+                const numA = parseFloat(valA.replace(',', '.'));
+                const numB = parseFloat(valB.replace(',', '.'));
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return isAscending ? numA - numB : numB - numA;
+                }
+
+                if (valA < valB) return isAscending ? -1 : 1;
+                if (valA > valB) return isAscending ? 1 : -1;
+                return 0;
+            });
+
+            renderTable();
+            // Сбрасываем выделение при сортировке
+            firstCheckedIndex = -1;
+            lastCheckedIndex = -1;
+            clearRangeHighlight();
+            updateSelectAllCheckboxState();
+        }
+
+        // --- Отображение информации об ошибке ---
+        function displayErrorInfo(errorCode) {
+            const errorDisplay = document.getElementById('errorDisplay');
+            if (!errorCode) {
+                errorDisplay.textContent = '';
+                return;
+            }
+
+            let displayText = `Код ошибки: ${errorCode}\n`;
+            // Ищем сначала точное совпадение, потом по шаблону XX
+            const errorInfo = errorDatabase[errorCode] || errorDatabase[errorCode.substring(0, 2) + "XX"];
+
+            if (errorInfo) {
+                if (errorInfo.description) displayText += `${errorInfo.description}\n\n`;
+                else displayText += "\n";
+
+                const maxCount = Math.max(errorInfo.causes.length, errorInfo.solutions.length);
+                for (let i = 0; i < maxCount; i++) {
+                    const cause = errorInfo.causes[i] || "";
+                    const solution = errorInfo.solutions[i] || "";
+                    if (cause || solution) {
+                        displayText += `${i + 1}. `;
+                        if (cause) displayText += cause;
+                        if (cause && solution) displayText += "  ►  ";
+                        if (solution) displayText += solution;
+                        displayText += "\n";
+                    }
+                }
+            } else {
+                const specialEvents = {
+                    "BUTTONS": "Нажатие служебных кнопок",
+                    "CALL": "Нажатие кнопки вызова",
+                    "CORR": "Корректировка",
+                    "DNE": "Срабатывание ДНЭ",
+                    "DOOR1": "Первая дверь кабины",
+                    "DOOR2": "Вторая дверь кабины",
+                    "DTO": "Срабатывание ДТО",
+                    "DVE": "Срабатывание ДВЭ",
+                    "ENGINE": "Работа главного привода",
+                    "LOG": "Действие с логом",
+                    "MAIN": "Включение КЦ",
+                    "MODE": "Переключение режима работы",
+                    "MULTIRUN": "Включение прогона",
+                    "ORDER": "Нажатие кнопки приказа",
+                    "POS": "Позиционирование",
+                    "SD": "Работа с флеш-картой",
+                    "ERROR CLEAR": "Сброс ошибки",
+                    "ERROR R CLEAR": "Сброс самосбрасывающейся ошибки",
+                    "ERROR C CLEAR": "Сброс критической ошибки",
+                    "WARNING CLEAR": "Сброс предупреждения"
+                };
+
+                const specialDescription = specialEvents[errorCode];
+                if (specialDescription) {
+                    displayText = specialDescription;
+                } else {
+                    displayText += `\nОписание не найдено в базе данных ошибок.`;
+                }
+            }
+            errorDisplay.textContent = displayText;
+        }
+
+        // --- Поиск ошибки по коду ---
+        function performErrorSearch() {
+            const searchInput = document.getElementById('errorSearchInput');
+            let code = searchInput.value.trim().toUpperCase();
+            code = code.replace(/\s/g, '');
+            if (code.length < 4) {
+                code = code.padStart(4, '0');
+            } else if (code.length > 4) {
+                code = code.substring(0, 4);
+            }
+            searchInput.value = code;
+
+            if (code.length === 4) {
+                displayErrorInfo(code);
+            }
+        }
+
+        // --- Обновление данных ---
+        function refreshData() {
+            currentFilters = {};
+            firstCheckedIndex = -1;
+            lastCheckedIndex = -1;
+            initializeFilters();
+            document.querySelectorAll('.filter-select').forEach(select => {
+                select.value = "Все";
+            });
+            document.getElementById('dateFilter').value = "Все даты";
+            document.getElementById('errorFilter').value = "";
+            document.getElementById('errorSearchInput').value = "";
+            document.getElementById('errorDisplay').textContent = '';
+            document.getElementById('statusBar').textContent = document.getElementById('statusBar').textContent.split(' | Δt:')[0];
+            
+            // Снять выделение со всех строк и чекбоксов
+            document.querySelectorAll('#tableBody tr').forEach(r => r.classList.remove('selected'));
+            document.querySelectorAll('#tableBody input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.getElementById('selectAllCheckbox').checked = false;
+            document.getElementById('selectAllCheckbox').indeterminate = false;
+            clearRangeHighlight();
+
+            applyFilters();
+        }
+
+        // --- Сохранение в файл ---
+        function saveToFile() {
+            if (filteredRows.length === 0) {
+                alert("Нет данных для сохранения.");
+                return;
+            }
+
+            let csvContent = "sep=;\n";
+            csvContent += columnNames.join(";") + "\n";
+            filteredRows.forEach(row => {
+                const rowString = row.map(cell => cell !== undefined ? cell : "").join(";");
+                csvContent += rowString + "\n";
+            });
+
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "exported_log.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- Показать график ---
+        function showChart() {
+            const selectedCheckboxes = document.querySelectorAll('#tableBody input[type="checkbox"]:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert("Не выделено ни одной строки");
+                return;
+            }
+
+            const selectedIndices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.rowIndex, 10));
+            selectedIndices.sort((a, b) => a - b); // Сортируем по возрастанию
+
+            if (selectedIndices.length < 4) {
+                 alert("Выделено слишком мало строк для анализа");
+                 return;
+            }
+
+            const selectedData = selectedIndices.map(i => filteredRows[i]);
+
+            // 1. Найти первые две ENGINE;SPEED
+            let firstEngineSpeedData = [];
+            let firstEngineEndIndex = -1;
+            for(let i=0; i<selectedData.length - 1; i++) {
+                const row = selectedData[i];
+                if (row[1] === "ENGINE" && row[2] === "SPEED" && row.length >= 17) {
+                    const speeds = [];
+                    for(let j=3; j<=16; j++) {
+                        const val = parseFloat(row[j]);
+                        if (!isNaN(val)) speeds.push(val);
+                    }
+                    if (speeds.length >= 13) {
+                        firstEngineSpeedData.push(speeds);
+                        if (firstEngineSpeedData.length === 2) {
+                            firstEngineEndIndex = i + 1;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (firstEngineSpeedData.length !== 2) {
+                alert("Не найдены первые две строки ENGINE;SPEED;");
+                return;
+            }
+
+            // 2. Найти последние две ENGINE;SPEED
+            let lastEngineSpeedData = [];
+            let lastEngineStartIndex = -1;
+            for(let i=selectedData.length - 1; i > firstEngineEndIndex; i--) {
+                const row = selectedData[i];
+                if (row[1] === "ENGINE" && row[2] === "SPEED" && row.length >= 17) {
+                    const speeds = [];
+                    for(let j=3; j<=16; j++) {
+                        const val = parseFloat(row[j]);
+                        if (!isNaN(val)) speeds.push(val);
+                    }
+                    if (speeds.length >= 13) {
+                        lastEngineSpeedData.unshift(speeds);
+                        if (lastEngineSpeedData.length === 2) {
+                            lastEngineStartIndex = i - 1;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (lastEngineSpeedData.length !== 2) {
+                alert("Не найдены последние две строки ENGINE;SPEED;");
+                return;
+            }
+
+            // 3. Проверка на наличие строк между блоками
+            if (lastEngineStartIndex <= firstEngineEndIndex) {
+                alert("Не найдены строки событий между блоками ENGINE;SPEED;");
+                return;
+            }
+
+            // 4. Сбор промежуточных точек
+            let intermediatePoints = [];
+            let firstEventTime = null;
+            let stopCollecting = false;
+            for(let i = firstEngineEndIndex + 1; i <= lastEngineStartIndex && !stopCollecting; i++) {
+                const row = selectedData[i];
+                if (row[1] === "ENGINE" && row[2] === "NEW SPEED") {
+                    stopCollecting = true;
+                    continue;
+                }
+
+                if (row[0]) {
+                    const eventTime = parseTimeToMsWeb(row[0]);
+                    if (firstEventTime === null) {
+                        firstEventTime = eventTime;
+                    }
+                    const relativeTime = (eventTime - firstEventTime) / 1000.0;
+                    const speed = parseFloat(row[11]) || 0.0;
+                    const event = row[1] || "";
+                    const text = row[2] || "";
+                    const floor = row[4] || "";
+
+                    intermediatePoints.push({
+                        relativeTime: relativeTime,
+                        speed: speed,
+                        event: event,
+                        text: text,
+                        floor: floor
+                    });
+                }
+            }
+
+            // --- Формирование данных для Chart.js ---
+            let chartDataPoints = [];
+            let currentTime = 0.0;
+            const timeStep = 0.250;
+
+            for(let i=0; i<2; i++) {
+                for(let j=0; j<firstEngineSpeedData[i].length; j++) {
+                     chartDataPoints.push({
+                         x: currentTime,
+                         y: firstEngineSpeedData[i][j],
+                         label: ""
+                     });
+                     currentTime += timeStep;
+                }
+            }
+
+            const intermediateStartTime = currentTime;
+            intermediatePoints.forEach(ip => {
+                const absTime = intermediateStartTime + ip.relativeTime;
+                const label = ip.event && ip.text && ip.floor ? `${ip.event}-${ip.text}:${ip.floor}` : "";
+                chartDataPoints.push({
+                    x: absTime,
+                    y: ip.speed,
+                    label: label
+                });
+            });
+
+            if (intermediatePoints.length > 0) {
+                currentTime = intermediateStartTime + intermediatePoints[intermediatePoints.length - 1].relativeTime + timeStep;
+            } else {
+                currentTime = intermediateStartTime;
+            }
+
+            for(let i=0; i<2; i++) {
+                 for(let j=0; j<lastEngineSpeedData[i].length; j++) {
+                      chartDataPoints.push({
+                          x: currentTime,
+                          y: lastEngineSpeedData[i][j],
+                          label: ""
+                      });
+                      currentTime += timeStep;
+                 }
+            }
+
+            // --- Отображение графика ---
+            renderChart(chartDataPoints);
+        }
+
+        // --- Рендеринг графика с Chart.js ---
+        function renderChart(chartDataPoints) {
+            const chartContainer = document.getElementById('chartContainer');
+            const ctx = document.getElementById('myChart').getContext('2d');
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartContainer.style.display = 'block';
+
+            const data = chartDataPoints.map(p => ({x: p.x, y: p.y}));
+            const pointLabels = chartDataPoints.map(p => p.label);
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Скорость (м/с)',
+                        data: data,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: function(context) {
+                             const index = context.dataIndex;
+                             const point = chartDataPoints[index];
+                             return point.label === "" ? 'blue' : 'red';
+                        },
+                        pointRadius: 4,
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'Время (сек)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Скорость (м/с)'
+                            }
+                        }
+                    },
+                    plugins: {
+                         tooltip: {
+                             callbacks: {
+                                 title: function(context) {
+                                     const index = context[0].dataIndex;
+                                     const point = chartDataPoints[index];
+                                     return point.label || `Время: ${point.x.toFixed(2)} сек`;
+                                 },
+                                 label: function(context) {
+                                     return `Скорость: ${context.parsed.y.toFixed(2)} м/с`;
+                                 }
+                             }
+                         },
+                         legend: {
+                             display: true,
+                             position: 'top',
+                         }
+                    },
+                    animation: {
+                        duration: 500
+                    }
+                }
+            });
+        }
+
+        // --- Закрыть график ---
+        function closeChart() {
+            const chartContainer = document.getElementById('chartContainer');
+            chartContainer.style.display = 'none';
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+        }
+
+        // --- Функция для парсинга времени в миллисекунды (для графика) ---
+        function parseTimeToMsWeb(timeStr) {
+             if (timeStr.length < 12) return 0.0;
+             try {
+                 const hours = parseInt(timeStr.substr(0, 2), 10);
+                 const minutes = parseInt(timeStr.substr(3, 2), 10);
+                 const seconds = parseInt(timeStr.substr(6, 2), 10);
+                 const milliseconds = parseInt(timeStr.substr(9, 3), 10);
+                 return (hours * 3600.0 + minutes * 60.0 + seconds) * 1000.0 + milliseconds;
+             } catch (e) {
+                 console.error("Ошибка парсинга времени:", timeStr, e);
+                 return 0.0;
+             }
+        }
+
+    </script>
+
+</body>
+</html>
