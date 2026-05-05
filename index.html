@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тест по первой помощи</title>
+    <title>Тест по охране труда и промбезопасности</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
@@ -19,18 +19,10 @@
         .btn-refresh { background-color: #2196F3; }
         .btn-refresh:hover { background-color: #1976D2; }
         
-        /* Стили для выпадающего списка */
         .file-select {
-            padding: 10px 12px;
-            background-color: #ffffff;
-            color: #333;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 15px;
-            font-family: Arial, sans-serif;
-            min-width: 200px;
-            max-width: 350px;
+            padding: 10px 12px; background-color: #ffffff; color: #333;
+            border: 1px solid #ccc; border-radius: 4px; cursor: pointer;
+            font-size: 15px; font-family: Arial, sans-serif; min-width: 200px; max-width: 350px;
         }
         .file-select option { padding: 8px; font-size: 14px; }
         .file-select:focus { outline: 2px solid #fff; }
@@ -76,7 +68,6 @@
         let currentQuestions = [];
         let currentFile = null;
 
-        // Список файлов для выпадающего меню
         const predefinedFiles = [
             "Оказание первой помощи пострадавшим (136 вопр.).wop",
             "ООС Обращение с ОРВ, ОРМ, охрана и использование вод.wop",
@@ -94,7 +85,6 @@
             "Электробезопасность (9 вопр.).wop"
         ];
 
-        // Заполняем выпадающий список
         const fileSelect = document.getElementById('fileSelect');
         predefinedFiles.forEach(file => {
             const option = document.createElement('option');
@@ -103,14 +93,13 @@
             fileSelect.appendChild(option);
         });
 
-        // Обработчик выбора из списка
         fileSelect.addEventListener('change', function() {
             const selectedFile = this.value;
             if (!selectedFile) return;
 
             document.getElementById('fileInfo').textContent = `Загрузка: ${selectedFile}...`;
             document.getElementById('refreshBtn').disabled = true;
-            document.getElementById('fileSelect').disabled = true; // Блокируем на время загрузки
+            document.getElementById('fileSelect').disabled = true;
 
             fetch(selectedFile)
                 .then(response => {
@@ -118,7 +107,6 @@
                     return response.arrayBuffer();
                 })
                 .then(buffer => {
-                    // Декодируем в windows-1251, так как .wop файлы обычно в этой кодировке
                     const decoder = new TextDecoder('windows-1251');
                     const content = decoder.decode(buffer);
                     
@@ -131,7 +119,7 @@
                 })
                 .catch(error => {
                     console.error(error);
-                    alert(`Ошибка загрузки файла: ${error.message}\n\n⚠️ Убедитесь, что:\n1. Файлы лежат в ТОЙ ЖЕ папке, что и HTML\n2. Вы открыли страницу через ЛОКАЛЬНЫЙ СЕРВЕР (не через file://)\nНапример: python -m http.server или расширение Live Server в VS Code.`);
+                    alert(`Ошибка загрузки файла: ${error.message}\n\n⚠️ Убедитесь, что файлы лежат в той же папке, что и HTML, и страница запущена через локальный сервер (Live Server, python -m http.server и т.д.).`);
                     document.getElementById('fileInfo').textContent = 'Ошибка загрузки';
                 })
                 .finally(() => {
@@ -147,58 +135,74 @@
             return array;
         }
 
-        // 🔧 ИСПРАВЛЕННАЯ функция нормализации имени изображения
+        // 🔧 Исправлено: корректно обрабатывает pie\, pic\, +pic/ и любые другие префиксы
         function normalizeImageName(imageName) {
             if (!imageName) return null;
-            let name = imageName.trim();
-            name = name.replace(/\\/g, '/');
-            name = name.replace(/\.[^/.]+$/, "");
+            let name = imageName.trim().replace(/\\/g, '/').replace(/\.[^/.]+$/, "").toLowerCase();
             const parts = name.split('/');
-            name = parts[parts.length - 1];
-            name = name.replace(/^[+\-_\s]*pic/i, '');
-            name = name.replace(/^[^\w]+/, '');
+            name = parts[parts.length - 1]; // Берем только имя файла
+            name = name.replace(/^(pic|pie|img)[\/\\]?/i, ''); // Убираем известные префиксы
+            name = name.replace(/^[^\w]+/, ''); // Убираем оставшиеся спецсимволы
             return name || null;
         }
 
+        // 🔧 НОВЫЙ ПАРСЕР: последовательный, учитывает ваш точный формат
         function parseWopFile(content) {
             const lines = content.split('\n');
             const questions = [];
-            let currentQuestion = null;
-            let inAnswersSection = false;
+            let currentQ = null;
+            let currentAnswerIdx = -1;
 
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (line.startsWith('W=')) continue;
-                
-                if (line.startsWith('Л') || line.startsWith('N')) {
-                    if (currentQuestion) questions.push(currentQuestion);
-                    currentQuestion = { id: '', source: '', image: '', question: '', answers: [] };
-                    inAnswersSection = false;
-                    
-                    if (line.startsWith('N')) {
-                        const match = line.match(/(N\d+)\s*(\(.*\))/);
-                        if (match) { currentQuestion.id = match[1]; currentQuestion.source = match[2] || ''; }
-                        if (i + 1 < lines.length) {
-                            const nextLine = lines[i + 1].trim();
-                            if (nextLine.startsWith('{') && nextLine.endsWith('}')) { currentQuestion.image = nextLine.slice(1, -1); i++; }
-                        }
-                        if (i + 1 < lines.length) {
-                            const questionLine = lines[i + 1].trim();
-                            if (!questionLine.startsWith('{') && !questionLine.match(/^\d+\./)) { currentQuestion.question = questionLine; i++; }
-                        }
-                        inAnswersSection = true;
+            for (let rawLine of lines) {
+                let line = rawLine.trim();
+                if (!line) continue;
+
+                // 1. Начало нового вопроса
+                if (/^N\d+/.test(line)) {
+                    if (currentQ) questions.push(currentQ);
+                    currentQ = { id: '', source: '', image: '', question: '', answers: [] };
+                    currentAnswerIdx = -1;
+
+                    const match = line.match(/(N\d+)\s*(\(.*\))/);
+                    if (match) {
+                        currentQ.id = match[1];
+                        currentQ.source = match[2].trim();
+                    } else {
+                        currentQ.id = line.match(/^N\d+/)?.[0] || '';
+                        currentQ.source = line.replace(/^N\d+\s*/, '').trim();
                     }
-                } else if (line.startsWith('{') && line.endsWith('}') && currentQuestion && !currentQuestion.image) {
-                    currentQuestion.image = line.slice(1, -1);
-                } else if (line.match(/^\d+\./) && currentQuestion && inAnswersSection) {
-                    currentQuestion.answers.push(line.replace(/^\d+\.\s*/, '').trim());
-                } else if (currentQuestion && line && !line.startsWith('(') && !line.match(/^W=/)) {
-                    if (!currentQuestion.question && !line.match(/^\d+\./) && !line.startsWith('{')) {
-                        currentQuestion.question = line;
-                    }
+                    continue;
                 }
+
+                if (!currentQ) continue;
+
+                // 2. Изображение в фигурных скобках
+                if (line.startsWith('{') && line.endsWith('}')) {
+                    currentQ.image = line.slice(1, -1);
+                    continue;
+                }
+
+                // 3. Начало варианта ответа (цифра с точкой)
+                if (/^\d+\./.test(line)) {
+                    const ansText = line.replace(/^\d+\.\s*/, '').trim();
+                    currentQ.answers.push(ansText);
+                    currentAnswerIdx = currentQ.answers.length - 1;
+                    continue;
+                }
+
+                // 4. Продолжение текущего ответа (многострочный)
+                if (currentAnswerIdx !== -1) {
+                    currentQ.answers[currentAnswerIdx] += ' ' + line;
+                    continue;
+                }
+
+                // 5. Текст вопроса (собирается пока не встретились 1., 2., 3...)
+                currentQ.question += (currentQ.question ? ' ' : '') + line;
             }
-            if (currentQuestion) questions.push(currentQuestion);
+
+            if (currentQ && currentQ.answers.length > 0) {
+                questions.push(currentQ);
+            }
             return questions;
         }
 
@@ -274,7 +278,7 @@
                 currentFile = file;
                 document.getElementById('refreshBtn').disabled = false;
                 document.getElementById('fileInfo').textContent = `Выбран файл: ${file.name}`;
-                document.getElementById('fileSelect').value = ""; // Сбрасываем выбор в меню
+                document.getElementById('fileSelect').value = "";
                 
                 const reader = new FileReader();
                 reader.onload = function(e) {
