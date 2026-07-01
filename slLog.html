@@ -109,7 +109,6 @@
     --error-display-bg: #1f2937;
     --error-info-bg: #111827;
   }
-
   [data-theme="light"] {
     --bg-primary: #f3f4f6;
     --bg-secondary: #ffffff;
@@ -203,268 +202,60 @@
     --error-display-bg: #ffffff;
     --error-info-bg: #f3f4f6;
   }
-
   * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-  html, body { 
-    overscroll-behavior: none; 
-    -webkit-user-select: none;
-    user-select: none;
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
-    margin: 0;
-    padding: 0;
-  }
-  body { 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    transition: background 0.3s ease, color 0.3s ease;
-    display: flex;
-    flex-direction: column;
-  }
-  .scroll-area {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-  }
+  html, body { overscroll-behavior: none; -webkit-user-select: none; user-select: none; height: 100vh; height: 100dvh; overflow: hidden; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-primary); color: var(--text-primary); transition: background 0.3s ease, color 0.3s ease; display: flex; flex-direction: column; }
+  .scroll-area { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
   .scroll-area::-webkit-scrollbar { width: 4px; }
   .scroll-area::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
-  
-  .log-card {
-    background: var(--log-card-bg);
-    border-left: 3px solid var(--log-card-border);
-    transition: transform 0.1s, background 0.3s;
-    padding: 6px 8px;
-    margin-bottom: 2px;
-  }
+  .log-card { background: var(--log-card-bg); border-left: 3px solid var(--log-card-border); transition: transform 0.1s, background 0.3s; padding: 6px 8px; margin-bottom: 2px; }
   .log-card:active { transform: scale(0.98); }
   .log-card.selected { border-left-color: #3b82f6; background: #1e3a5f; }
-  .log-card.date-header { 
-    background: var(--date-header-bg); 
-    border-left-color: var(--date-header-border);
-    font-weight: 600;
-  }
+  .log-card.date-header { background: var(--date-header-bg); border-left-color: var(--date-header-border); font-weight: 600; }
   .log-card.engine-start { border-left-color: var(--engine-start-border); background: var(--engine-start-bg); }
   .log-card.engine-stop { border-left-color: var(--engine-stop-border); background: var(--engine-stop-bg); }
   .log-card.error-c { border-left-color: var(--error-c-border); background: var(--error-c-bg); }
   .log-card.error-r { border-left-color: var(--error-r-border); background: var(--error-r-bg); }
   .log-card.warning { border-left-color: var(--warning-border); background: var(--warning-bg); }
-  
-  .tab-btn {
-    flex: 1;
-    padding: 10px 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    color: var(--tab-inactive);
-    transition: all 0.2s;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-  }
+  .tab-btn { flex: 1; padding: 10px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--tab-inactive); transition: all 0.2s; background: transparent; border: none; cursor: pointer; }
   .tab-btn.active { color: var(--tab-active); }
   .tab-btn svg { width: 22px; height: 22px; }
   .tab-btn span { font-size: 10px; }
-  
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: var(--modal-overlay);
-    z-index: 50;
-    display: none;
-    align-items: center;
-    justify-content: center;
-  }
+  .modal-overlay { position: fixed; inset: 0; background: var(--modal-overlay); z-index: 50; display: none; align-items: center; justify-content: center; }
   .modal-overlay.show { display: flex; }
-  .modal-content {
-    background: var(--modal-bg);
-    width: 95%;
-    max-width: 500px;
-    max-height: 90vh;
-    border-radius: 12px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: background 0.3s;
-  }
-  
-  .shaft-floor {
-    display: grid;
-    grid-template-columns: 40px 32px 32px 32px 40px 24px 32px;
-    gap: 2px;
-    height: 38px;
-    align-items: center;
-    background: var(--shaft-bg);
-    border-bottom: 1px solid var(--shaft-border);
-  }
-  .shaft-floor-num {
-    background: var(--shaft-num-bg);
-    color: var(--shaft-num-text);
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 13px;
-  }
-  .shaft-call-btn {
-    height: 17px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--shaft-call-bg);
-    color: var(--shaft-call-text);
-    font-size: 10px;
-    border-radius: 2px;
-  }
+  .modal-content { background: var(--modal-bg); width: 95%; max-width: 500px; max-height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s; }
+  .shaft-floor { display: grid; grid-template-columns: 40px 32px 32px 32px 40px 24px 32px; gap: 2px; height: 38px; align-items: center; background: var(--shaft-bg); border-bottom: 1px solid var(--shaft-border); }
+  .shaft-floor-num { background: var(--shaft-num-bg); color: var(--shaft-num-text); height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
+  .shaft-call-btn { height: 17px; display: flex; align-items: center; justify-content: center; background: var(--shaft-call-bg); color: var(--shaft-call-text); font-size: 10px; border-radius: 2px; }
   .shaft-call-btn.active { background: var(--shaft-call-active); }
-  .shaft-order {
-    background: var(--shaft-order-bg);
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--shaft-order-color);
-    font-weight: bold;
-  }
-  .shaft-floor-ind {
-    background: var(--shaft-ind-bg);
-    color: var(--shaft-ind-text);
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 13px;
-  }
-  .shaft-dir {
-    background: var(--shaft-ind-bg);
-    color: var(--shaft-ind-text);
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-  }
-  .shaft-sensor {
-    background: var(--shaft-sensor-bg);
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 9px;
-    color: var(--shaft-sensor-text);
-  }
+  .shaft-order { background: var(--shaft-order-bg); height: 100%; display: flex; align-items: center; justify-content: center; color: var(--shaft-order-color); font-weight: bold; }
+  .shaft-floor-ind { background: var(--shaft-ind-bg); color: var(--shaft-ind-text); height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
+  .shaft-dir { background: var(--shaft-ind-bg); color: var(--shaft-ind-text); height: 100%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .shaft-sensor { background: var(--shaft-sensor-bg); height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--shaft-sensor-text); }
   .shaft-sensor.active { background: var(--shaft-sensor-active); }
-  
-  .door-indicator {
-    display: flex;
-    gap: 2px;
-    padding: 4px;
-    background: var(--shaft-bg);
-    border-radius: 4px;
-  }
-  .door-cell {
-    width: 8px;
-    height: 24px;
-    background: var(--door-cell-bg);
-    border-radius: 1px;
-  }
+  .door-indicator { display: flex; gap: 2px; padding: 4px; background: var(--shaft-bg); border-radius: 4px; }
+  .door-cell { width: 8px; height: 24px; background: var(--door-cell-bg); border-radius: 1px; }
   .door-cell.yellow { background: var(--door-cell-yellow); }
-  
-  .status-ind {
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 10px;
-    background: var(--status-ind-bg);
-    color: var(--status-ind-text);
-  }
+  .status-ind { padding: 2px 6px; border-radius: 3px; font-size: 10px; background: var(--status-ind-bg); color: var(--status-ind-text); }
   .status-ind.active-main { background: var(--status-active-main); color: #000; }
   .status-ind.active-pos { background: var(--status-active-pos); color: #000; }
   .status-ind.active-multi { background: var(--status-active-multi); color: #000; }
-  
-  .event-line {
-    font-family: 'Segoe UI', monospace;
-    font-size: 11px;
-    line-height: 1.4;
-    padding: 2px 8px;
-    border-bottom: 1px solid var(--event-border);
-  }
+  .event-line { font-family: 'Segoe UI', monospace; font-size: 11px; line-height: 1.4; padding: 2px 8px; border-bottom: 1px solid var(--event-border); }
   .event-time { color: var(--text-secondary); }
   .event-error { color: #ef4444; font-weight: bold; }
   .event-warning { color: #60a5fa; font-weight: bold; }
   .event-mode { color: #10b981; }
   .event-pos { color: #3b82f6; }
   .event-multirun { color: #f97316; }
-  
-  input, select {
-    background: var(--bg-input);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 8px 10px;
-    font-size: 14px;
-    width: 100%;
-    transition: background 0.3s, color 0.3s, border-color 0.3s;
-  }
+  input, select { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; font-size: 14px; width: 100%; transition: background 0.3s, color 0.3s, border-color 0.3s; }
   input:focus, select:focus { outline: none; border-color: #3b82f6; }
-  
-  .btn-primary {
-    background: #3b82f6;
-    color: white;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 14px;
-    border: none;
-    cursor: pointer;
-  }
+  .btn-primary { background: #3b82f6; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 500; font-size: 14px; border: none; cursor: pointer; }
   .btn-primary:active { background: #2563eb; }
-  
-  .btn-secondary {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 14px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
+  .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); padding: 10px 16px; border-radius: 8px; font-weight: 500; font-size: 14px; border: none; cursor: pointer; transition: background 0.3s; }
   .btn-secondary:active { opacity: 0.8; }
-  
-  .toast {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--toast-bg);
-    color: var(--text-primary);
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 13px;
-    z-index: 100;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-    border: 1px solid var(--toast-border);
-  }
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--toast-bg); color: var(--text-primary); padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none; border: 1px solid var(--toast-border); }
   .toast.show { opacity: 1; }
-  
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 500;
-    border: 1px solid;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
+  .badge { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 500; border: 1px solid; white-space: nowrap; flex-shrink: 0; }
   .badge-stop { background: var(--badge-stop-bg); border-color: var(--badge-stop-border); color: var(--badge-stop-text); }
   .badge-start { background: var(--badge-start-bg); border-color: var(--badge-start-border); color: var(--badge-start-text); }
   .badge-error { background: var(--badge-error-bg); border-color: var(--badge-error-border); color: var(--badge-error-text); }
@@ -474,315 +265,65 @@
   .badge-blue { background: var(--badge-blue-bg); border-color: var(--badge-blue-border); color: var(--badge-blue-text); }
   .badge-green { background: var(--badge-green-bg); border-color: var(--badge-green-border); color: var(--badge-green-text); }
   .badge-purple { background: var(--badge-purple-bg); border-color: var(--badge-purple-border); color: var(--badge-purple-text); }
-  
-  .log-time {
-    font-size: 12px;
-    font-family: 'SF Mono', 'Menlo', 'Consolas', 'Monaco', 'Liberation Mono', monospace;
-    font-weight: var(--log-text-weight);
-    flex-shrink: 0;
-    color: var(--log-meta-text);
-    letter-spacing: 0.3px;
-  }
-  .meta-text {
-    font-size: 12px;
-    color: var(--log-meta-text);
-    white-space: nowrap;
-    font-weight: var(--log-text-weight);
-  }
-
-  .logo-btn {
-    cursor: pointer;
-    transition: transform 0.2s;
-    user-select: none;
-  }
+  .log-time { font-size: 12px; font-family: 'SF Mono', 'Menlo', 'Consolas', 'Monaco', 'Liberation Mono', monospace; font-weight: var(--log-text-weight); flex-shrink: 0; color: var(--log-meta-text); letter-spacing: 0.3px; }
+  .meta-text { font-size: 12px; color: var(--log-meta-text); white-space: nowrap; font-weight: var(--log-text-weight); }
+  .logo-btn { cursor: pointer; transition: transform 0.2s; user-select: none; }
   .logo-btn:active { transform: scale(0.92); }
-
-  .theme-icon {
-    transition: transform 0.3s;
-    display: inline-block;
-    font-size: 12px;
-  }
-  .theme-icon.spin {
-    animation: spin 0.4s ease;
-  }
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  #appContainer {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
-  }
-  #mainContent {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+  .theme-icon { transition: transform 0.3s; display: inline-block; font-size: 12px; }
+  .theme-icon.spin { animation: spin 0.4s ease; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  #appContainer { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+  #mainContent { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   #mainContent::-webkit-scrollbar { width: 4px; }
   #mainContent::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
-
-  .install-banner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, #3b82f6, #1e40af);
-    color: white;
-    padding: 12px 16px;
-    display: none;
-    align-items: center;
-    gap: 12px;
-    z-index: 60;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    animation: slideDown 0.3s ease;
-  }
+  .install-banner { position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #3b82f6, #1e40af); color: white; padding: 12px 16px; display: none; align-items: center; gap: 12px; z-index: 60; box-shadow: 0 2px 8px rgba(0,0,0,0.3); animation: slideDown 0.3s ease; }
   .install-banner.show { display: flex; }
-  .install-banner .banner-icon {
-    width: 36px;
-    height: 36px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
-  }
-  .install-banner .banner-text {
-    flex: 1;
-    font-size: 13px;
-    line-height: 1.3;
-  }
+  .install-banner .banner-icon { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .install-banner .banner-text { flex: 1; font-size: 13px; line-height: 1.3; }
   .install-banner .banner-text b { font-size: 14px; }
-  .install-banner .banner-btn {
-    background: white;
-    color: #1e40af;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  .install-banner .banner-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-    padding: 4px 8px;
-    opacity: 0.8;
-  }
-  @keyframes slideDown {
-    from { transform: translateY(-100%); }
-    to { transform: translateY(0); }
-  }
-
-  .ios-hint-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.8);
-    z-index: 70;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
+  .install-banner .banner-btn { background: white; color: #1e40af; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; flex-shrink: 0; }
+  .install-banner .banner-close { background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 4px 8px; opacity: 0.8; }
+  @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+  .ios-hint-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 70; display: none; align-items: center; justify-content: center; padding: 20px; }
   .ios-hint-modal.show { display: flex; }
-  .ios-hint-content {
-    background: var(--modal-bg);
-    border-radius: 16px;
-    padding: 24px;
-    max-width: 340px;
-    width: 100%;
-    text-align: center;
-  }
-  .ios-hint-content h3 {
-    margin: 0 0 12px 0;
-    font-size: 18px;
-  }
-  .ios-hint-content .steps {
-    text-align: left;
-    margin: 16px 0;
-    font-size: 14px;
-    line-height: 1.8;
-    color: var(--text-secondary);
-  }
-  .ios-hint-content .steps .step-icon {
-    display: inline-block;
-    width: 24px;
-    text-align: center;
-    margin-right: 8px;
-  }
-  .ios-hint-content .close-btn {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: none;
-    padding: 10px 24px;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    margin-top: 8px;
-  }
-
-  .error-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border-left: 4px solid;
-    background: var(--error-list-bg);
-    cursor: pointer;
-    transition: transform 0.1s;
-  }
+  .ios-hint-content { background: var(--modal-bg); border-radius: 16px; padding: 24px; max-width: 340px; width: 100%; text-align: center; }
+  .ios-hint-content h3 { margin: 0 0 12px 0; font-size: 18px; }
+  .ios-hint-content .steps { text-align: left; margin: 16px 0; font-size: 14px; line-height: 1.8; color: var(--text-secondary); }
+  .ios-hint-content .steps .step-icon { display: inline-block; width: 24px; text-align: center; margin-right: 8px; }
+  .ios-hint-content .close-btn { background: var(--bg-tertiary); color: var(--text-primary); border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+  .error-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; border-left: 4px solid; background: var(--error-list-bg); cursor: pointer; transition: transform 0.1s; }
   .error-item:active { transform: scale(0.98); }
-  .error-item .error-info {
-    flex: 1;
-    min-width: 0;
-  }
-  .error-item .eye-btn {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-tertiary);
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-    border: none;
-    color: var(--text-primary);
-  }
+  .error-item .error-info { flex: 1; min-width: 0; }
+  .error-item .eye-btn { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); border-radius: 6px; font-size: 16px; cursor: pointer; border: none; color: var(--text-primary); }
   .error-item .eye-btn:active { opacity: 0.7; }
-
-  .error-full-info {
-    background: var(--error-info-bg);
-    border-radius: 8px;
-    padding: 12px;
-    margin-top: 12px;
-  }
-  .error-full-info .cause-row {
-    padding: 8px 10px;
-    background: var(--bg-secondary);
-    border-radius: 6px;
-    margin-bottom: 6px;
-    font-size: 12px;
-    line-height: 1.4;
-  }
+  .error-full-info { background: var(--error-info-bg); border-radius: 8px; padding: 12px; margin-top: 12px; }
+  .error-full-info .cause-row { padding: 8px 10px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 6px; font-size: 12px; line-height: 1.4; }
   .error-full-info .cause-row:last-child { margin-bottom: 0; }
-
-  /* Cloud modal styles */
-  .cloud-modal-content {
-    background: var(--modal-bg);
-    width: 95%;
-    max-width: 600px;
-    max-height: 90vh;
-    border-radius: 12px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-  .cloud-url-input {
-    background: var(--bg-input);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 10px;
-    font-size: 13px;
-    width: 100%;
-    font-family: monospace;
-  }
-  .cloud-presets {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
-  }
-  .cloud-preset-btn {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 4px 10px;
-    border-radius: 14px;
-    font-size: 11px;
-    cursor: pointer;
-  }
+  .cloud-modal-content { background: var(--modal-bg); width: 95%; max-width: 600px; max-height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .cloud-url-input { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; font-size: 13px; width: 100%; font-family: monospace; }
+  .cloud-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .cloud-preset-btn { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 14px; font-size: 11px; cursor: pointer; }
   .cloud-preset-btn:active { background: #3b82f6; color: white; }
-  .cloud-file-list {
-    max-height: 50vh;
-    overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background: var(--bg-input);
-  }
-  .cloud-file-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--border-color);
-    font-size: 13px;
-    cursor: pointer;
-  }
+  .cloud-file-list { max-height: 50vh; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-input); }
+  .cloud-file-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border-color); font-size: 13px; cursor: pointer; }
   .cloud-file-item:last-child { border-bottom: none; }
   .cloud-file-item:active { background: var(--bg-tertiary); }
-  .cloud-file-item input[type="checkbox"] {
-    width: 16px; height: 16px; flex-shrink: 0;
-    accent-color: #3b82f6;
-  }
+  .cloud-file-item input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; accent-color: #3b82f6; }
   .cloud-file-name { flex: 1; word-break: break-all; }
   .cloud-file-size { color: var(--text-muted); font-size: 11px; flex-shrink: 0; }
-  .cloud-toolbar {
-    display: flex;
-    gap: 8px;
-    margin: 8px 0;
-    align-items: center;
-  }
-  .cloud-toolbar button {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    cursor: pointer;
-  }
-  .cloud-progress {
-    height: 4px;
-    background: var(--bg-tertiary);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-top: 8px;
-    display: none;
-  }
-  .cloud-progress-bar {
-    height: 100%;
-    background: #3b82f6;
-    width: 0%;
-    transition: width 0.3s;
-  }
+  .cloud-toolbar { display: flex; gap: 8px; margin: 8px 0; align-items: center; }
+  .cloud-toolbar button { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+  .cloud-progress { height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden; margin-top: 8px; display: none; }
+  .cloud-progress-bar { height: 100%; background: #3b82f6; width: 0%; transition: width 0.3s; }
 </style>
 </head>
 <body>
-
 <div class="install-banner" id="installBanner">
   <div class="banner-icon">📱</div>
-  <div class="banner-text">
-    <b>Установить приложение</b><br>
-    Добавьте СЛ LogViewer на главный экран
-  </div>
+  <div class="banner-text"><b>Установить приложение</b><br>Добавьте СЛ LogViewer на главный экран</div>
   <button class="banner-btn" id="installBtn">Установить</button>
   <button class="banner-close" onclick="dismissInstallBanner()">×</button>
 </div>
-
 <div class="ios-hint-modal" id="iosHintModal" onclick="if(event.target===this)closeIosHint()">
   <div class="ios-hint-content">
     <h3>📲 Установка на iPhone/iPad</h3>
@@ -794,9 +335,7 @@
     <button class="close-btn" onclick="closeIosHint()">Понятно</button>
   </div>
 </div>
-
 <div id="appContainer">
-
 <header class="border-b px-3 py-2 flex items-center justify-between flex-shrink-0" style="background: var(--bg-secondary); border-color: var(--border-header); padding-top: max(8px, env(safe-area-inset-top));">
   <div class="flex items-center gap-2">
     <div class="logo-btn w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-white font-bold text-sm relative" onclick="toggleTheme()" title="Сменить тему">
@@ -809,57 +348,33 @@
     </div>
   </div>
   <div class="flex gap-1.5">
-    <button onclick="document.getElementById('fileInput').click()" class="btn-primary text-xs !py-2 !px-2.5" title="Открыть CSV логи">
-      📂
-    </button>
-    <button onclick="showCloudModal()" class="btn-primary text-xs !py-2 !px-2.5" title="Загрузить из облака">
-      🌐
-    </button>
-    <button onclick="showInstallHint()" class="btn-secondary text-xs !py-2 !px-2.5" title="Установить на главный экран" id="installHeaderBtn">
-      📲
-    </button>
+    <button onclick="document.getElementById('fileInput').click()" class="btn-primary text-xs !py-2 !px-2.5" title="Открыть CSV логи">📂</button>
+    <button onclick="showCloudModal()" class="btn-primary text-xs !py-2 !px-2.5" title="Загрузить из облака">🌐</button>
+    <button onclick="showInstallHint()" class="btn-secondary text-xs !py-2 !px-2.5" title="Установить на главный экран" id="installHeaderBtn">📲</button>
   </div>
   <input type="file" id="fileInput" accept=".csv" multiple style="display:none" onchange="handleFiles(event)">
 </header>
-
 <div class="border-b px-3 py-2 flex gap-2 flex-shrink-0" id="filterBar" style="display:none; background: var(--bg-secondary); border-color: var(--border-header);">
-  <select id="dateFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1">
-    <option value="">Все даты</option>
-  </select>
-  <select id="eventFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1">
-    <option value="">Все события</option>
-  </select>
+  <select id="dateFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1"><option value="">Все даты</option></select>
+  <select id="eventFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1"><option value="">Все события</option></select>
 </div>
-
 <div class="px-3 py-1 text-[11px] flex justify-between border-b flex-shrink-0" id="statusBar" style="display:none; background: var(--bg-primary); color: var(--text-secondary); border-color: var(--border-header);">
   <span id="statusText">Строк: 0</span>
   <span id="deltaTime"></span>
 </div>
-
 <main class="scroll-area" id="mainContent">
-  
   <div id="welcomeScreen" class="h-full flex flex-col items-center justify-center p-6 text-center">
     <div class="text-6xl mb-4">📋</div>
     <h2 class="text-lg font-semibold mb-2">Добро пожаловать</h2>
     <p class="text-sm mb-6" style="color: var(--text-secondary);">Откройте CSV лог-файлы для просмотра и анализа</p>
     <div class="flex gap-2 flex-wrap justify-center">
-      <button onclick="document.getElementById('fileInput').click()" class="btn-primary">
-        📂 Открыть CSV логи
-      </button>
-      <button onclick="showCloudModal()" class="btn-secondary">
-        🌐 Загрузить из облака
-      </button>
+      <button onclick="document.getElementById('fileInput').click()" class="btn-primary">📂 Открыть CSV логи</button>
+      <button onclick="showCloudModal()" class="btn-secondary">🌐 Загрузить из облака</button>
     </div>
-    <div class="mt-4 text-xs" style="color: var(--text-muted); max-width: 280px;">
-      💡 Нажмите на логотип <b>СЛ</b> для смены темы
-    </div>
-    <div class="mt-2 text-xs" style="color: var(--text-muted); max-width: 280px;">
-      📲 Нажмите 📲 чтобы установить приложение
-    </div>
+    <div class="mt-4 text-xs" style="color: var(--text-muted); max-width: 280px;">💡 Нажмите на логотип <b>СЛ</b> для смены темы</div>
+    <div class="mt-2 text-xs" style="color: var(--text-muted); max-width: 280px;">📲 Нажмите 📲 чтобы установить приложение</div>
   </div>
-  
   <div id="logView" style="display:none;" class="pb-2"></div>
-  
   <div id="graphView" style="display:none;" class="p-3">
     <div class="rounded-lg p-3 mb-3" style="background: var(--bg-secondary);">
       <div class="flex justify-between items-center mb-2">
@@ -875,11 +390,8 @@
     <div class="rounded-lg p-2" style="background: var(--bg-secondary);">
       <canvas id="speedChart" style="max-height: 300px;"></canvas>
     </div>
-    <div id="graphEmpty" class="text-center py-10 text-sm" style="color: var(--text-muted);">
-      Выберите блок ENGINE;START в логе
-    </div>
+    <div id="graphEmpty" class="text-center py-10 text-sm" style="color: var(--text-muted);">Выберите блок ENGINE;START в логе</div>
   </div>
-  
   <div id="monitorView" style="display:none;" class="p-2">
     <div class="rounded-lg p-2 mb-2" style="background: var(--bg-secondary);">
       <div class="flex justify-between items-center mb-2">
@@ -899,13 +411,9 @@
       </div>
       <div class="flex gap-1 mt-2 items-center">
         <div class="text-[10px]" style="color: var(--text-secondary);">Д1:</div>
-        <div class="door-indicator" id="door1Ind">
-          <div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div>
-        </div>
+        <div class="door-indicator" id="door1Ind"><div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div></div>
         <div class="text-[10px] ml-1" style="color: var(--text-secondary);">Д2:</div>
-        <div class="door-indicator" id="door2Ind">
-          <div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div>
-        </div>
+        <div class="door-indicator" id="door2Ind"><div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div></div>
       </div>
     </div>
     <div class="rounded-lg overflow-hidden" style="background: var(--bg-secondary);">
@@ -916,15 +424,10 @@
       <div class="scroll-area rounded p-1" id="eventsArea" style="max-height: 150px; font-family: monospace; background: var(--event-bg);"></div>
     </div>
   </div>
-  
   <div id="errorsView" style="display:none;" class="p-3">
-    <div class="mb-3">
-      <input type="text" id="errorSearch" placeholder="Код ошибки (4 символа)" maxlength="4" oninput="searchError()">
-    </div>
+    <div class="mb-3"><input type="text" id="errorSearch" placeholder="Код ошибки (4 символа)" maxlength="4" oninput="searchError()"></div>
     <div class="rounded-lg p-3" id="errorDisplay" style="background: var(--error-display-bg);">
-      <div class="text-center text-sm py-6" style="color: var(--text-muted);">
-        Введите код ошибки для поиска
-      </div>
+      <div class="text-center text-sm py-6" style="color: var(--text-muted);">Введите код ошибки для поиска</div>
     </div>
     <div class="mt-3">
       <div class="text-xs font-semibold mb-2" style="color: var(--text-secondary);">Последние ошибки:</div>
@@ -932,17 +435,11 @@
     </div>
     <div class="mt-4 rounded-lg p-3" style="background: var(--error-display-bg);">
       <div class="text-xs font-semibold mb-2" style="color: var(--text-secondary);">📚 Справочник ошибок</div>
-      <div class="text-xs mb-2" style="color: var(--text-muted);">
-        Загружено кодов: <span id="errDbCount">0</span>
-      </div>
-      <div class="text-xs" style="color: var(--text-muted);" id="errStatus">
-        Ожидание загрузки err.csv...
-      </div>
+      <div class="text-xs mb-2" style="color: var(--text-muted);">Загружено кодов: <span id="errDbCount">0</span></div>
+      <div class="text-xs" style="color: var(--text-muted);" id="errStatus">Ожидание загрузки err.csv...</div>
     </div>
   </div>
-  
 </main>
-
 <nav class="flex border-t flex-shrink-0" style="background: var(--tab-bg); border-color: var(--tab-border); padding-bottom: env(safe-area-inset-bottom);">
   <button class="tab-btn active" onclick="switchTab('log')" data-tab="log">
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -961,9 +458,7 @@
     <span>Ошибки</span>
   </button>
 </nav>
-
 </div>
-
 <div class="modal-overlay" id="rowModal" onclick="if(event.target===this)closeModal('rowModal')">
   <div class="modal-content">
     <div class="p-3 border-b flex justify-between items-center" style="border-color: var(--border-header);">
@@ -973,7 +468,6 @@
     <div class="p-3 scroll-area" id="rowDetails" style="max-height: 70vh;"></div>
   </div>
 </div>
-
 <div class="modal-overlay" id="cloudModal" onclick="if(event.target===this)closeModal('cloudModal')">
   <div class="cloud-modal-content">
     <div class="p-3 border-b flex justify-between items-center" style="border-color: var(--border-header);">
@@ -988,10 +482,8 @@
         <button class="cloud-preset-btn" onclick="setCloudPreset('')">🗑 Очистить</button>
       </div>
       <button onclick="loadCloudFileList()" class="btn-primary text-xs w-full mt-3" id="cloudLoadBtn">🔍 Показать файлы</button>
-
       <div class="cloud-progress" id="cloudProgress"><div class="cloud-progress-bar" id="cloudProgressBar"></div></div>
       <div id="cloudStatus" class="text-xs mt-2" style="color: var(--text-muted);"></div>
-
       <div id="cloudFilesWrap" style="display:none;" class="mt-3">
         <div class="cloud-toolbar">
           <button onclick="cloudSelectAll()">✅ Все</button>
@@ -1002,14 +494,10 @@
         <div class="cloud-file-list" id="cloudFileList"></div>
         <button onclick="downloadSelectedCloudFiles()" class="btn-primary text-xs w-full mt-3">⬇️ Загрузить выбранные (<span id="cloudDownloadCount">0</span>)</button>
       </div>
-
-      <div class="mt-4 text-xs" style="color: var(--text-muted);">
-        💡 Сотрудники скидывают логи в эту папку. Нажмите «Показать файлы» — приложение само найдёт и загрузит их.
-      </div>
+      <div class="mt-4 text-xs" style="color: var(--text-muted);">💡 Сотрудники скидывают логи в эту папку. Нажмите «Показать файлы» — приложение само найдёт и загрузит их.</div>
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1048,81 +536,50 @@ function registerServiceWorker() {
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  if (!isStandalone) {
-    installBanner.classList.add('show');
-  }
+  if (!isStandalone) installBanner.classList.add('show');
 });
-
 window.addEventListener('appinstalled', () => {
   installBanner.classList.remove('show');
   deferredInstallPrompt = null;
   showToast('✅ Приложение установлено!');
 });
-
 installBtn.addEventListener('click', async () => {
   if (!deferredInstallPrompt) return;
   installBanner.classList.remove('show');
   deferredInstallPrompt.prompt();
   const { outcome } = await deferredInstallPrompt.userChoice;
-  if (outcome === 'accepted') {
-    showToast('✅ Установка началась');
-  }
+  if (outcome === 'accepted') showToast('✅ Установка началась');
   deferredInstallPrompt = null;
 });
-
 function dismissInstallBanner() {
   installBanner.classList.remove('show');
   try { localStorage.setItem('sl-install-dismissed', '1'); } catch(e) {}
 }
-
 function showInstallHint() {
-  if (isStandalone) {
-    showToast('Приложение уже установлено');
-    return;
-  }
-  if (isIOS) {
-    document.getElementById('iosHintModal').classList.add('show');
-  } else if (deferredInstallPrompt) {
-    installBanner.classList.add('show');
-  } else {
-    showToast('Меню браузера → "Добавить на главный экран"');
-  }
+  if (isStandalone) { showToast('Приложение уже установлено'); return; }
+  if (isIOS) document.getElementById('iosHintModal').classList.add('show');
+  else if (deferredInstallPrompt) installBanner.classList.add('show');
+  else showToast('Меню браузера → "Добавить на главный экран"');
 }
-
-function closeIosHint() {
-  document.getElementById('iosHintModal').classList.remove('show');
-}
-
+function closeIosHint() { document.getElementById('iosHintModal').classList.remove('show'); }
 if (isStandalone) {
   const ib = document.getElementById('installHeaderBtn');
   if (ib) ib.style.display = 'none';
 }
-
 try {
-  if (localStorage.getItem('sl-install-dismissed') === '1') {
-    installBanner.classList.remove('show');
-  }
+  if (localStorage.getItem('sl-install-dismissed') === '1') installBanner.classList.remove('show');
 } catch(e) {}
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', registerServiceWorker);
-}
+if ('serviceWorker' in navigator) window.addEventListener('load', registerServiceWorker);
 
 // ============ THEME ============
 let currentTheme = 'dark';
-
-function getTheme() {
-  try { return localStorage.getItem('sl-theme') || 'dark'; } catch(e) { return 'dark'; }
-}
-
+function getTheme() { try { return localStorage.getItem('sl-theme') || 'dark'; } catch(e) { return 'dark'; } }
 function setTheme(theme) {
   currentTheme = theme;
   try { localStorage.setItem('sl-theme', theme); } catch(e) {}
-  
   const html = document.documentElement;
   if (theme === 'light') html.setAttribute('data-theme', 'light');
   else html.removeAttribute('data-theme');
-  
   const icon = document.getElementById('themeIcon');
   if (icon) {
     icon.textContent = theme === 'dark' ? '🌙' : '☀️';
@@ -1130,19 +587,15 @@ function setTheme(theme) {
     void icon.offsetWidth;
     icon.classList.add('spin');
   }
-  
   const meta = document.getElementById('themeColorMeta');
   if (meta) meta.content = theme === 'dark' ? '#1f2937' : '#ffffff';
-  
   if (speedChart) setTimeout(() => renderGraph(), 100);
 }
-
 function toggleTheme() {
   const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
   setTheme(newTheme);
   showToast(newTheme === 'dark' ? '🌙 Тёмная тема' : '☀️ Светлая тема');
 }
-
 document.addEventListener('DOMContentLoaded', () => {
   const saved = getTheme();
   setTheme(saved);
@@ -1152,54 +605,34 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============ STATE ============
 const HEADERS = ['ВРЕМЯ','СОБЫТИЕ','СООБЩЕНИЕ','РЕЖИМ','ЭТАЖ','НАПРАВЛ.','ЦЕЛЬ','ДТО','ЦБ','ВЕС','СКОРОСТЬ','М/С','ЭНКОД','ДВЕРЬ1','ДВЕРЬ2','EX1','EX2'];
 const FIXED_COLS = 17;
-
 let allRows = [];
 let filteredRows = [];
 let errorEntries = [];
 let speedBlocks = [];
 let currentBlockIndex = 0;
 let speedChart = null;
-
 let monitorState = {
   floor: '', mode: '--', weight: '', direction: '',
-  orders: new Set(),
-  callUp: {}, callDown: {},
-  door1: {}, door2: {},
+  orders: new Set(), callUp: {}, callDown: {}, door1: {}, door2: {},
   open: false, close: false, cancel: false,
   dto: {}, dve: {}, dne: {},
   main: false, pos: false, multirun: false,
-  floors: [],
-  playing: false, timer: null, currentIndex: 0, interval: 250
+  floors: [], playing: false, timer: null, currentIndex: 0, interval: 250
 };
-
 const errorDB = {
   '0001': { desc: 'Включение/пересброс питания КЦ', causes: ['Пропадание питания'], solutions: ['Проверить питание'] },
   '0101': { desc: 'Ошибка датчика позиции', causes: ['Неисправность ДТО'], solutions: ['Проверить датчик'] },
   '0202': { desc: 'Ошибка двери', causes: ['Заклинивание двери'], solutions: ['Проверить механизм'] },
   '0303': { desc: 'Ошибка привода', causes: ['Перегрев привода'], solutions: ['Дать остыть'] },
 };
-
 const specialEvents = {
-  'BUTTONS': 'Нажатие служебных кнопок',
-  'CALL': 'Нажатие кнопки вызова',
-  'CORR': 'Корректировка',
-  'DNE': 'Срабатывание ДНЭ',
-  'DOOR1': 'Первая дверь кабины',
-  'DOOR2': 'Вторая дверь кабины',
-  'DTO': 'Срабатывание ДТО',
-  'DVE': 'Срабатывание ДВЭ',
-  'ENGINE': 'Работа главного привода',
-  'LOG': 'Действие с логом',
-  'MAIN': 'Включение КЦ',
-  'MODE': 'Переключение режима работы',
-  'MULTIRUN': 'Включение прогона',
-  'ORDER': 'Нажатие кнопки приказа',
-  'POS': 'Позиционирование',
-  'SD': 'Работа с флеш-картой',
-  'ERROR CLEAR': 'Сброс ошибки',
-  'ERROR R CLEAR': 'Сброс самосбрасывающейся ошибки',
-  'ERROR C CLEAR': 'Сброс критической ошибки',
-  'WARNING CLEAR': 'Сброс предупреждения'
+  'BUTTONS': 'Нажатие служебных кнопок', 'CALL': 'Нажатие кнопки вызова', 'CORR': 'Корректировка',
+  'DNE': 'Срабатывание ДНЭ', 'DOOR1': 'Первая дверь кабины', 'DOOR2': 'Вторая дверь кабины',
+  'DTO': 'Срабатывание ДТО', 'DVE': 'Срабатывание ДВЭ', 'ENGINE': 'Работа главного привода',
+  'LOG': 'Действие с логом', 'MAIN': 'Включение КЦ', 'MODE': 'Переключение режима работы',
+  'MULTIRUN': 'Включение прогона', 'ORDER': 'Нажатие кнопки приказа', 'POS': 'Позиционирование',
+  'SD': 'Работа с флеш-картой', 'ERROR CLEAR': 'Сброс ошибки', 'ERROR R CLEAR': 'Сброс самосбрасывающейся ошибки',
+  'ERROR C CLEAR': 'Сброс критической ошибки', 'WARNING CLEAR': 'Сброс предупреждения'
 };
 
 // ============ AUTO LOAD ERR.CSV ============
@@ -1207,23 +640,16 @@ async function loadErrCsvAuto() {
   const statusEl = document.getElementById('errStatus');
   try {
     const response = await fetch('./err.csv');
-    if (!response.ok) {
-      if (statusEl) statusEl.textContent = 'err.csv не найден рядом с файлом';
-      return;
-    }
+    if (!response.ok) { if (statusEl) statusEl.textContent = 'err.csv не найден рядом с файлом'; return; }
     const text = await response.text();
     parseErrCsv(text);
     document.getElementById('errDbCount').textContent = Object.keys(errorDB).length;
     if (statusEl) statusEl.textContent = '✅ err.csv загружен автоматически';
-  } catch(e) {
-    if (statusEl) statusEl.textContent = 'Не удалось загрузить err.csv';
-  }
+  } catch(e) { if (statusEl) statusEl.textContent = 'Не удалось загрузить err.csv'; }
 }
-
 function parseErrCsv(text) {
   const lines = text.split(/\r?\n/);
   let insideBlock = false;
-  
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed) continue;
@@ -1234,15 +660,12 @@ function parseErrCsv(text) {
     if (parts.length < 2) continue;
     const code = parts[0].trim();
     if (code.length !== 4 || !/^[0-9X]{4}$/.test(code)) continue;
-    const desc = parts[1] || '';
-    const cause = parts[2] || '';
-    const solution = parts[3] || '';
+    const desc = parts[1] || '', cause = parts[2] || '', solution = parts[3] || '';
     if (!errorDB[code]) errorDB[code] = { desc, causes: [], solutions: [] };
     if (desc) errorDB[code].desc = desc;
     if (cause) errorDB[code].causes.push(cause);
     if (solution) errorDB[code].solutions.push(solution);
   }
-  
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith(';') || trimmed.startsWith('#')) continue;
@@ -1251,9 +674,7 @@ function parseErrCsv(text) {
     if (parts.length < 2) continue;
     const code = parts[0].trim();
     if (code.length !== 4 || !/^[0-9X]{4}$/.test(code)) continue;
-    const desc = parts[1] || '';
-    const cause = parts[2] || '';
-    const solution = parts[3] || '';
+    const desc = parts[1] || '', cause = parts[2] || '', solution = parts[3] || '';
     if (!errorDB[code]) errorDB[code] = { desc, causes: [], solutions: [] };
     if (desc && !errorDB[code].desc) errorDB[code].desc = desc;
     if (cause) errorDB[code].causes.push(cause);
@@ -1290,13 +711,7 @@ async function handleFiles(e) {
   showToast(`Загружено строк: ${allRows.length}`);
   e.target.value = '';
 }
-
-function makeRow(first) {
-  const r = [first];
-  for (let i = 1; i < FIXED_COLS; i++) r.push('');
-  return r;
-}
-
+function makeRow(first) { const r = [first]; for (let i = 1; i < FIXED_COLS; i++) r.push(''); return r; }
 function extractDate(filename) {
   const name = filename.replace(/\.[^.]+$/, '');
   for (let i = 0; i + 8 <= name.length; i++) {
@@ -1308,28 +723,19 @@ function extractDate(filename) {
   }
   return '';
 }
-
 function formatDate(dateStr) {
   if (dateStr.length !== 8) return 'Неизвестная дата';
   return dateStr.substr(6, 2) + '.' + dateStr.substr(4, 2) + '.' + dateStr.substr(0, 4);
 }
-
 function updateUI() {
   const hasData = allRows.length > 0;
   document.getElementById('welcomeScreen').style.display = hasData ? 'none' : 'flex';
   document.getElementById('logView').style.display = hasData ? 'block' : 'none';
   document.getElementById('filterBar').style.display = hasData ? 'flex' : 'none';
   document.getElementById('statusBar').style.display = hasData ? 'flex' : 'none';
-  if (hasData) {
-    populateFilters();
-    renderLog();
-    updateStatus();
-    extractFloors();
-    buildErrorList();
-  }
+  if (hasData) { populateFilters(); renderLog(); updateStatus(); extractFloors(); buildErrorList(); }
   document.getElementById('errDbCount').textContent = Object.keys(errorDB).length;
 }
-
 function populateFilters() {
   const dates = new Set(), events = new Set();
   for (const row of allRows) {
@@ -1343,7 +749,6 @@ function populateFilters() {
   eventSel.innerHTML = '<option value="">Все события</option>';
   [...events].sort().forEach(e => eventSel.innerHTML += `<option value="${e}">${e}</option>`);
 }
-
 function applyFilters() {
   const date = document.getElementById('dateFilter').value;
   const event = document.getElementById('eventFilter').value;
@@ -1360,21 +765,15 @@ function applyFilters() {
     if (event && row[1] !== event) continue;
     filteredRows.push(row);
   }
-  renderLog();
-  updateStatus();
-  buildErrorList();
+  renderLog(); updateStatus(); buildErrorList();
 }
-
 function shouldShowMessageBadge(ev, text) {
-  if (!text) return false;
-  if (text === ev) return false;
+  if (!text || text === ev) return false;
   if (ev === 'ENGINE' && (text === 'START' || text === 'STOP' || text === 'SPEED' || text === 'NEW SPEED')) return true;
   if (ev.startsWith('ERROR') || ev === 'WARNING') return true;
   if (ev === 'MODE') return false;
-  if (text.length <= 30) return true;
-  return false;
+  return text.length <= 30;
 }
-
 function getMessageBadgeClass(ev, text) {
   if (ev === 'ENGINE' && text === 'STOP') return 'badge-stop';
   if (ev === 'ENGINE' && text === 'START') return 'badge-start';
@@ -1389,7 +788,6 @@ function getMessageBadgeClass(ev, text) {
   if (ev === 'CALL' || ev === 'ORDER') return 'badge-info';
   return 'badge-info';
 }
-
 function renderLog() {
   const container = document.getElementById('logView');
   let html = '';
@@ -1435,7 +833,6 @@ function renderLog() {
   });
   container.innerHTML = html || '<div class="text-center py-10 text-sm" style="color: var(--text-muted);">Нет данных</div>';
 }
-
 function getEventColor(ev) {
   if (ev.startsWith('ERROR')) return 'text-red-400';
   if (ev === 'WARNING') return 'text-blue-400';
@@ -1449,7 +846,6 @@ function getEventColor(ev) {
   if (ev === 'MAIN') return 'text-emerald-400';
   return '';
 }
-
 function selectRow(idx) {
   const row = filteredRows[idx];
   if (!row || row[0].startsWith('Дата: ')) return;
@@ -1468,15 +864,12 @@ function selectRow(idx) {
     const code = extractErrorCode(row[2]);
     const info = errorDB[code];
     if (info) {
-      html += `<div class="error-full-info">
-        <div class="text-xs font-semibold text-red-400 mb-2">Ошибка ${code}</div>
-        <div class="text-sm mb-3" style="color: var(--text-primary);">${info.desc}</div>`;
+      html += `<div class="error-full-info"><div class="text-xs font-semibold text-red-400 mb-2">Ошибка ${code}</div><div class="text-sm mb-3" style="color: var(--text-primary);">${info.desc}</div>`;
       if (info.causes && info.causes.length) {
         html += `<div class="text-xs font-semibold mb-2" style="color: var(--text-secondary);">Причины / Решения:</div>`;
         const maxCount = Math.max(info.causes.length, info.solutions.length);
         for (let i = 0; i < maxCount; i++) {
-          const cause = info.causes[i] || '';
-          const solution = info.solutions[i] || '';
+          const cause = info.causes[i] || '', solution = info.solutions[i] || '';
           let rowText = `${i+1}. `;
           if (cause) rowText += cause;
           if (cause && solution) rowText += '  ►  ';
@@ -1487,12 +880,7 @@ function selectRow(idx) {
       html += `</div>`;
     } else {
       const special = specialEvents[code];
-      if (special) {
-        html += `<div class="error-full-info">
-          <div class="text-xs font-semibold text-blue-400 mb-2">Событие ${code}</div>
-          <div class="text-sm" style="color: var(--text-primary);">${special}</div>
-        </div>`;
-      }
+      if (special) html += `<div class="error-full-info"><div class="text-xs font-semibold text-blue-400 mb-2">Событие ${code}</div><div class="text-sm" style="color: var(--text-primary);">${special}</div></div>`;
     }
   }
   html += '</div>';
@@ -1500,7 +888,6 @@ function selectRow(idx) {
   document.getElementById('rowModal').classList.add('show');
   updateTimeDelta(idx);
 }
-
 function extractErrorCode(msg) {
   if (!msg) return '';
   for (let i = 0; i <= msg.length - 4; i++) {
@@ -1509,12 +896,7 @@ function extractErrorCode(msg) {
   }
   return '';
 }
-
-function updateTimeDelta(idx) {
-  const row = filteredRows[idx];
-  if (row) document.getElementById('deltaTime').textContent = row[0] || '';
-}
-
+function updateTimeDelta(idx) { const row = filteredRows[idx]; if (row) document.getElementById('deltaTime').textContent = row[0] || ''; }
 function updateStatus() {
   let logCount = 0, errors = 0, critical = 0, warnings = 0, cycles = 0;
   for (const row of filteredRows) {
@@ -1536,7 +918,6 @@ function updateStatus() {
   if (dateArr.length === 1) document.getElementById('headerInfo').textContent = `Лог за ${dateArr[0]}`;
   else if (dateArr.length > 1) document.getElementById('headerInfo').textContent = `${dateArr[0]} — ${dateArr[dateArr.length-1]}`;
 }
-
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.getElementById('logView').style.display = tab === 'log' ? 'block' : 'none';
@@ -1548,16 +929,12 @@ function switchTab(tab) {
   if (tab === 'monitor') renderShaft();
   if (tab === 'errors') document.getElementById('errDbCount').textContent = Object.keys(errorDB).length;
 }
-
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-
 function parseTimeToMs(t) {
   if (!t || t.length < 12) return 0;
-  try {
-    return (parseInt(t.substr(0,2))*3600 + parseInt(t.substr(3,2))*60 + parseInt(t.substr(6,2)))*1000 + parseInt(t.substr(9,3));
-  } catch { return 0; }
+  try { return (parseInt(t.substr(0,2))*3600 + parseInt(t.substr(3,2))*60 + parseInt(t.substr(6,2)))*1000 + parseInt(t.substr(9,3)); }
+  catch { return 0; }
 }
-
 function findSpeedBlocks() {
   speedBlocks = [];
   for (let i = 0; i < filteredRows.length; i++) {
@@ -1602,7 +979,6 @@ function findSpeedBlocks() {
     }
   }
 }
-
 function analyzeBlock(idx) {
   if (idx < 0 || idx >= speedBlocks.length) return null;
   const block = speedBlocks[idx];
@@ -1618,7 +994,6 @@ function analyzeBlock(idx) {
   }
   return points;
 }
-
 function renderGraph() {
   findSpeedBlocks();
   const canvas = document.getElementById('speedChart');
@@ -1644,11 +1019,9 @@ function renderGraph() {
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { title: { display: true, text: 'сек', color: isDark ? '#9ca3af' : '#4b5563' }, ticks: { color: isDark ? '#9ca3af' : '#4b5563', maxTicksLimit: 6 }, grid: { color: isDark ? 'rgba(75,85,99,0.3)' : 'rgba(0,0,0,0.1)' } }, y: { title: { display: true, text: 'м/с', color: isDark ? '#9ca3af' : '#4b5563' }, ticks: { color: isDark ? '#9ca3af' : '#4b5563' }, grid: { color: isDark ? 'rgba(75,85,99,0.3)' : 'rgba(0,0,0,0.1)' } } } }
   });
 }
-
 function prevBlock() { if (currentBlockIndex > 0) { currentBlockIndex--; renderGraph(); } }
 function nextBlock() { if (currentBlockIndex < speedBlocks.length - 1) { currentBlockIndex++; renderGraph(); } }
 function currentBlock() { renderGraph(); }
-
 function extractFloors() {
   const floors = new Set();
   for (const row of allRows) {
@@ -1658,7 +1031,6 @@ function extractFloors() {
   }
   monitorState.floors = [...floors].sort((a, b) => a - b);
 }
-
 function isValidFloor(f) {
   if (f.length !== 2) return false;
   if (f === 'П2' || f === 'П1') return true;
@@ -1666,25 +1038,19 @@ function isValidFloor(f) {
   if (f[0] >= '0' && f[0] <= '9' && f[1] >= '0' && f[1] <= '9') return true;
   return false;
 }
-
 function floorToInt(f) {
   if (f === 'П2') return 26; if (f === 'П1') return 25;
   if (f[0] === '-') return -(f[1] - '0');
   return (f[0] - '0') * 10 + (f[1] - '0');
 }
-
 function floorToString(n) {
   if (n === 26) return 'П2'; if (n === 25) return 'П1';
   if (n < 0) return '-' + (-n);
   return n.toString().padStart(2, '0');
 }
-
 function renderShaft() {
   const container = document.getElementById('shaftContainer');
-  if (!monitorState.floors.length) {
-    container.innerHTML = '<div class="text-center text-sm py-6" style="color: var(--text-muted);">Нет данных об этажах</div>';
-    return;
-  }
+  if (!monitorState.floors.length) { container.innerHTML = '<div class="text-center text-sm py-6" style="color: var(--text-muted);">Нет данных об этажах</div>'; return; }
   let html = '';
   const floors = [...monitorState.floors].reverse();
   floors.forEach((fNum, idx) => {
@@ -1711,7 +1077,6 @@ function renderShaft() {
   container.innerHTML = html;
   updateMonitorIndicators();
 }
-
 function updateMonitorIndicators() {
   document.getElementById('modeInd').textContent = monitorState.mode;
   document.getElementById('weightInd').textContent = monitorState.weight || '--';
@@ -1721,7 +1086,6 @@ function updateMonitorIndicators() {
   updateDoorIndicator('door1Ind', monitorState.door1[monitorState.floor] || '');
   updateDoorIndicator('door2Ind', monitorState.door2[monitorState.floor] || '');
 }
-
 function updateDoorIndicator(id, state) {
   const s = state.toLowerCase();
   const cells = document.getElementById(id).children;
@@ -1732,7 +1096,6 @@ function updateDoorIndicator(id, state) {
     cells[i].className = 'door-cell' + (yellow ? ' yellow' : '');
   }
 }
-
 function processRowForMonitor(row) {
   if (!row || row.length < 15) return;
   const ev = row[1], text = row[2], mode = row[3];
@@ -1768,9 +1131,7 @@ function processRowForMonitor(row) {
   if (door1 && floor) monitorState.door1[floor] = door1;
   if (door2 && floor) monitorState.door2[floor] = door2;
 }
-
 function togglePlay() { if (monitorState.playing) stopPlay(); else startPlay(); }
-
 function startPlay() {
   if (!filteredRows.length) { showToast('Нет данных'); return; }
   monitorState.playing = true;
@@ -1785,13 +1146,11 @@ function startPlay() {
     renderShaft();
   }, monitorState.interval);
 }
-
 function stopPlay() {
   monitorState.playing = false;
   document.getElementById('playBtn').textContent = '▶';
   if (monitorState.timer) { clearInterval(monitorState.timer); monitorState.timer = null; }
 }
-
 function updateSpeed() {
   const pos = parseInt(document.getElementById('speedSlider').value);
   const intervals = [3500, 1200, 950, 775, 575, 400, 250, 125, 50, 5];
@@ -1808,7 +1167,6 @@ function updateSpeed() {
     }, monitorState.interval);
   }
 }
-
 function addEventToArea(row) {
   const ev = row[1], text = row[2], mode = row[3], time = row[0];
   const area = document.getElementById('eventsArea');
@@ -1831,14 +1189,12 @@ function addEventToArea(row) {
   }
   if (line) { area.innerHTML += `<div class="event-line">${line}</div>`; area.scrollTop = area.scrollHeight; }
 }
-
 function showAllEvents() {
   const area = document.getElementById('eventsArea');
   area.innerHTML = '';
   for (const row of filteredRows) if (!row[0].startsWith('Дата: ') && row[0]) addEventToArea(row);
   showToast('Показаны все события');
 }
-
 function searchError() {
   const input = document.getElementById('errorSearch').value.toUpperCase();
   const display = document.getElementById('errorDisplay');
@@ -1852,8 +1208,7 @@ function searchError() {
       const maxCount = Math.max(info.causes.length, info.solutions.length);
       causesHtml = `<div class="text-xs font-semibold mt-3" style="color: var(--text-secondary);">Причины / Решения:</div><div class="mt-2 space-y-2">`;
       for (let i = 0; i < maxCount; i++) {
-        const cause = info.causes[i] || '';
-        const solution = info.solutions[i] || '';
+        const cause = info.causes[i] || '', solution = info.solutions[i] || '';
         let rowText = `${i+1}. `;
         if (cause) rowText += cause;
         if (cause && solution) rowText += '  ►  ';
@@ -1862,23 +1217,13 @@ function searchError() {
       }
       causesHtml += '</div>';
     }
-    display.innerHTML = `
-      <div class="text-xs mb-1" style="color: var(--text-secondary);">Код ошибки</div>
-      <div class="text-lg font-bold text-red-400 mb-2">${code}</div>
-      <div class="text-sm mb-2">${info.desc}</div>
-      ${causesHtml}`;
+    display.innerHTML = `<div class="text-xs mb-1" style="color: var(--text-secondary);">Код ошибки</div><div class="text-lg font-bold text-red-400 mb-2">${code}</div><div class="text-sm mb-2">${info.desc}</div>${causesHtml}`;
   } else if (special) {
-    display.innerHTML = `<div class="text-xs mb-1" style="color: var(--text-secondary);">Событие</div>
-      <div class="text-lg font-bold text-blue-400 mb-2">${code}</div>
-      <div class="text-sm">${special}</div>`;
+    display.innerHTML = `<div class="text-xs mb-1" style="color: var(--text-secondary);">Событие</div><div class="text-lg font-bold text-blue-400 mb-2">${code}</div><div class="text-sm">${special}</div>`;
   } else {
-    display.innerHTML = `<div class="text-center py-6">
-      <div class="text-3xl mb-2">🔍</div>
-      <div class="text-sm" style="color: var(--text-muted);">Код ${code} не найден</div>
-    </div>`;
+    display.innerHTML = `<div class="text-center py-6"><div class="text-3xl mb-2">🔍</div><div class="text-sm" style="color: var(--text-muted);">Код ${code} не найден</div></div>`;
   }
 }
-
 function buildErrorList() {
   errorEntries = [];
   let currentDate = '';
@@ -1887,22 +1232,11 @@ function buildErrorList() {
     if (row[0].startsWith('Дата: ')) { currentDate = row[0].substr(6); continue; }
     const ev = row[1];
     if (ev === 'ERROR' || ev === 'ERROR C' || ev === 'ERROR R' || ev === 'WARNING') {
-      errorEntries.push({
-        date: currentDate,
-        type: ev,
-        time: row[0],
-        message: row[2] || '',
-        rowIndex: i
-      });
+      errorEntries.push({ date: currentDate, type: ev, time: row[0], message: row[2] || '', rowIndex: i });
     }
   }
-  
   const list = document.getElementById('errorList');
-  if (!errorEntries.length) {
-    list.innerHTML = '<div class="text-center text-sm py-4" style="color: var(--text-muted);">Ошибок не найдено</div>';
-    return;
-  }
-  
+  if (!errorEntries.length) { list.innerHTML = '<div class="text-center text-sm py-4" style="color: var(--text-muted);">Ошибок не найдено</div>'; return; }
   list.innerHTML = errorEntries.slice(-20).reverse().map(e => {
     const msg = e.message.length > 40 ? e.message.substr(0, 37) + '...' : e.message;
     const color = e.type === 'ERROR C' ? 'red' : e.type === 'ERROR R' ? 'orange' : e.type === 'WARNING' ? 'blue' : 'red';
@@ -1920,20 +1254,13 @@ function buildErrorList() {
     </div>`;
   }).join('');
 }
-
 function showErrorInfo(code) {
-  if (!code || code.length < 4) {
-    showToast('Код ошибки не найден');
-    return;
-  }
+  if (!code || code.length < 4) { showToast('Код ошибки не найден'); return; }
   switchTab('errors');
   document.getElementById('errorSearch').value = code;
   searchError();
-  setTimeout(() => {
-    document.getElementById('errorDisplay').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
+  setTimeout(() => { document.getElementById('errorDisplay').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
 }
-
 function goToError(idx) {
   switchTab('log');
   setTimeout(() => {
@@ -1952,21 +1279,18 @@ function goToError(idx) {
     }
   }, 100);
 }
-
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
 }
-
 let lastTouch = 0;
 document.addEventListener('touchend', e => {
   const now = Date.now();
   if (now - lastTouch <= 300) e.preventDefault();
   lastTouch = now;
 }, { passive: false });
-
 document.getElementById('speedSlider').value = 6;
 updateSpeed();
 
@@ -1978,22 +1302,15 @@ const CORS_PROXIES = [
 ];
 let cloudFilesCache = [];
 
-function setCloudPreset(url) {
-  document.getElementById('cloudUrl').value = url;
-}
+function setCloudPreset(url) { document.getElementById('cloudUrl').value = url; }
 
 function showCloudModal() {
   document.getElementById('cloudModal').classList.add('show');
   try {
     const savedUrl = localStorage.getItem('sl-last-cloud-url') || '';
-    if (!document.getElementById('cloudUrl').value && savedUrl) {
-      document.getElementById('cloudUrl').value = savedUrl;
-    }
+    if (!document.getElementById('cloudUrl').value && savedUrl) document.getElementById('cloudUrl').value = savedUrl;
   } catch(e) {}
-  // Автозагрузка при открытии
-  if (!cloudFilesCache.length) {
-    setTimeout(() => loadCloudFileList(), 300);
-  }
+  if (!cloudFilesCache.length) setTimeout(() => loadCloudFileList(), 300);
 }
 
 function normalizeShareUrl(raw) {
@@ -2010,123 +1327,30 @@ async function fetchViaProxy(url) {
   for (const makeProxy of CORS_PROXIES) {
     const proxyUrl = makeProxy(url);
     try {
+      console.log('[Cloud] Trying proxy:', proxyUrl.substring(0, 80));
       const resp = await fetch(proxyUrl);
-      if (resp.ok) return await resp.text();
-    } catch (e) { lastErr = e; }
-  }
-  throw lastErr || new Error('Все прокси недоступны');
-}
-
-function parseNextcloudHtml(html, baseUrl) {
-  const files = [];
-  try {
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const rows = doc.querySelectorAll('tr[data-entry-name], #fileList tr');
-    rows.forEach(row => {
-      const name = row.getAttribute('data-entry-name') ||
-                   (row.querySelector('.name')?.textContent?.trim()) ||
-                   (row.querySelector('a.name')?.getAttribute('href')?.split('/').pop());
-      if (!name || name === '..') return;
-      const size = row.getAttribute('data-size') ||
-                   row.querySelector('.filesize')?.textContent?.trim() || '';
-      const type = row.getAttribute('data-mime') || '';
-      const isDir = row.getAttribute('data-type') === 'dir' || type === 'httpd/unix-directory';
-      files.push({ name, size: parseInt(size) || 0, type, isDir, isCsv: /\.csv$/i.test(name) });
-    });
-    if (!files.length) {
-      doc.querySelectorAll('a[href]').forEach(a => {
-        const href = a.getAttribute('href') || '';
-        const name = href.split('/').pop().split('?')[0];
-        if (/\.csv$/i.test(name) && !files.some(f => f.name === name)) {
-          files.push({ name, size: 0, type: '', isDir: false, isCsv: true });
-        }
-      });
-    }
-  } catch (e) { console.error('Parse error', e); }
-  return files;
-}
-
-async function loadCloudFileList() {
-  const raw = document.getElementById('cloudUrl').value;
-  const base = normalizeShareUrl(raw);
-  const status = document.getElementById('cloudStatus');
-  const progress = document.getElementById('cloudProgress');
-  const bar = document.getElementById('cloudProgressBar');
-  const wrap = document.getElementById('cloudFilesWrap');
-  const list = document.getElementById('cloudFileList');
-  const btn = document.getElementById('cloudLoadBtn');
-
-  if (!base) { status.textContent = '❌ Введите ссылку'; return; }
-
-  wrap.style.display = 'none';
-  list.innerHTML = '';
-  status.textContent = '⏳ Получение списка файлов...';
-  progress.style.display = 'block';
-  bar.style.width = '30%';
-// ============ CLOUD LOADER ============
-const CORS_PROXIES = [
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  url => `https://cors.eu.org/${url}`,
-];
-let cloudFilesCache = [];
-
-function setCloudPreset(url) {
-  document.getElementById('cloudUrl').value = url;
-}
-
-function showCloudModal() {
-  document.getElementById('cloudModal').classList.add('show');
-  try {
-    const savedUrl = localStorage.getItem('sl-last-cloud-url') || '';
-    if (!document.getElementById('cloudUrl').value && savedUrl) {
-      document.getElementById('cloudUrl').value = savedUrl;
-    }
-  } catch(e) {}
-  if (!cloudFilesCache.length) {
-    setTimeout(() => loadCloudFileList(), 300);
-  }
-}
-
-function normalizeShareUrl(raw) {
-  let url = raw.trim();
-  if (!url) return null;
-  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-  url = url.split('#')[0];
-  const m = url.match(/^(https?:\/\/[^\/]+\/(?:s|index\.php\/s)\/[A-Za-z0-9]+)/);
-  return m ? m[1] : url.replace(/\/+$/, '');
-}
-
-async function fetchViaProxy(url) {
-  let lastErr;
-  for (const makeProxy of CORS_PROXIES) {
-    const proxyUrl = makeProxy(url);
-    try {
-      console.log('Trying proxy:', proxyUrl);
-      const resp = await fetch(proxyUrl);
-      console.log('Proxy response status:', resp.status);
+      console.log('[Cloud] Status:', resp.status);
       if (resp.ok) {
         const text = await resp.text();
-        console.log('Response length:', text.length);
+        console.log('[Cloud] Response length:', text.length);
         return text;
       }
-    } catch (e) { 
-      console.error('Proxy failed:', e.message);
-      lastErr = e; 
+    } catch (e) {
+      console.error('[Cloud] Proxy failed:', e.message);
+      lastErr = e;
     }
   }
   throw lastErr || new Error('Все прокси недоступны');
 }
 
 function parseNextcloudHtml(html, baseUrl) {
-  console.log('Parsing HTML, length:', html.length);
+  console.log('[Cloud] Parsing HTML, length:', html.length);
   const files = [];
   try {
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    
-    // Метод 1: Ищем таблицу файлов Nextcloud
+    // Метод 1: таблица Nextcloud
     const rows = doc.querySelectorAll('tr[data-entry-name]');
-    console.log('Found rows with data-entry-name:', rows.length);
+    console.log('[Cloud] Found rows with data-entry-name:', rows.length);
     rows.forEach(row => {
       const name = row.getAttribute('data-entry-name');
       if (!name || name === '..') return;
@@ -2135,13 +1359,10 @@ function parseNextcloudHtml(html, baseUrl) {
       const isDir = row.getAttribute('data-type') === 'dir';
       files.push({ name, size, type, isDir, isCsv: /\.csv$/i.test(name) });
     });
-    
-    // Метод 2: Ищем ссылки на скачивание
+    // Метод 2: ссылки на download
     if (!files.length) {
-      console.log('Trying method 2: looking for download links');
-      const links = doc.querySelectorAll('a[href*="download"]');
-      console.log('Found download links:', links.length);
-      links.forEach(a => {
+      console.log('[Cloud] Trying method 2: download links');
+      doc.querySelectorAll('a[href*="download"]').forEach(a => {
         const href = a.getAttribute('href') || '';
         const match = href.match(/files=([^&]+)/);
         if (match) {
@@ -2152,10 +1373,9 @@ function parseNextcloudHtml(html, baseUrl) {
         }
       });
     }
-    
-    // Метод 3: Ищем любые ссылки на CSV
+    // Метод 3: любые CSV
     if (!files.length) {
-      console.log('Trying method 3: looking for any CSV links');
+      console.log('[Cloud] Trying method 3: any CSV links');
       doc.querySelectorAll('a[href]').forEach(a => {
         const href = a.getAttribute('href') || '';
         const name = href.split('/').pop().split('?')[0];
@@ -2164,11 +1384,28 @@ function parseNextcloudHtml(html, baseUrl) {
         }
       });
     }
-    
-    console.log('Total files found:', files.length);
-  } catch (e) { 
-    console.error('Parse error', e); 
-  }
+    // Метод 4: ищем в JSON, встроенном в страницу
+    if (!files.length) {
+      console.log('[Cloud] Trying method 4: embedded JSON');
+      const scripts = doc.querySelectorAll('script');
+      scripts.forEach(s => {
+        const text = s.textContent || '';
+        const match = text.match(/"files"\s*:\s*(\[[\s\S]*?\])/);
+        if (match) {
+          try {
+            const arr = JSON.parse(match[1]);
+            arr.forEach(f => {
+              if (f.name && !files.some(x => x.name === f.name)) {
+                files.push({ name: f.name, size: f.size || 0, type: f.mimetype || '', isDir: f.type === 'dir', isCsv: /\.csv$/i.test(f.name) });
+              }
+            });
+          } catch(e) {}
+        }
+      });
+    }
+    console.log('[Cloud] Total files found:', files.length);
+    if (!files.length) console.log('[Cloud] HTML preview:', html.substring(0, 1000));
+  } catch (e) { console.error('[Cloud] Parse error', e); }
   return files;
 }
 
@@ -2182,12 +1419,8 @@ async function loadCloudFileList() {
   const list = document.getElementById('cloudFileList');
   const btn = document.getElementById('cloudLoadBtn');
 
-  console.log('Loading from:', base);
-
-  if (!base) { 
-    status.textContent = '❌ Введите ссылку'; 
-    return; 
-  }
+  console.log('[Cloud] Loading from:', base);
+  if (!base) { status.textContent = '❌ Введите ссылку'; return; }
 
   wrap.style.display = 'none';
   list.innerHTML = '';
@@ -2200,29 +1433,23 @@ async function loadCloudFileList() {
     const html = await fetchViaProxy(base);
     bar.style.width = '80%';
     const files = parseNextcloudHtml(html, base);
-    
     if (!files.length) {
       status.textContent = '⚠️ Файлы не найдены. Откройте консоль (F12) для диагностики.';
-      console.log('HTML preview:', html.substring(0, 500));
       progress.style.display = 'none';
       btn.disabled = false;
       return;
     }
-    
     cloudFilesCache = files.map(f => ({ ...f, baseUrl: base }));
     renderCloudFileList();
     wrap.style.display = 'block';
     status.textContent = `✅ Найдено файлов: ${files.length}`;
     try { localStorage.setItem('sl-last-cloud-url', base); } catch(e) {}
   } catch (e) {
-    console.error('Load error:', e);
-    status.textContent = '❌ Ошибка: ' + (e.message || e) + '. Проверьте консоль (F12)';
+    console.error('[Cloud] Load error:', e);
+    status.textContent = '❌ Ошибка: ' + (e.message || e);
   } finally {
     bar.style.width = '100%';
-    setTimeout(() => { 
-      progress.style.display = 'none'; 
-      bar.style.width = '0%'; 
-    }, 500);
+    setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0%'; }, 500);
     btn.disabled = false;
   }
 }
@@ -2267,16 +1494,13 @@ function updateCloudSelection() {
 }
 
 async function downloadSelectedCloudFiles() {
-  const indices = [...document.querySelectorAll('#cloudFileList input[type=checkbox]:checked')]
-    .map(c => parseInt(c.dataset.idx));
+  const indices = [...document.querySelectorAll('#cloudFileList input[type=checkbox]:checked')].map(c => parseInt(c.dataset.idx));
   if (!indices.length) { showToast('Ничего не выбрано'); return; }
-
   const status = document.getElementById('cloudStatus');
   const progress = document.getElementById('cloudProgress');
   const bar = document.getElementById('cloudProgressBar');
   progress.style.display = 'block';
   bar.style.width = '0%';
-
   const files = [];
   for (let i = 0; i < indices.length; i++) {
     const f = cloudFilesCache[indices[i]];
@@ -2285,25 +1509,17 @@ async function downloadSelectedCloudFiles() {
     try {
       const text = await fetchViaProxy(downloadUrl);
       files.push(new File([text], f.name, { type: 'text/csv' }));
-    } catch (e) {
-      console.error('Download failed', f.name, e);
-    }
+    } catch (e) { console.error('[Cloud] Download failed', f.name, e); }
     bar.style.width = Math.round(((i+1)/indices.length)*100) + '%';
   }
-
   progress.style.display = 'none';
-  if (!files.length) {
-    status.textContent = '❌ Не удалось скачать ни одного файла';
-    return;
-  }
+  if (!files.length) { status.textContent = '❌ Не удалось скачать ни одного файла'; return; }
   status.textContent = `✅ Загружено файлов: ${files.length}`;
   closeModal('cloudModal');
-
   const dt = new DataTransfer();
   files.forEach(f => dt.items.add(f));
   await handleFiles({ target: { files: dt.files, value: '' } });
 }
 </script>
-
 </body>
 </html>
