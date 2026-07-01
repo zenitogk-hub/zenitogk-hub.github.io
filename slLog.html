@@ -1459,43 +1459,119 @@ async function loadCloudFileList() {
   btn.disabled = false;
 }
 
-function renderCloudFileList() {
+async function loadCloudFileList() {
+  const raw = document.getElementById('cloudUrl').value;
+  const base = normalizeShareUrl(raw);
+  const token = extractToken(base);
+  const serverUrl = extractBaseUrl(base);
+  const pathsInput = document.getElementById('cloudPaths').value;
+  const folders = pathsInput.split(',').map(p => p.trim()).filter(p => p);
+  
+  const status = document.getElementById('cloudStatus');
+  const progress = document.getElementById('cloudProgress');
+  const bar = document.getElementById('cloudProgressBar');
+  const wrap = document.getElementById('cloudFilesWrap');
   const list = document.getElementById('cloudFileList');
-  list.innerHTML = cloudFilesCache.map((f, i) => `
-    <label class="cloud-file-item">
-      <input type="checkbox" data-idx="${i}" ${f.isCsv ? 'checked' : ''} onchange="updateCloudSelection()">
-      <span class="cloud-file-name">${f.isDir ? '📁' : (f.isCsv ? '📄' : '📎')} ${f.name}</span>
-      <span class="cloud-file-size">${f.size ? formatBytes(f.size) : ''}</span>
-    </label>
-  `).join('');
-  updateCloudSelection();
-}
+  const btn = document.getElementById('cloudLoadBtn');
 
-function formatBytes(b) {
-  if (b < 1024) return b + ' Б';
-  if (b < 1024*1024) return (b/1024).toFixed(1) + ' КБ';
-  return (b/1024/1024).toFixed(1) + ' МБ';
-}
+  console.log('[Cloud] Base:', base, 'Token:', token, 'Folders:', folders);
+  if (!base || !token) { status.textContent = '❌ Неверная ссылка'; return; }
 
-function cloudSelectAll() {
-  document.querySelectorAll('#cloudFileList input[type=checkbox]').forEach(c => c.checked = true);
-  updateCloudSelection();
-}
-function cloudSelectNone() {
-  document.querySelectorAll('#cloudFileList input[type=checkbox]').forEach(c => c.checked = false);
-  updateCloudSelection();
-}
-function cloudSelectCsv() {
-  document.querySelectorAll('#cloudFileList input[type=checkbox]').forEach(c => {
-    const idx = parseInt(c.dataset.idx);
-    c.checked = cloudFilesCache[idx].isCsv;
-  });
-  updateCloudSelection();
-}
-function updateCloudSelection() {
-  const n = document.querySelectorAll('#cloudFileList input[type=checkbox]:checked').length;
-  document.getElementById('cloudSelectedCount').textContent = n + ' выбрано';
-  document.getElementById('cloudDownloadCount').textContent = n;
+  wrap.style.display = 'none';
+  list.innerHTML = '';
+  status.textContent = '⏳ Сканирование папок...';
+  progress.style.display = 'block';
+  bar.style.width = '30%';
+  btn.disabled = true;
+
+  let files = [];
+  const foldersToScan = folders.length > 0 ? folders : [''];
+
+  for (let i = 0; i < foldersToScan.length; i++) {
+    const folder = foldersToScan[i];
+    
+    try {
+      // Пробуем получить HTML страницы папки и найти ссылки на CSV
+      const folderUrl = folder 
+        ? `${base}?path=${encodeURIComponent('/' + folder)}`
+        : base;
+      
+      console.log(`[Cloud] Scanning folder ${i+1}/${foldersToScan.length}:`, folderUrl);
+      
+      const html = await fetchViaProxy(folderUrl);
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      // Ищем все ссылки на CSV файлы
+      let foundInFolder = 0;
+      doc.querySelectorAll('a[href]').forEach(a => {
+        const href = a.getAttribute('href') || '';
+        // Ищем ссылки на скачивание CSV
+        if (href.includes('download') && href.toLowerCase().includes('.csv')) {
+          const urlParams = new URLSearchParams(href.split('?')[1]);
+          const filename = urlParams.get('files');
+          if (filename && !files.some(f => f.name === filename)) {
+            files.push({
+              name: filename,
+              folder: folder || 'Корень',
+              size: 0,
+              type: 'text/csv',
+              isDir: false,
+              isCsv: true,
+              path: folder ? '/' + folder : '',
+              token: token,
+              serverUrl: serverUrl
+            });
+            foundInFolder++;
+          }
+        }
+        // Также ищем прямые ссылки на CSV файлы
+        else if (href.toLowerCase().endsWith('.csv')) {
+          const filename = href.split('/').pop().split('?')[0];
+          if (filename && !files.some(f => f.name === filename)) {
+            files.push({
+              name: filename,
+              folder: folder || 'Корень',
+              size: 0,
+              type: 'text/csv',
+              isDir: false,
+              isCsv: true,
+              path: folder ? '/' + folder : '',
+              token: token,
+              serverUrl: serverUrl
+            });
+            foundInFolder++;
+          }
+        }
+      });
+      
+      console.log(`[Cloud] Folder "${folder}" found ${foundInFolder} CSV files`);
+      bar.style.width = Math.round(((i+1)/foldersToScan.length)*80 + 10) + '%';
+    } catch(e) {
+      console.error(`[Cloud] Failed to scan folder "${folder}":`, e);
+    }
+  }
+
+  bar.style.width = '90%';
+
+  if (!files.length) {
+    status.textContent = '⚠️ Файлы не найдены. Проверьте пути к папкам или откройте консоль (F12) для диагностики.';
+    progress.style.display = 'none';
+    btn.disabled = false;
+    return;
+  }
+
+  // Сортируем по имени
+  files.sort((a, b) => a.name.localeCompare(b.name));
+
+  cloudFilesCache = files;
+  renderCloudFileList();
+  wrap.style.display = 'block';
+  status.textContent = `✅ Найдено файлов: ${files.length}`;
+  try { localStorage.setItem('sl-last-cloud-url', base); } catch(e) {}
+
+  bar.style.width = '100%';
+  setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0%'; }, 500);
+  btn.disabled = false;
 }
 
 async function downloadSelectedCloudFiles() {
@@ -1513,15 +1589,14 @@ async function downloadSelectedCloudFiles() {
     const f = cloudFilesCache[indices[i]];
     status.textContent = `⬇️ ${i+1}/${indices.length}: ${f.name}`;
     
-    // URL для скачивания через WebDAV
-    const downloadUrl = `${f.serverUrl}/remote.php/dav/public-files/${f.token}${f.path}/${encodeURIComponent(f.name)}`;
-    const proxyUrl = `https://sl-log-proxy.zenitogk.workers.dev?url=${encodeURIComponent(downloadUrl)}&method=GET`;
+    // Формируем URL для скачивания
+    const pathParam = f.path ? `&path=${encodeURIComponent(f.path)}` : '';
+    const downloadUrl = `${f.serverUrl}/index.php/s/${f.token}/download?files=${encodeURIComponent(f.name)}${pathParam}`;
     
-    console.log('[Cloud] Downloading:', f.name);
+    console.log('[Cloud] Downloading:', downloadUrl);
     
     try {
-      const response = await fetch(proxyUrl);
-      const text = await response.text();
+      const text = await fetchViaProxy(downloadUrl);
       if (text && text.length > 0) {
         files.push(new File([text], f.name, { type: 'text/csv' }));
       }
@@ -1540,6 +1615,7 @@ async function downloadSelectedCloudFiles() {
   files.forEach(f => dt.items.add(f));
   await handleFiles({ target: { files: dt.files, value: '' } });
 }
+
 </script>
 </body>
 </html>
