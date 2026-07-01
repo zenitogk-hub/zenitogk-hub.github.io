@@ -1491,7 +1491,6 @@ async function loadCloudFileList() {
     const folder = foldersToScan[i];
     
     try {
-      // Пробуем получить HTML страницы папки и найти ссылки на CSV
       const folderUrl = folder 
         ? `${base}?path=${encodeURIComponent('/' + folder)}`
         : base;
@@ -1501,11 +1500,9 @@ async function loadCloudFileList() {
       const html = await fetchViaProxy(folderUrl);
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      // Ищем все ссылки на CSV файлы
       let foundInFolder = 0;
       doc.querySelectorAll('a[href]').forEach(a => {
         const href = a.getAttribute('href') || '';
-        // Ищем ссылки на скачивание CSV
         if (href.includes('download') && href.toLowerCase().includes('.csv')) {
           const urlParams = new URLSearchParams(href.split('?')[1]);
           const filename = urlParams.get('files');
@@ -1524,7 +1521,6 @@ async function loadCloudFileList() {
             foundInFolder++;
           }
         }
-        // Также ищем прямые ссылки на CSV файлы
         else if (href.toLowerCase().endsWith('.csv')) {
           const filename = href.split('/').pop().split('?')[0];
           if (filename && !files.some(f => f.name === filename)) {
@@ -1551,18 +1547,47 @@ async function loadCloudFileList() {
     }
   }
 
+  // Fallback: если ничего не найдено, генерируем имена по датам (последние 14 дней)
+  if (!files.length) {
+    console.log('[Cloud] HTML scan found nothing, generating dates...');
+    const today = new Date();
+    for (let i = 0; i < 14; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
+      
+      foldersToScan.forEach(folder => {
+        ['.CSV', '.csv'].forEach(ext => {
+          const filename = `${dateStr}${ext}`;
+          if (!files.some(f => f.name === filename)) {
+            files.push({
+              name: filename,
+              folder: folder || 'Корень',
+              size: 0,
+              type: 'text/csv',
+              isDir: false,
+              isCsv: true,
+              path: folder ? '/' + folder : '',
+              token: token,
+              serverUrl: serverUrl
+            });
+          }
+        });
+      });
+    }
+    console.log('[Cloud] Generated', files.length, 'date-based filenames');
+  }
+
   bar.style.width = '90%';
 
   if (!files.length) {
-    status.textContent = '⚠️ Файлы не найдены. Проверьте пути к папкам или откройте консоль (F12) для диагностики.';
+    status.textContent = '⚠️ Файлы не найдены.';
     progress.style.display = 'none';
     btn.disabled = false;
     return;
   }
 
-  // Сортируем по имени
   files.sort((a, b) => a.name.localeCompare(b.name));
-
   cloudFilesCache = files;
   renderCloudFileList();
   wrap.style.display = 'block';
@@ -1572,7 +1597,7 @@ async function loadCloudFileList() {
   bar.style.width = '100%';
   setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0%'; }, 500);
   btn.disabled = false;
-}
+  }
 
 async function downloadSelectedCloudFiles() {
   const indices = [...document.querySelectorAll('#cloudFileList input[type=checkbox]:checked')].map(c => parseInt(c.dataset.idx));
