@@ -2063,28 +2063,166 @@ async function loadCloudFileList() {
   status.textContent = '⏳ Получение списка файлов...';
   progress.style.display = 'block';
   bar.style.width = '30%';
+// ============ CLOUD LOADER ============
+const CORS_PROXIES = [
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://cors.eu.org/${url}`,
+];
+let cloudFilesCache = [];
+
+function setCloudPreset(url) {
+  document.getElementById('cloudUrl').value = url;
+}
+
+function showCloudModal() {
+  document.getElementById('cloudModal').classList.add('show');
+  try {
+    const savedUrl = localStorage.getItem('sl-last-cloud-url') || '';
+    if (!document.getElementById('cloudUrl').value && savedUrl) {
+      document.getElementById('cloudUrl').value = savedUrl;
+    }
+  } catch(e) {}
+  if (!cloudFilesCache.length) {
+    setTimeout(() => loadCloudFileList(), 300);
+  }
+}
+
+function normalizeShareUrl(raw) {
+  let url = raw.trim();
+  if (!url) return null;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  url = url.split('#')[0];
+  const m = url.match(/^(https?:\/\/[^\/]+\/(?:s|index\.php\/s)\/[A-Za-z0-9]+)/);
+  return m ? m[1] : url.replace(/\/+$/, '');
+}
+
+async function fetchViaProxy(url) {
+  let lastErr;
+  for (const makeProxy of CORS_PROXIES) {
+    const proxyUrl = makeProxy(url);
+    try {
+      console.log('Trying proxy:', proxyUrl);
+      const resp = await fetch(proxyUrl);
+      console.log('Proxy response status:', resp.status);
+      if (resp.ok) {
+        const text = await resp.text();
+        console.log('Response length:', text.length);
+        return text;
+      }
+    } catch (e) { 
+      console.error('Proxy failed:', e.message);
+      lastErr = e; 
+    }
+  }
+  throw lastErr || new Error('Все прокси недоступны');
+}
+
+function parseNextcloudHtml(html, baseUrl) {
+  console.log('Parsing HTML, length:', html.length);
+  const files = [];
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    
+    // Метод 1: Ищем таблицу файлов Nextcloud
+    const rows = doc.querySelectorAll('tr[data-entry-name]');
+    console.log('Found rows with data-entry-name:', rows.length);
+    rows.forEach(row => {
+      const name = row.getAttribute('data-entry-name');
+      if (!name || name === '..') return;
+      const size = parseInt(row.getAttribute('data-size')) || 0;
+      const type = row.getAttribute('data-mime') || '';
+      const isDir = row.getAttribute('data-type') === 'dir';
+      files.push({ name, size, type, isDir, isCsv: /\.csv$/i.test(name) });
+    });
+    
+    // Метод 2: Ищем ссылки на скачивание
+    if (!files.length) {
+      console.log('Trying method 2: looking for download links');
+      const links = doc.querySelectorAll('a[href*="download"]');
+      console.log('Found download links:', links.length);
+      links.forEach(a => {
+        const href = a.getAttribute('href') || '';
+        const match = href.match(/files=([^&]+)/);
+        if (match) {
+          const name = decodeURIComponent(match[1]);
+          if (!files.some(f => f.name === name)) {
+            files.push({ name, size: 0, type: '', isDir: false, isCsv: /\.csv$/i.test(name) });
+          }
+        }
+      });
+    }
+    
+    // Метод 3: Ищем любые ссылки на CSV
+    if (!files.length) {
+      console.log('Trying method 3: looking for any CSV links');
+      doc.querySelectorAll('a[href]').forEach(a => {
+        const href = a.getAttribute('href') || '';
+        const name = href.split('/').pop().split('?')[0];
+        if (/\.csv$/i.test(name) && !files.some(f => f.name === name)) {
+          files.push({ name, size: 0, type: '', isDir: false, isCsv: true });
+        }
+      });
+    }
+    
+    console.log('Total files found:', files.length);
+  } catch (e) { 
+    console.error('Parse error', e); 
+  }
+  return files;
+}
+
+async function loadCloudFileList() {
+  const raw = document.getElementById('cloudUrl').value;
+  const base = normalizeShareUrl(raw);
+  const status = document.getElementById('cloudStatus');
+  const progress = document.getElementById('cloudProgress');
+  const bar = document.getElementById('cloudProgressBar');
+  const wrap = document.getElementById('cloudFilesWrap');
+  const list = document.getElementById('cloudFileList');
+  const btn = document.getElementById('cloudLoadBtn');
+
+  console.log('Loading from:', base);
+
+  if (!base) { 
+    status.textContent = '❌ Введите ссылку'; 
+    return; 
+  }
+
+  wrap.style.display = 'none';
+  list.innerHTML = '';
+  status.textContent = '⏳ Получение списка файлов...';
+  progress.style.display = 'block';
+  bar.style.width = '30%';
   btn.disabled = true;
 
   try {
     const html = await fetchViaProxy(base);
     bar.style.width = '80%';
     const files = parseNextcloudHtml(html, base);
+    
     if (!files.length) {
-      status.textContent = '⚠️ Файлы не найдены. Возможно, ссылка не ведёт на публичную папку Nextcloud.';
+      status.textContent = '⚠️ Файлы не найдены. Откройте консоль (F12) для диагностики.';
+      console.log('HTML preview:', html.substring(0, 500));
       progress.style.display = 'none';
       btn.disabled = false;
       return;
     }
+    
     cloudFilesCache = files.map(f => ({ ...f, baseUrl: base }));
     renderCloudFileList();
     wrap.style.display = 'block';
     status.textContent = `✅ Найдено файлов: ${files.length}`;
     try { localStorage.setItem('sl-last-cloud-url', base); } catch(e) {}
   } catch (e) {
-    status.textContent = '❌ Не удалось получить список: ' + (e.message || e);
+    console.error('Load error:', e);
+    status.textContent = '❌ Ошибка: ' + (e.message || e) + '. Проверьте консоль (F12)';
   } finally {
     bar.style.width = '100%';
-    setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0%'; }, 500);
+    setTimeout(() => { 
+      progress.style.display = 'none'; 
+      bar.style.width = '0%'; 
+    }, 500);
     btn.disabled = false;
   }
 }
