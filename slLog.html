@@ -481,6 +481,11 @@
         <button class="cloud-preset-btn" onclick="setCloudPreset('https://disk.datacenter.by/index.php/s/mMwPSLCWMs4PM5o')">📁 datacenter.by</button>
         <button class="cloud-preset-btn" onclick="setCloudPreset('')">🗑 Очистить</button>
       </div>
+      
+      <div class="text-xs mb-2 mt-3" style="color: var(--text-secondary);">Пути к папкам с логами (через запятую):</div>
+      <input type="text" id="cloudPaths" class="cloud-url-input" value="Башня,Зенит,Стенд" placeholder="Папка1,Папка2,...">
+      <div class="text-[10px] mt-1" style="color: var(--text-muted);">Оставьте пустым для корневой папки</div>
+      
       <button onclick="loadCloudFileList()" class="btn-primary text-xs w-full mt-3" id="cloudLoadBtn">🔍 Показать файлы</button>
       <div class="cloud-progress" id="cloudProgress"><div class="cloud-progress-bar" id="cloudProgressBar"></div></div>
       <div id="cloudStatus" class="text-xs mt-2" style="color: var(--text-muted);"></div>
@@ -589,7 +594,7 @@ function setTheme(theme) {
   }
   const meta = document.getElementById('themeColorMeta');
   if (meta) meta.content = theme === 'dark' ? '#1f2937' : '#ffffff';
-  if (speedChart) setTimeout(() => renderGraph(), 100);
+  if (window.speedChart) setTimeout(() => renderGraph(), 100);
 }
 function toggleTheme() {
   const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -1294,14 +1299,6 @@ document.addEventListener('touchend', e => {
 document.getElementById('speedSlider').value = 6;
 updateSpeed();
 
-
-
-
-
-
-
-
-
 // ============ CLOUD LOADER ============
 const CORS_PROXIES = [
   url => `https://sl-log-proxy.zenitogk.workers.dev?url=${encodeURIComponent(url)}`,
@@ -1366,6 +1363,8 @@ async function loadCloudFileList() {
   const base = normalizeShareUrl(raw);
   const token = extractToken(base);
   const serverUrl = extractBaseUrl(base);
+  const pathsInput = document.getElementById('cloudPaths').value;
+  const folders = pathsInput.split(',').map(p => p.trim()).filter(p => p);
   
   const status = document.getElementById('cloudStatus');
   const progress = document.getElementById('cloudProgress');
@@ -1374,150 +1373,84 @@ async function loadCloudFileList() {
   const list = document.getElementById('cloudFileList');
   const btn = document.getElementById('cloudLoadBtn');
 
-  console.log('[Cloud] Base:', base, 'Token:', token, 'Server:', serverUrl);
+  console.log('[Cloud] Base:', base, 'Token:', token, 'Folders:', folders);
   if (!base || !token) { status.textContent = '❌ Неверная ссылка'; return; }
 
   wrap.style.display = 'none';
   list.innerHTML = '';
-  status.textContent = '⏳ Получение списка файлов...';
+  status.textContent = '⏳ Сканирование папок...';
   progress.style.display = 'block';
   bar.style.width = '30%';
   btn.disabled = true;
 
   let files = [];
+  const foldersToScan = folders.length > 0 ? folders : [''];
 
-  try {
-    console.log('[Cloud] Fetching HTML page...');
-    const html = await fetchViaProxy(base);
-    console.log('[Cloud] HTML length:', html.length);
+  for (let i = 0; i < foldersToScan.length; i++) {
+    const folder = foldersToScan[i];
+    const folderPath = folder ? `/${folder}` : '';
     
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    
-    // Метод 1: Ищем JSON в скриптах Nextcloud
-    console.log('[Cloud] Method 1: Searching for JSON in scripts...');
-    const scripts = doc.querySelectorAll('script');
-    
-    scripts.forEach(script => {
-      const text = script.textContent || '';
+    try {
+      const folderUrl = `${serverUrl}/index.php/s/${token}${folderPath ? '?path=' + encodeURIComponent(folderPath) : ''}`;
+      console.log(`[Cloud] Scanning folder ${i+1}/${foldersToScan.length}:`, folderUrl);
       
-      // Паттерны для поиска данных о файлах
-      const patterns = [
-        /filesData\s*=\s*(\{[\s\S]{100,50000}?\});?/,
-        /OC\.Files[\s\S]*?fileList[\s\S]*?=\s*(\{[\s\S]{100,50000}?\});?/,
-        /"files"\s*:\s*(\[[\s\S]{100,50000}?\])/,
-        /fileList\s*:\s*(\[[\s\S]{100,50000}?\])/,
-      ];
+      const html = await fetchViaProxy(folderUrl);
+      const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      patterns.forEach((pattern, idx) => {
-        const matches = text.match(pattern);
-        if (matches) {
-          console.log(`[Cloud] Found pattern ${idx + 1}, trying to parse...`);
-          try {
-            const data = JSON.parse(matches[1]);
-            console.log('[Cloud] Parsed JSON:', typeof data);
-            
-            if (Array.isArray(data)) {
-              data.forEach(f => {
-                if (f.name || f.basename) {
-                  const name = f.name || f.basename;
-                  if (!files.some(x => x.name === name)) {
-                    files.push({
-                      name: name,
-                      size: f.size || f.filesize || 0,
-                      type: f.mimetype || f.type || '',
-                      isDir: f.type === 'dir' || f.mimetype === 'httpd/unix-directory',
-                      isCsv: /\.csv$/i.test(name)
-                    });
-                  }
-                }
-              });
-            } else if (data && typeof data === 'object') {
-              Object.keys(data).forEach(key => {
-                const item = data[key];
-                if (item.name || item.basename) {
-                  const name = item.name || item.basename;
-                  if (!files.some(x => x.name === name)) {
-                    files.push({
-                      name: name,
-                      size: item.size || item.filesize || 0,
-                      type: item.mimetype || item.type || '',
-                      isDir: item.type === 'dir',
-                      isCsv: /\.csv$/i.test(name)
-                    });
-                  }
-                }
-              });
-            }
-          } catch(e) {
-            console.log('[Cloud] Parse failed for pattern', idx + 1, e.message);
-          }
-        }
-      });
-    });
-    
-    // Метод 2: Ищем data-атрибуты в HTML
-    if (!files.length) {
-      console.log('[Cloud] Method 2: Searching for data attributes...');
-      doc.querySelectorAll('[data-filename], [data-entry-name], [data-name]').forEach(el => {
-        const name = el.getAttribute('data-filename') || 
-                     el.getAttribute('data-entry-name') || 
-                     el.getAttribute('data-name');
-        if (name && name !== '..' && !files.some(f => f.name === name)) {
+      doc.querySelectorAll('a[href*=".csv"]').forEach(a => {
+        const href = a.getAttribute('href') || '';
+        const filename = href.split('/').pop().split('?')[0];
+        if (filename && !files.some(f => f.name === filename)) {
           files.push({
-            name: name,
-            size: parseInt(el.getAttribute('data-size')) || 0,
-            type: el.getAttribute('data-mimetype') || '',
-            isDir: el.getAttribute('data-type') === 'dir',
-            isCsv: /\.csv$/i.test(name)
+            name: filename,
+            folder: folder || 'Корень',
+            size: 0,
+            type: 'text/csv',
+            isDir: false,
+            isCsv: true,
+            path: folderPath
           });
         }
       });
+      
+      bar.style.width = Math.round(((i+1)/foldersToScan.length)*50 + 30) + '%';
+    } catch(e) {
+      console.error(`[Cloud] Failed to scan folder "${folder}":`, e);
     }
-    
-    // Метод 3: Ищем ссылки на скачивание
-    if (!files.length) {
-      console.log('[Cloud] Method 3: Searching for download links...');
-      const seen = new Set();
-      doc.querySelectorAll('a[href*="download"], a[href*="files"]').forEach(a => {
-        const href = a.getAttribute('href') || '';
-        const match = href.match(/files=([^&]+)/);
-        if (match) {
-          const name = decodeURIComponent(match[1]);
-          if (!seen.has(name) && name.length > 0) {
-            seen.add(name);
-            files.push({
-              name: name,
-              size: 0,
-              type: '',
-              isDir: false,
-              isCsv: /\.csv$/i.test(name)
-            });
-          }
-        }
+  }
+
+  if (!files.length) {
+    console.log('[Cloud] HTML scan found nothing, trying common patterns...');
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
+      ['csv', 'CSV'].forEach(ext => {
+        const filename = `${dateStr}.${ext}`;
+        files.push({
+          name: filename,
+          folder: folders[0] || 'Корень',
+          size: 0,
+          type: 'text/csv',
+          isDir: false,
+          isCsv: true,
+          path: folders.length > 0 ? `/${folders[0]}` : ''
+        });
       });
     }
-    
-    console.log('[Cloud] Total files found:', files.length);
-    if (files.length > 0) {
-      console.log('[Cloud] Files:', files.map(f => f.name).join(', '));
-    } else {
-      console.log('[Cloud] HTML preview (first 2000 chars):', html.substring(0, 2000));
-    }
-    
-  } catch(e) {
-    console.error('[Cloud] Error:', e);
   }
 
   bar.style.width = '80%';
 
   if (!files.length) {
-    status.textContent = '⚠️ Файлы не найдены. Возможно, папка пуста или защищена паролем. Откройте консоль (F12) для диагностики.';
+    status.textContent = '⚠️ Файлы не найдены. Проверьте пути к папкам или откройте консоль (F12) для диагностики.';
     progress.style.display = 'none';
     btn.disabled = false;
     return;
   }
 
-  cloudFilesCache = files.map(f => ({ ...f, baseUrl: base }));
+  cloudFilesCache = files.map(f => ({ ...f, baseUrl: base, token, serverUrl }));
   renderCloudFileList();
   wrap.style.display = 'block';
   status.textContent = `✅ Найдено файлов: ${files.length}`;
@@ -1582,13 +1515,16 @@ async function downloadSelectedCloudFiles() {
     const f = cloudFilesCache[indices[i]];
     status.textContent = `⬇️ ${i+1}/${indices.length}: ${f.name}`;
     
-    const token = extractToken(f.baseUrl);
-    const serverUrl = extractBaseUrl(f.baseUrl);
-    const downloadUrl = `${serverUrl}/index.php/s/${token}/download?path=%2F&files=${encodeURIComponent(f.name)}`;
+    const pathParam = f.path ? `&path=${encodeURIComponent(f.path)}` : '';
+    const downloadUrl = `${f.serverUrl}/index.php/s/${f.token}/download?files=${encodeURIComponent(f.name)}${pathParam}`;
+    
+    console.log('[Cloud] Downloading:', downloadUrl);
     
     try {
       const text = await fetchViaProxy(downloadUrl);
-      files.push(new File([text], f.name, { type: 'text/csv' }));
+      if (text && text.length > 0) {
+        files.push(new File([text], f.name, { type: 'text/csv' }));
+      }
     } catch (e) { 
       console.error('[Cloud] Download failed', f.name, e); 
     }
@@ -1603,9 +1539,7 @@ async function downloadSelectedCloudFiles() {
   const dt = new DataTransfer();
   files.forEach(f => dt.items.add(f));
   await handleFiles({ target: { files: dt.files, value: '' } });
-    }
-      
-  
+}
 </script>
 </body>
 </html>
