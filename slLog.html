@@ -498,7 +498,6 @@
     to { transform: rotate(360deg); }
   }
 
-  /* Main content flex container */
   #appContainer {
     display: flex;
     flex-direction: column;
@@ -515,7 +514,6 @@
   #mainContent::-webkit-scrollbar { width: 4px; }
   #mainContent::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
 
-  /* PWA Install Banner */
   .install-banner {
     position: fixed;
     top: 0;
@@ -574,7 +572,6 @@
     to { transform: translateY(0); }
   }
 
-  /* iOS Install Hint Modal */
   .ios-hint-modal {
     position: fixed;
     inset: 0;
@@ -621,11 +618,60 @@
     cursor: pointer;
     margin-top: 8px;
   }
+
+  /* Error list item with eye button */
+  .error-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border-left: 4px solid;
+    background: var(--error-list-bg);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .error-item:active { transform: scale(0.98); }
+  .error-item .error-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .error-item .eye-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    color: var(--text-primary);
+  }
+  .error-item .eye-btn:active { opacity: 0.7; }
+
+  /* Full error info in modal */
+  .error-full-info {
+    background: var(--error-info-bg);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+  }
+  .error-full-info .cause-row {
+    padding: 8px 10px;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .error-full-info .cause-row:last-child { margin-bottom: 0; }
 </style>
 </head>
 <body>
 
-<!-- PWA Install Banner (Android/Chrome) -->
 <div class="install-banner" id="installBanner">
   <div class="banner-icon">📱</div>
   <div class="banner-text">
@@ -636,14 +682,13 @@
   <button class="banner-close" onclick="dismissInstallBanner()">×</button>
 </div>
 
-<!-- iOS Install Hint Modal -->
 <div class="ios-hint-modal" id="iosHintModal" onclick="if(event.target===this)closeIosHint()">
   <div class="ios-hint-content">
     <h3>📲 Установка на iPhone/iPad</h3>
     <div class="steps">
       <div><span class="step-icon">1️⃣</span>Нажмите кнопку <b>Поделиться</b> <span style="font-size:18px">⬆️</span> внизу экрана</div>
       <div><span class="step-icon">2️⃣</span>Прокрутите меню и выберите <b>«На экран Домой»</b></div>
-      <div><span class="step-icon">3️⃣</span>Нажмите <b>«Добавить»</b></div>
+      <div><span class="step-icon">3️</span>Нажмите <b>«Добавить»</b></div>
     </div>
     <button class="close-btn" onclick="closeIosHint()">Понятно</button>
   </div>
@@ -651,7 +696,6 @@
 
 <div id="appContainer">
 
-<!-- Header -->
 <header class="border-b px-3 py-2 flex items-center justify-between flex-shrink-0" style="background: var(--bg-secondary); border-color: var(--border-header); padding-top: max(8px, env(safe-area-inset-top));">
   <div class="flex items-center gap-2">
     <div class="logo-btn w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-white font-bold text-sm relative" onclick="toggleTheme()" title="Сменить тему">
@@ -674,7 +718,6 @@
   <input type="file" id="fileInput" accept=".csv" multiple style="display:none" onchange="handleFiles(event)">
 </header>
 
-<!-- Filters bar -->
 <div class="border-b px-3 py-2 flex gap-2 flex-shrink-0" id="filterBar" style="display:none; background: var(--bg-secondary); border-color: var(--border-header);">
   <select id="dateFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1">
     <option value="">Все даты</option>
@@ -684,18 +727,15 @@
   </select>
 </div>
 
-<!-- Status bar -->
 <div class="px-3 py-1 text-[11px] flex justify-between border-b flex-shrink-0" id="statusBar" style="display:none; background: var(--bg-primary); color: var(--text-secondary); border-color: var(--border-header);">
   <span id="statusText">Строк: 0</span>
   <span id="deltaTime"></span>
 </div>
 
-<!-- Main content -->
 <main class="scroll-area" id="mainContent">
   
-  <!-- Welcome screen -->
   <div id="welcomeScreen" class="h-full flex flex-col items-center justify-center p-6 text-center">
-    <div class="text-6xl mb-4"></div>
+    <div class="text-6xl mb-4">📋</div>
     <h2 class="text-lg font-semibold mb-2">Добро пожаловать</h2>
     <p class="text-sm mb-6" style="color: var(--text-secondary);">Откройте CSV лог-файлы для просмотра и анализа</p>
     <button onclick="document.getElementById('fileInput').click()" class="btn-primary">
@@ -705,14 +745,12 @@
       💡 Нажмите на логотип <b>СЛ</b> для смены темы
     </div>
     <div class="mt-2 text-xs" style="color: var(--text-muted); max-width: 280px;">
-      📲 Нажмите 📲 чтобы установить приложение
+       Нажмите 📲 чтобы установить приложение
     </div>
   </div>
   
-  <!-- Log view -->
   <div id="logView" style="display:none;" class="pb-2"></div>
   
-  <!-- Graph view -->
   <div id="graphView" style="display:none;" class="p-3">
     <div class="rounded-lg p-3 mb-3" style="background: var(--bg-secondary);">
       <div class="flex justify-between items-center mb-2">
@@ -733,7 +771,6 @@
     </div>
   </div>
   
-  <!-- Monitor view -->
   <div id="monitorView" style="display:none;" class="p-2">
     <div class="rounded-lg p-2 mb-2" style="background: var(--bg-secondary);">
       <div class="flex justify-between items-center mb-2">
@@ -771,7 +808,6 @@
     </div>
   </div>
   
-  <!-- Errors view -->
   <div id="errorsView" style="display:none;" class="p-3">
     <div class="mb-3">
       <input type="text" id="errorSearch" placeholder="Код ошибки (4 символа)" maxlength="4" oninput="searchError()">
@@ -798,7 +834,6 @@
   
 </main>
 
-<!-- Bottom tabs -->
 <nav class="flex border-t flex-shrink-0" style="background: var(--tab-bg); border-color: var(--tab-border); padding-bottom: env(safe-area-inset-bottom);">
   <button class="tab-btn active" onclick="switchTab('log')" data-tab="log">
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -820,7 +855,6 @@
 
 </div>
 
-<!-- Row details modal -->
 <div class="modal-overlay" id="rowModal" onclick="if(event.target===this)closeModal('rowModal')">
   <div class="modal-content">
     <div class="p-3 border-b flex justify-between items-center" style="border-color: var(--border-header);">
@@ -831,7 +865,6 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -842,7 +875,6 @@ const installBtn = document.getElementById('installBtn');
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-// Регистрируем Service Worker для PWA (inline через Blob)
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   const swCode = `
@@ -864,28 +896,24 @@ function registerServiceWorker() {
   const blob = new Blob([swCode], { type: 'application/javascript' });
   const swUrl = URL.createObjectURL(blob);
   navigator.serviceWorker.register(swUrl, { scope: '/' }).catch(err => {
-    console.log('SW registration failed (expected for blob URL):', err.message);
+    console.log('SW registration failed:', err.message);
   });
 }
 
-// Обработчик beforeinstallprompt (Android Chrome)
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  // Показываем баннер только если не в режиме standalone
   if (!isStandalone) {
     installBanner.classList.add('show');
   }
 });
 
-// Обработка успешной установки
 window.addEventListener('appinstalled', () => {
   installBanner.classList.remove('show');
   deferredInstallPrompt = null;
   showToast('✅ Приложение установлено!');
 });
 
-// Клик по кнопке "Установить" в баннере
 installBtn.addEventListener('click', async () => {
   if (!deferredInstallPrompt) return;
   installBanner.classList.remove('show');
@@ -902,7 +930,6 @@ function dismissInstallBanner() {
   try { localStorage.setItem('sl-install-dismissed', '1'); } catch(e) {}
 }
 
-// Показать подсказку установки
 function showInstallHint() {
   if (isStandalone) {
     showToast('Приложение уже установлено');
@@ -913,8 +940,7 @@ function showInstallHint() {
   } else if (deferredInstallPrompt) {
     installBanner.classList.add('show');
   } else {
-    // Если нет события beforeinstallprompt (например, Firefox)
-    showToast('Используйте меню браузера → "Добавить на главный экран"');
+    showToast('Меню браузера → "Добавить на главный экран"');
   }
 }
 
@@ -922,20 +948,17 @@ function closeIosHint() {
   document.getElementById('iosHintModal').classList.remove('show');
 }
 
-// Скрыть кнопку установки если уже установлено
 if (isStandalone) {
   const ib = document.getElementById('installHeaderBtn');
   if (ib) ib.style.display = 'none';
 }
 
-// Не показывать баннер если пользователь его закрыл
 try {
   if (localStorage.getItem('sl-install-dismissed') === '1') {
     installBanner.classList.remove('show');
   }
 } catch(e) {}
 
-// Регистрируем SW после загрузки
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', registerServiceWorker);
 }
@@ -944,25 +967,16 @@ if ('serviceWorker' in navigator) {
 let currentTheme = 'dark';
 
 function getTheme() {
-  try {
-    return localStorage.getItem('sl-theme') || 'dark';
-  } catch(e) {
-    return 'dark';
-  }
+  try { return localStorage.getItem('sl-theme') || 'dark'; } catch(e) { return 'dark'; }
 }
 
 function setTheme(theme) {
   currentTheme = theme;
-  try {
-    localStorage.setItem('sl-theme', theme);
-  } catch(e) {}
+  try { localStorage.setItem('sl-theme', theme); } catch(e) {}
   
   const html = document.documentElement;
-  if (theme === 'light') {
-    html.setAttribute('data-theme', 'light');
-  } else {
-    html.removeAttribute('data-theme');
-  }
+  if (theme === 'light') html.setAttribute('data-theme', 'light');
+  else html.removeAttribute('data-theme');
   
   const icon = document.getElementById('themeIcon');
   if (icon) {
@@ -975,9 +989,7 @@ function setTheme(theme) {
   const meta = document.getElementById('themeColorMeta');
   if (meta) meta.content = theme === 'dark' ? '#1f2937' : '#ffffff';
   
-  if (speedChart) {
-    setTimeout(() => renderGraph(), 100);
-  }
+  if (speedChart) setTimeout(() => renderGraph(), 100);
 }
 
 function toggleTheme() {
@@ -1034,7 +1046,7 @@ const specialEvents = {
   'ENGINE': 'Работа главного привода',
   'LOG': 'Действие с логом',
   'MAIN': 'Включение КЦ',
-  'MODE': 'Переключение режима',
+  'MODE': 'Переключение режима работы',
   'MULTIRUN': 'Включение прогона',
   'ORDER': 'Нажатие кнопки приказа',
   'POS': 'Позиционирование',
@@ -1241,7 +1253,7 @@ function renderLog() {
     let cls = 'log-card';
     if (isDate) {
       cls += ' date-header';
-      html += `<div class="${cls} py-2 px-3 mt-2 mb-1"><div class="text-xs">📅 ${row[0].substr(6)}</div></div>`;
+      html += `<div class="${cls} py-2 px-3 mt-2 mb-1"><div class="text-xs"> ${row[0].substr(6)}</div></div>`;
       return;
     }
     const ev = row[1] || '', text = row[2] || '', time = row[0] || '';
@@ -1311,11 +1323,33 @@ function selectRow(idx) {
     const code = extractErrorCode(row[2]);
     const info = errorDB[code];
     if (info) {
-      html += `<div class="mt-3 p-2 rounded" style="background: var(--error-info-bg);">
-        <div class="text-xs font-semibold text-red-400 mb-1">Ошибка ${code}</div>
-        <div class="text-xs" style="color: var(--text-primary);">${info.desc}</div>
-        ${info.causes ? `<div class="text-xs mt-1" style="color: var(--text-secondary);">Причины: ${info.causes.join(', ')}</div>` : ''}
-      </div>`;
+      // Полная информация об ошибке как в справочнике
+      html += `<div class="error-full-info">
+        <div class="text-xs font-semibold text-red-400 mb-2">Ошибка ${code}</div>
+        <div class="text-sm mb-3" style="color: var(--text-primary);">${info.desc}</div>`;
+      if (info.causes && info.causes.length) {
+        html += `<div class="text-xs font-semibold mb-2" style="color: var(--text-secondary);">Причины / Решения:</div>`;
+        const maxCount = Math.max(info.causes.length, info.solutions.length);
+        for (let i = 0; i < maxCount; i++) {
+          const cause = info.causes[i] || '';
+          const solution = info.solutions[i] || '';
+          let rowText = `${i+1}. `;
+          if (cause) rowText += cause;
+          if (cause && solution) rowText += '  ►  ';
+          if (solution) rowText += solution;
+          html += `<div class="cause-row">${rowText}</div>`;
+        }
+      }
+      html += `</div>`;
+    } else {
+      // Специальные события
+      const special = specialEvents[code];
+      if (special) {
+        html += `<div class="error-full-info">
+          <div class="text-xs font-semibold text-blue-400 mb-2">Событие ${code}</div>
+          <div class="text-sm" style="color: var(--text-primary);">${special}</div>
+        </div>`;
+      }
     }
   }
   html += '</div>';
@@ -1662,6 +1696,7 @@ function showAllEvents() {
   showToast('Показаны все события');
 }
 
+// ============ ERRORS ============
 function searchError() {
   const input = document.getElementById('errorSearch').value.toUpperCase();
   const display = document.getElementById('errorDisplay');
@@ -1670,15 +1705,35 @@ function searchError() {
   if (!info && code.length === 4) { const template = code.substr(0, 2) + 'XX'; if (errorDB[template]) info = errorDB[template]; }
   const special = specialEvents[code];
   if (info) {
-    display.innerHTML = `<div class="text-xs mb-1" style="color: var(--text-secondary);">Код ошибки</div>
+    let causesHtml = '';
+    if (info.causes && info.causes.length) {
+      const maxCount = Math.max(info.causes.length, info.solutions.length);
+      causesHtml = `<div class="text-xs font-semibold mt-3" style="color: var(--text-secondary);">Причины / Решения:</div><div class="mt-2 space-y-2">`;
+      for (let i = 0; i < maxCount; i++) {
+        const cause = info.causes[i] || '';
+        const solution = info.solutions[i] || '';
+        let rowText = `${i+1}. `;
+        if (cause) rowText += cause;
+        if (cause && solution) rowText += '  ►  ';
+        if (solution) rowText += solution;
+        causesHtml += `<div class="text-xs p-2 rounded" style="background: var(--error-info-bg);">${rowText}</div>`;
+      }
+      causesHtml += '</div>';
+    }
+    display.innerHTML = `
+      <div class="text-xs mb-1" style="color: var(--text-secondary);">Код ошибки</div>
       <div class="text-lg font-bold text-red-400 mb-2">${code}</div>
-      <div class="text-sm mb-3">${info.desc}</div>
-      ${info.causes && info.causes.length ? `<div class="text-xs font-semibold mt-2" style="color: var(--text-secondary);">Причины / Решения:</div>
-        <div class="mt-1 space-y-1">${info.causes.map((c, i) => `<div class="text-xs p-2 rounded" style="background: var(--error-info-bg);">${i+1}. ${c}${info.solutions[i] ? ' <span class="text-green-400">►</span> ' + info.solutions[i] : ''}</div>`).join('')}</div>` : ''}`;
+      <div class="text-sm mb-2">${info.desc}</div>
+      ${causesHtml}`;
   } else if (special) {
-    display.innerHTML = `<div class="text-xs mb-1" style="color: var(--text-secondary);">Событие</div><div class="text-lg font-bold text-blue-400 mb-2">${code}</div><div class="text-sm">${special}</div>`;
+    display.innerHTML = `<div class="text-xs mb-1" style="color: var(--text-secondary);">Событие</div>
+      <div class="text-lg font-bold text-blue-400 mb-2">${code}</div>
+      <div class="text-sm">${special}</div>`;
   } else {
-    display.innerHTML = `<div class="text-center py-6"><div class="text-3xl mb-2">🔍</div><div class="text-sm" style="color: var(--text-muted);">Код ${code} не найден</div></div>`;
+    display.innerHTML = `<div class="text-center py-6">
+      <div class="text-3xl mb-2"></div>
+      <div class="text-sm" style="color: var(--text-muted);">Код ${code} не найден</div>
+    </div>`;
   }
 }
 
@@ -1690,19 +1745,56 @@ function buildErrorList() {
     if (row[0].startsWith('Дата: ')) { currentDate = row[0].substr(6); continue; }
     const ev = row[1];
     if (ev === 'ERROR' || ev === 'ERROR C' || ev === 'ERROR R' || ev === 'WARNING') {
-      errorEntries.push({ date: currentDate, type: ev, time: row[0], message: row[2] || '', rowIndex: i });
+      errorEntries.push({
+        date: currentDate,
+        type: ev,
+        time: row[0],
+        message: row[2] || '',
+        rowIndex: i
+      });
     }
   }
+  
   const list = document.getElementById('errorList');
-  if (!errorEntries.length) { list.innerHTML = '<div class="text-center text-sm py-4" style="color: var(--text-muted);">Ошибок не найдено</div>'; return; }
+  if (!errorEntries.length) {
+    list.innerHTML = '<div class="text-center text-sm py-4" style="color: var(--text-muted);">Ошибок не найдено</div>';
+    return;
+  }
+  
   list.innerHTML = errorEntries.slice(-20).reverse().map(e => {
     const msg = e.message.length > 40 ? e.message.substr(0, 37) + '...' : e.message;
     const color = e.type === 'ERROR C' ? 'red' : e.type === 'ERROR R' ? 'orange' : e.type === 'WARNING' ? 'blue' : 'red';
-    return `<div class="rounded p-2 border-l-4 border-${color}-500 cursor-pointer" style="background: var(--error-list-bg);" onclick="goToError(${e.rowIndex})">
-      <div class="flex justify-between items-center"><span class="text-xs font-bold text-${color}-400">${e.type}</span><span class="text-[10px]" style="color: var(--text-muted);">${e.date} ${e.time.substr(0,8)}</span></div>
-      <div class="text-xs mt-1 truncate" style="color: var(--text-primary);">${msg}</div>
+    const code = extractErrorCode(e.message);
+    const shortTime = e.time.length >= 8 ? e.time.substr(0,8) : e.time;
+    return `<div class="error-item" style="border-left-color: var(--${color === 'red' ? 'error-c-border' : color === 'orange' ? 'error-r-border' : 'warning-border'});" onclick="showErrorInfo('${code}')">
+      <div class="error-info">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-${color}-400">${e.type}${code ? ' ' + code : ''}</span>
+          <span class="text-[10px]" style="color: var(--text-muted);">${e.date} ${shortTime}</span>
+        </div>
+        <div class="text-xs mt-1 truncate" style="color: var(--text-primary);">${msg}</div>
+      </div>
+      <button class="eye-btn" onclick="event.stopPropagation();goToError(${e.rowIndex})" title="Перейти к ошибке в логе">👁️</button>
     </div>`;
   }).join('');
+}
+
+// Показать информацию об ошибке в справочнике (клик по строке)
+function showErrorInfo(code) {
+  if (!code || code.length < 4) {
+    showToast('Код ошибки не найден');
+    return;
+  }
+  // Переключаемся на таб ошибок
+  switchTab('errors');
+  // Устанавливаем код в поле поиска
+  document.getElementById('errorSearch').value = code;
+  // Запускаем поиск
+  searchError();
+  // Прокручиваем к блоку с информацией
+  setTimeout(() => {
+    document.getElementById('errorDisplay').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
 }
 
 function goToError(idx) {
