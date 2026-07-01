@@ -1300,9 +1300,11 @@ updateSpeed();
 
 
 
+
+
 // ============ CLOUD LOADER ============
 const CORS_PROXIES = [
-  url => `https://sl-log-proxy.zenitogk.workers.dev?url=${encodeURIComponent(url)}`, // Ваш Worker
+  url => `https://sl-log-proxy.zenitogk.workers.dev?url=${encodeURIComponent(url)}`,
   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
 ];
@@ -1359,11 +1361,6 @@ async function fetchViaProxy(url) {
   throw lastErr || new Error('Все прокси недоступны');
 }
 
-
-
-
-
-  
 async function loadCloudFileList() {
   const raw = document.getElementById('cloudUrl').value;
   const base = normalizeShareUrl(raw);
@@ -1389,97 +1386,6 @@ async function loadCloudFileList() {
 
   let files = [];
 
-  // Метод 1: AJAX endpoint Nextcloud для публичных ссылок
-  try {
-    const ajaxUrl = `${serverUrl}/index.php/apps/files_sharing/ajax/publiclist.php?token=${token}&dir=%2F`;
-    console.log('[Cloud] Method 1: AJAX endpoint:', ajaxUrl);
-    const response = await fetchViaProxy(ajaxUrl);
-    console.log('[Cloud] AJAX response:', response.substring(0, 500));
-    
-    try {
-      const json = JSON.parse(response);
-      if (json && json.data && Array.isArray(json.data.files)) {
-        files = json.data.files.map(f => ({
-          name: f.name,
-          size: f.size || 0,
-          type: f.mimetype || '',
-          isDir: f.type === 'dir',
-          isCsv: /\.csv$/i.test(f.name)
-        }));
-        console.log('[Cloud] AJAX found files:', files.length);
-      }
-    } catch(e) {
-      console.error('[Cloud] AJAX parse failed:', e);
-    }
-  } catch(e) {
-    console.error('[Cloud] Method 1 failed:', e);
-  }
-
-  // Метод 2: OCS API
-  if (!files.length) {
-    try {
-      const ocsUrl = `${serverUrl}/ocs/v1.php/apps/files_sharing/api/v1/shares?format=json&share_token=${token}`;
-      console.log('[Cloud] Method 2: OCS API:', ocsUrl);
-      const response = await fetchViaProxy(ocsUrl);
-      console.log('[Cloud] OCS response:', response.substring(0, 500));
-      
-      try {
-        const json = JSON.parse(response);
-        if (json && json.ocs && json.ocs.data && Array.isArray(json.ocs.data)) {
-          files = json.ocs.data.map(f => ({
-            name: f.item_target?.replace(/^\//, '') || f.path?.split('/').pop() || '',
-            size: 0,
-            type: '',
-            isDir: false,
-            isCsv: /\.csv$/i.test(f.item_target || f.path || '')
-          })).filter(f => f.name);
-          console.log('[Cloud] OCS found files:', files.length);
-        }
-      } catch(e) {
-        console.error('[Cloud] OCS parse failed:', e);
-      }
-    } catch(e) {
-      console.error('[Cloud] Method 2 failed:', e);
-    }
-  }
-
-  // Метод 3: Парсинг HTML страницы
-  if (!files.length) {
-    try {
-      console.log('[Cloud] Method 3: HTML parsing');
-      const html = await fetchViaProxy(base);
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      
-      // Ищем JSON в скриптах
-      doc.querySelectorAll('script').forEach(script => {
-        const text = script.textContent || '';
-        const patterns = [
-async function loadCloudFileList() {
-  const raw = document.getElementById('cloudUrl').value;
-  const base = normalizeShareUrl(raw);
-  const token = extractToken(base);
-  const serverUrl = extractBaseUrl(base);
-  
-  const status = document.getElementById('cloudStatus');
-  const progress = document.getElementById('cloudProgress');
-  const bar = document.getElementById('cloudProgressBar');
-  const wrap = document.getElementById('cloudFilesWrap');
-  const list = document.getElementById('cloudFileList');
-  const btn = document.getElementById('cloudLoadBtn');
-
-  console.log('[Cloud] Base:', base, 'Token:', token, 'Server:', serverUrl);
-  if (!base || !token) { status.textContent = '❌ Неверная ссылка'; return; }
-
-  wrap.style.display = 'none';
-  list.innerHTML = '';
-  status.textContent = '⏳ Получение списка файлов...';
-  progress.style.display = 'block';
-  bar.style.width = '30%';
-  btn.disabled = true;
-
-  let files = [];
-
-  // Пробуем получить HTML страницы
   try {
     console.log('[Cloud] Fetching HTML page...');
     const html = await fetchViaProxy(base);
@@ -1496,13 +1402,9 @@ async function loadCloudFileList() {
       
       // Паттерны для поиска данных о файлах
       const patterns = [
-        // Nextcloud filesData
         /filesData\s*=\s*(\{[\s\S]{100,50000}?\});?/,
-        // OC.Files или OCA.Files
         /OC\.Files[\s\S]*?fileList[\s\S]*?=\s*(\{[\s\S]{100,50000}?\});?/,
-        // JSON с массивом файлов
         /"files"\s*:\s*(\[[\s\S]{100,50000}?\])/,
-        // Vue/Angular данные
         /fileList\s*:\s*(\[[\s\S]{100,50000}?\])/,
       ];
       
@@ -1514,7 +1416,6 @@ async function loadCloudFileList() {
             const data = JSON.parse(matches[1]);
             console.log('[Cloud] Parsed JSON:', typeof data);
             
-            // Если это массив файлов
             if (Array.isArray(data)) {
               data.forEach(f => {
                 if (f.name || f.basename) {
@@ -1530,9 +1431,7 @@ async function loadCloudFileList() {
                   }
                 }
               });
-            }
-            // Если это объект с файлами
-            else if (data && typeof data === 'object') {
+            } else if (data && typeof data === 'object') {
               Object.keys(data).forEach(key => {
                 const item = data[key];
                 if (item.name || item.basename) {
@@ -1602,7 +1501,6 @@ async function loadCloudFileList() {
     if (files.length > 0) {
       console.log('[Cloud] Files:', files.map(f => f.name).join(', '));
     } else {
-      // Показываем превью HTML для отладки
       console.log('[Cloud] HTML preview (first 2000 chars):', html.substring(0, 2000));
     }
     
@@ -1705,13 +1603,7 @@ async function downloadSelectedCloudFiles() {
   const dt = new DataTransfer();
   files.forEach(f => dt.items.add(f));
   await handleFiles({ target: { files: dt.files, value: '' } });
-}
-
-
-
-  
-
-      
+    }
       
   
 </script>
