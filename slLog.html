@@ -1353,28 +1353,35 @@ async function loadCloudExplorer() {
       folders[f.folder].push(f);
     });
 
+    // --- ОБНОВЛЕННЫЕ СТИЛИ ДЛЯ ИДЕАЛЬНОГО ВЫРАВНИВАНИЯ ---
+    const labelStyle = "display: flex; align-items: center; gap: 8px; margin: 2px 0; padding: 3px 4px; cursor: pointer; border-radius: 4px; transition: background 0.2s;";
+    const checkboxStyle = "margin: 0; width: 14px; height: 14px; flex-shrink: 0; cursor: pointer;";
+    const hoverEffect = "this.style.background='rgba(156, 163, 175, 0.1)'";
+    const leaveEffect = "this.style.background='transparent'";
+
     // Генерируем HTML проводника
-    let html = '<div style="margin-bottom: 12px; border-bottom: 1px solid #4b5563; padding-bottom: 8px;">';
-    html += '<strong style="color:#60a5fa;">🔥 Последние 10 логов:</strong><br>';
+    let html = '<div style="margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">';
+    html += '<strong style="color:#60a5fa; display:block; margin-bottom: 6px;">🔥 Последние 10 логов:</strong>';
     top10.forEach(f => {
-      html += `<label style="display:block; margin: 4px 0; cursor:pointer;">
-        <input type="checkbox" class="nc-file-cb" value="${f.path}" data-name="${f.name}" data-folder="${f.folder}"> 
-        ${f.name} <span style="color:#9ca3af; font-size:10px;">[${f.folder}]</span>
+      html += `<label style="${labelStyle}" onmouseover="${hoverEffect}" onmouseout="${leaveEffect}">
+        <input type="checkbox" class="nc-file-cb" value="${f.path}" data-name="${f.name}" data-folder="${f.folder}" style="${checkboxStyle}"> 
+        <span style="line-height: 1;">${f.name} <span style="color:var(--text-muted); font-size:10px; margin-left: 4px;">[${f.folder}]</span></span>
       </label>`;
     });
     html += '</div>';
 
-    html += '<strong style="color:#60a5fa;">📁 Все папки:</strong><br>';
+    html += '<strong style="color:#60a5fa; display:block; margin-bottom: 6px;">📁 Все папки:</strong>';
     for (const folderName in folders) {
-      // Используем тег details для создания раскрывающейся папки
-      html += `<details style="margin: 4px 0; cursor:pointer;">
-        <summary style="font-weight: bold; outline: none;">📂 ${folderName} (${folders[folderName].length})</summary>
-        <div style="margin-left: 20px; border-left: 1px dashed #4b5563; padding-left: 8px; margin-top: 4px;">`;
+      html += `<details style="margin: 4px 0;">
+        <summary style="font-weight: 600; outline: none; cursor: pointer; padding: 4px 0; display: flex; align-items: center; gap: 6px; user-select: none;">
+          📁 ${folderName} <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(${folders[folderName].length} файлов)</span>
+        </summary>
+        <div style="margin-left: 8px; border-left: 1px dashed #4b5563; padding-left: 12px; margin-top: 4px;">`;
       
       folders[folderName].forEach(f => {
-        html += `<label style="display:block; margin: 2px 0; cursor:pointer;">
-          <input type="checkbox" class="nc-file-cb" value="${f.path}" data-name="${f.name}" data-folder="${f.folder}"> 
-          ${f.name}
+        html += `<label style="${labelStyle}" onmouseover="${hoverEffect}" onmouseout="${leaveEffect}">
+          <input type="checkbox" class="nc-file-cb" value="${f.path}" data-name="${f.name}" data-folder="${f.folder}" style="${checkboxStyle}"> 
+          <span style="line-height: 1;">${f.name}</span>
         </label>`;
       });
       html += `</div></details>`;
