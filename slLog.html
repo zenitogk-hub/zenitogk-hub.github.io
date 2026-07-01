@@ -1,1494 +1,1829 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>СЛ LogViewer Web</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12px; /* Уменьшенный базовый шрифт */
-            margin: 0;
-            background-color: #f5f5f5;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-        .header {
-            position: sticky;
-            top: 0;
-            z-index: 100; /* Высокий z-index для закрепления */
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background-color: #e9e9e9;
-            border-bottom: 1px solid #ccc; /* Визуальное отделение */
-        }
-        .header > * {
-            flex-shrink: 0;
-        }
-        #fileInput {
-            display: none;
-        }
-        #fileLabel {
-            display: inline-block;
-            padding: 6px 10px;
-            background-color: #007bff;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            border: none;
-        }
-        #fileLabel:hover {
-            background-color: #0056b3;
-        }
-        #fileNameDisplay {
-            margin-left: 10px;
-            font-weight: bold;
-            color: #333;
-            font-size: 12px;
-        }
-        #saveButton {
-            padding: 6px 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        #saveButton:hover {
-            background-color: #218838;
-        }
-        #chartButton {
-            padding: 6px 10px;
-            background-color: #ffc107; /* Желтый */
-            color: black;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        #chartButton:hover {
-            background-color: #e0a800;
-        }
-        #refreshButton {
-            padding: 6px 10px;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        #refreshButton:hover {
-            background-color: #5a6268;
-        }
-        #statusBar {
-            margin-top: 5px; /* Уменьшено */
-            padding: 4px; /* Уменьшено */
-            background-color: #d1ecf1;
-            border: 1px solid #bee5eb;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        #errorDisplay {
-            margin-top: 5px; /* Уменьшено */
-            padding: 8px; /* Уменьшено */
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            border-radius: 4px;
-            white-space: pre-wrap;
-            font-size: 11px;
-        }
-        #tableView {
-            margin-top: 5px; /* Уменьшено */
-            overflow-x: auto;
-            /* Высота таблицы занимает оставшееся пространство */
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        #tableContainer {
-            overflow-y: auto; /* Разрешаем вертикальную прокрутку таблицы */
-            flex-grow: 1;
-            position: relative;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Уменьшена тень */
-            font-size: 11px; /* Уменьшенный шрифт в таблице */
-        }
-        thead {
-            position: sticky;
-            top: 0;
-            z-index: 50; /* Выше чем columnFilters, но ниже header */
-            background-color: #f2f2f2; /* Фон для закрепленного заголовка */
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 6px 4px; /* Уменьшены отступы */
-            text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        th {
-            cursor: pointer;
-            position: relative; /* Для позиционирования фильтров */
-        }
-        /* Стили для чекбоксов в заголовке и строках */
-        th.checkbox-header, td.checkbox-cell {
-            width: 30px; /* Фиксированная ширина для столбца чекбоксов */
-            text-align: center;
-            padding: 0;
-        }
-        th.checkbox-header input, td.checkbox-cell input {
-            margin: 0 auto;
-            display: block;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        /* Цвета строк */
-        tr.selected {
-            background-color: #b3d9ff !important;
-        }
-        tr.error-critical {
-            background-color: #ffccbb !important;
-        }
-        tr.error-resetting {
-            background-color: #ffe5cc !important;
-        }
-        tr.warning {
-            background-color: #cce5ff !important;
-        }
-        tr.engine-start {
-            background-color: #ccffcc !important;
-        }
-        tr.engine-stop {
-            background-color: #ffcccc !important;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1f2937">
+<title>СЛ LogViewer Mobile</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg-primary: #111827;
+    --bg-secondary: #1f2937;
+    --bg-tertiary: #374151;
+    --bg-input: #374151;
+    --border-color: #374151;
+    --border-header: #374151;
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --log-card-bg: #1f2937;
+    --log-card-border: #374151;
+    --date-header-bg: #312e81;
+    --date-header-border: #6366f1;
+    --engine-start-bg: #064e3b;
+    --engine-start-border: #10b981;
+    --engine-stop-bg: #7f1d1d;
+    --engine-stop-border: #ef4444;
+    --error-c-bg: #7f1d1d;
+    --error-c-border: #dc2626;
+    --error-r-bg: #7c2d12;
+    --error-r-border: #f97316;
+    --warning-bg: #1e3a8a;
+    --warning-border: #3b82f6;
+    --shaft-bg: #111827;
+    --shaft-border: #1f2937;
+    --shaft-num-bg: #2a3349;
+    --shaft-num-text: #e5e7eb;
+    --shaft-call-bg: #f0f0f0;
+    --shaft-call-text: #374151;
+    --shaft-call-active: #90ee90;
+    --shaft-order-bg: #f0f0f0;
+    --shaft-order-color: #0000ff;
+    --shaft-ind-bg: #2a3349;
+    --shaft-ind-text: white;
+    --shaft-sensor-bg: #f0f0f0;
+    --shaft-sensor-text: #374151;
+    --shaft-sensor-active: #90ee90;
+    --door-cell-bg: #5f606c;
+    --door-cell-yellow: #e5c07b;
+    --status-ind-bg: #2a3349;
+    --status-ind-text: #e5e7eb;
+    --status-active-main: #90ee90;
+    --status-active-pos: #9090ee;
+    --status-active-multi: #ffa500;
+    --event-bg: #111827;
+    --event-border: #2d3748;
+    --chip-bg: #374151;
+    --chip-text: #e5e7eb;
+    --chip-active-bg: #3b82f6;
+    --chip-active-text: white;
+    --badge-stop-bg: #7f1d1d;
+    --badge-stop-border: #dc2626;
+    --badge-stop-text: #fca5a5;
+    --badge-start-bg: #064e3b;
+    --badge-start-border: #10b981;
+    --badge-start-text: #6ee7b7;
+    --badge-error-bg: #7f1d1d;
+    --badge-error-border: #dc2626;
+    --badge-error-text: #fca5a5;
+    --badge-warning-bg: #1e3a8a;
+    --badge-warning-border: #3b82f6;
+    --badge-warning-text: #93c5fd;
+    --badge-info-bg: #1f2937;
+    --badge-info-border: #6b7280;
+    --badge-info-text: #d1d5db;
+    --badge-orange-bg: #7c2d12;
+    --badge-orange-border: #f97316;
+    --badge-orange-text: #fdba74;
+    --badge-blue-bg: #1e3a8a;
+    --badge-blue-border: #3b82f6;
+    --badge-blue-text: #93c5fd;
+    --badge-green-bg: #064e3b;
+    --badge-green-border: #10b981;
+    --badge-green-text: #6ee7b7;
+    --badge-purple-bg: #4c1d95;
+    --badge-purple-border: #a855f7;
+    --badge-purple-text: #d8b4fe;
+    --meta-text: #6b7280;
+    --tab-bg: #1f2937;
+    --tab-border: #374151;
+    --tab-inactive: #9ca3af;
+    --tab-active: #60a5fa;
+    --modal-bg: #1f2937;
+    --modal-overlay: rgba(0,0,0,0.7);
+    --toast-bg: #1f2937;
+    --toast-border: #4b5563;
+    --scrollbar-thumb: #4b5563;
+    --error-list-bg: #1f2937;
+    --error-display-bg: #1f2937;
+    --error-info-bg: #111827;
+  }
 
-        /* Стили для фильтров по колонкам */
-        #columnFilters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            padding: 5px;
-            background-color: #e9ecef;
-            border-bottom: 1px solid #ccc;
-            position: sticky;
-            top: 0;
-            z-index: 30; /* Ниже thead */
-        }
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            min-width: 80px; /* Минимальная ширина группы фильтра */
-        }
-        .filter-label {
-            font-size: 10px; /* Очень маленький шрифт для подписей */
-            margin-bottom: 1px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .filter-select {
-            padding: 2px; /* Уменьшены отступы */
-            font-size: 11px; /* Шрифт как в таблице */
-        }
+  [data-theme="light"] {
+    --bg-primary: #f3f4f6;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e5e7eb;
+    --bg-input: #ffffff;
+    --border-color: #d1d5db;
+    --border-header: #e5e7eb;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+    --log-card-bg: #ffffff;
+    --log-card-border: #e5e7eb;
+    --date-header-bg: #e0e7ff;
+    --date-header-border: #6366f1;
+    --engine-start-bg: #d1fae5;
+    --engine-start-border: #10b981;
+    --engine-stop-bg: #fee2e2;
+    --engine-stop-border: #ef4444;
+    --error-c-bg: #fee2e2;
+    --error-c-border: #dc2626;
+    --error-r-bg: #ffedd5;
+    --error-r-border: #f97316;
+    --warning-bg: #dbeafe;
+    --warning-border: #3b82f6;
+    --shaft-bg: #f9fafb;
+    --shaft-border: #e5e7eb;
+    --shaft-num-bg: #e5e7eb;
+    --shaft-num-text: #1f2937;
+    --shaft-call-bg: #e5e7eb;
+    --shaft-call-text: #1f2937;
+    --shaft-call-active: #10b981;
+    --shaft-order-bg: #e5e7eb;
+    --shaft-order-color: #2563eb;
+    --shaft-ind-bg: #e5e7eb;
+    --shaft-ind-text: #1f2937;
+    --shaft-sensor-bg: #e5e7eb;
+    --shaft-sensor-text: #1f2937;
+    --shaft-sensor-active: #10b981;
+    --door-cell-bg: #9ca3af;
+    --door-cell-yellow: #f59e0b;
+    --status-ind-bg: #e5e7eb;
+    --status-ind-text: #1f2937;
+    --status-active-main: #10b981;
+    --status-active-pos: #6366f1;
+    --status-active-multi: #f59e0b;
+    --event-bg: #f9fafb;
+    --event-border: #e5e7eb;
+    --chip-bg: #e5e7eb;
+    --chip-text: #1f2937;
+    --chip-active-bg: #3b82f6;
+    --chip-active-text: white;
+    --badge-stop-bg: #fee2e2;
+    --badge-stop-border: #dc2626;
+    --badge-stop-text: #991b1b;
+    --badge-start-bg: #d1fae5;
+    --badge-start-border: #10b981;
+    --badge-start-text: #065f46;
+    --badge-error-bg: #fee2e2;
+    --badge-error-border: #dc2626;
+    --badge-error-text: #991b1b;
+    --badge-warning-bg: #dbeafe;
+    --badge-warning-border: #3b82f6;
+    --badge-warning-text: #1e40af;
+    --badge-info-bg: #f3f4f6;
+    --badge-info-border: #9ca3af;
+    --badge-info-text: #374151;
+    --badge-orange-bg: #ffedd5;
+    --badge-orange-border: #f97316;
+    --badge-orange-text: #9a3412;
+    --badge-blue-bg: #dbeafe;
+    --badge-blue-border: #3b82f6;
+    --badge-blue-text: #1e40af;
+    --badge-green-bg: #d1fae5;
+    --badge-green-border: #10b981;
+    --badge-green-text: #065f46;
+    --badge-purple-bg: #ede9fe;
+    --badge-purple-border: #a855f7;
+    --badge-purple-text: #6b21a8;
+    --meta-text: #9ca3af;
+    --tab-bg: #ffffff;
+    --tab-border: #e5e7eb;
+    --tab-inactive: #6b7280;
+    --tab-active: #2563eb;
+    --modal-bg: #ffffff;
+    --modal-overlay: rgba(0,0,0,0.5);
+    --toast-bg: #ffffff;
+    --toast-border: #d1d5db;
+    --scrollbar-thumb: #9ca3af;
+    --error-list-bg: #ffffff;
+    --error-display-bg: #ffffff;
+    --error-info-bg: #f3f4f6;
+  }
 
-        /* Стили для поиска ошибок */
-        .error-search-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 5px; /* Уменьшено */
-        }
-        #errorSearchInput {
-            padding: 4px; /* Уменьшено */
-            font-size: 12px;
-            width: 100px;
-        }
-        #errorSearchButton {
-             padding: 4px 8px; /* Уменьшено */
-             background-color: #17a2b8;
-             color: white;
-             border: none;
-             border-radius: 4px;
-             cursor: pointer;
-             font-size: 12px;
-        }
-        #errorSearchButton:hover {
-             background-color: #138496;
-        }
+  * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+  html, body { 
+    overscroll-behavior: none; 
+    -webkit-user-select: none;
+    user-select: none;
+    height: 100vh;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .scroll-area {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .scroll-area::-webkit-scrollbar { width: 4px; }
+  .scroll-area::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+  
+  .log-card {
+    background: var(--log-card-bg);
+    border-left: 3px solid var(--log-card-border);
+    transition: transform 0.1s, background 0.3s;
+    padding: 6px 8px;
+    margin-bottom: 2px;
+  }
+  .log-card:active { transform: scale(0.98); }
+  .log-card.selected { border-left-color: #3b82f6; background: #1e3a5f; }
+  .log-card.date-header { 
+    background: var(--date-header-bg); 
+    border-left-color: var(--date-header-border);
+    font-weight: 600;
+  }
+  .log-card.engine-start { border-left-color: var(--engine-start-border); background: var(--engine-start-bg); }
+  .log-card.engine-stop { border-left-color: var(--engine-stop-border); background: var(--engine-stop-bg); }
+  .log-card.error-c { border-left-color: var(--error-c-border); background: var(--error-c-bg); }
+  .log-card.error-r { border-left-color: var(--error-r-border); background: var(--error-r-bg); }
+  .log-card.warning { border-left-color: var(--warning-border); background: var(--warning-bg); }
+  
+  .tab-btn {
+    flex: 1;
+    padding: 10px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: var(--tab-inactive);
+    transition: all 0.2s;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .tab-btn.active { color: var(--tab-active); }
+  .tab-btn svg { width: 22px; height: 22px; }
+  .tab-btn span { font-size: 10px; }
+  
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--modal-overlay);
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-content {
+    background: var(--modal-bg);
+    width: 95%;
+    max-width: 500px;
+    max-height: 90vh;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.3s;
+  }
+  
+  .shaft-floor {
+    display: grid;
+    grid-template-columns: 40px 32px 32px 32px 40px 24px 32px;
+    gap: 2px;
+    height: 38px;
+    align-items: center;
+    background: var(--shaft-bg);
+    border-bottom: 1px solid var(--shaft-border);
+  }
+  .shaft-floor-num {
+    background: var(--shaft-num-bg);
+    color: var(--shaft-num-text);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 13px;
+  }
+  .shaft-call-btn {
+    height: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--shaft-call-bg);
+    color: var(--shaft-call-text);
+    font-size: 10px;
+    border-radius: 2px;
+  }
+  .shaft-call-btn.active { background: var(--shaft-call-active); }
+  .shaft-order {
+    background: var(--shaft-order-bg);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--shaft-order-color);
+    font-weight: bold;
+  }
+  .shaft-floor-ind {
+    background: var(--shaft-ind-bg);
+    color: var(--shaft-ind-text);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 13px;
+  }
+  .shaft-dir {
+    background: var(--shaft-ind-bg);
+    color: var(--shaft-ind-text);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .shaft-sensor {
+    background: var(--shaft-sensor-bg);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--shaft-sensor-text);
+  }
+  .shaft-sensor.active { background: var(--shaft-sensor-active); }
+  
+  .door-indicator {
+    display: flex;
+    gap: 2px;
+    padding: 4px;
+    background: var(--shaft-bg);
+    border-radius: 4px;
+  }
+  .door-cell {
+    width: 8px;
+    height: 24px;
+    background: var(--door-cell-bg);
+    border-radius: 1px;
+  }
+  .door-cell.yellow { background: var(--door-cell-yellow); }
+  
+  .status-ind {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    background: var(--status-ind-bg);
+    color: var(--status-ind-text);
+  }
+  .status-ind.active-main { background: var(--status-active-main); color: #000; }
+  .status-ind.active-pos { background: var(--status-active-pos); color: #000; }
+  .status-ind.active-multi { background: var(--status-active-multi); color: #000; }
+  
+  .event-line {
+    font-family: 'Segoe UI', monospace;
+    font-size: 11px;
+    line-height: 1.4;
+    padding: 2px 8px;
+    border-bottom: 1px solid var(--event-border);
+  }
+  .event-time { color: var(--text-secondary); }
+  .event-error { color: #ef4444; font-weight: bold; }
+  .event-warning { color: #60a5fa; font-weight: bold; }
+  .event-mode { color: #10b981; }
+  .event-pos { color: #3b82f6; }
+  .event-multirun { color: #f97316; }
+  
+  input, select {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+    width: 100%;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+  }
+  input:focus, select:focus { outline: none; border-color: #3b82f6; }
+  
+  .btn-primary {
+    background: #3b82f6;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary:active { background: #2563eb; }
+  
+  .btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  .btn-secondary:active { opacity: 0.8; }
+  
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--toast-bg);
+    color: var(--text-primary);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    border: 1px solid var(--toast-border);
+  }
+  .toast.show { opacity: 1; }
+  
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    border: 1px solid;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge-stop { background: var(--badge-stop-bg); border-color: var(--badge-stop-border); color: var(--badge-stop-text); }
+  .badge-start { background: var(--badge-start-bg); border-color: var(--badge-start-border); color: var(--badge-start-text); }
+  .badge-error { background: var(--badge-error-bg); border-color: var(--badge-error-border); color: var(--badge-error-text); }
+  .badge-warning { background: var(--badge-warning-bg); border-color: var(--badge-warning-border); color: var(--badge-warning-text); }
+  .badge-info { background: var(--badge-info-bg); border-color: var(--badge-info-border); color: var(--badge-info-text); }
+  .badge-orange { background: var(--badge-orange-bg); border-color: var(--badge-orange-border); color: var(--badge-orange-text); }
+  .badge-blue { background: var(--badge-blue-bg); border-color: var(--badge-blue-border); color: var(--badge-blue-text); }
+  .badge-green { background: var(--badge-green-bg); border-color: var(--badge-green-border); color: var(--badge-green-text); }
+  .badge-purple { background: var(--badge-purple-bg); border-color: var(--badge-purple-border); color: var(--badge-purple-text); }
+  
+  .meta-text {
+    font-size: 10px;
+    color: var(--meta-text);
+    white-space: nowrap;
+  }
 
-        /* Стили для графика */
-        #chartContainer {
-            display: none;
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 500px; /* Фиксированная ширина */
-            max-height: calc(100vh - 40px); /* Максимальная высота с отступами */
-            background-color: white;
-            padding: 10px;
-            border: 2px solid #333;
-            border-radius: 5px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 1000; /* Высокий z-index */
-            overflow-y: auto; /* Прокрутка внутри контейнера графика */
-        }
-        #chartTitle {
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        #myChart {
-            width: 100% !important;
-            height: 350px !important; /* Фиксированная высота холста */
-        }
-        #closeChartBtn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            color: #999;
-        }
-        #closeChartBtn:hover {
-            color: #333;
-        }
+  .logo-btn {
+    cursor: pointer;
+    transition: transform 0.2s;
+    user-select: none;
+  }
+  .logo-btn:active { transform: scale(0.92); }
 
-        /* Стили для выделения диапазона чекбоксов */
-        .checkbox-range-selection {
-            background-color: #ffffcc !important;
-        }
-
-        /* Адаптивность */
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .header > * {
-                width: 100%;
-                margin-bottom: 5px;
-            }
-            #columnFilters {
-                flex-direction: column;
-            }
-            #tableView {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            table {
-                min-width: 800px; /* Минимальная ширина для таблицы на мобильных */
-            }
-            #chartContainer {
-                width: 90%;
-                left: 5%;
-                right: 5%;
-            }
-        }
-    </style>
+  .theme-icon {
+    transition: transform 0.3s;
+    display: inline-block;
+  }
+  .theme-icon.spin {
+    animation: spin 0.4s ease;
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+</style>
 </head>
 <body>
 
-    <div class="header">
-        <input type="file" id="fileInput" accept=".csv" multiple>
-        <label for="fileInput" id="fileLabel">Открыть CSV логи</label>
-        <span id="fileNameDisplay"></span>
-        <button id="saveButton">Сохранить в файл</button>
-        <select id="dateFilter">
-            <option value="Все даты">Все даты</option>
-        </select>
-        <select id="errorFilter">
-            <option value="">Все ошибки</option>
-        </select>
-        <button id="chartButton">График</button>
-        <button id="refreshButton">Обновить</button>
-		<input type="text" id="errorSearchInput" placeholder="Код ошибки" maxlength="4">
-        <button id="errorSearchButton">Поиск</button>
+<!-- Header -->
+<header class="border-b px-3 py-2 flex items-center justify-between" style="background: var(--bg-secondary); border-color: var(--border-header); padding-top: max(8px, env(safe-area-inset-top));">
+  <div class="flex items-center gap-2">
+    <div class="logo-btn w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-white font-bold text-sm relative" onclick="toggleTheme()" title="Сменить тему">
+      <span id="logoText">СЛ</span>
+      <span class="theme-icon absolute -top-1 -right-1 text-[10px]" id="themeIcon">🌙</span>
     </div>
+    <div>
+      <div class="text-sm font-semibold">LogViewer</div>
+      <div class="text-[10px]" style="color: var(--text-secondary);" id="headerInfo">Нет данных</div>
+    </div>
+  </div>
+  <div class="flex gap-1.5">
+    <button onclick="document.getElementById('fileInput').click()" class="btn-primary text-xs !py-2 !px-2.5" title="Открыть CSV логи">
+      📂
+    </button>
+    <button onclick="switchTab('errors')" class="btn-secondary text-xs !py-2 !px-2.5" title="Справочник ошибок">
+      
+    </button>
+    <button onclick="saveCSV()" class="btn-secondary text-xs !py-2 !px-2.5" id="saveBtn" style="display:none;" title="Сохранить CSV">
+      💾
+    </button>
+  </div>
+  <input type="file" id="fileInput" accept=".csv" multiple style="display:none" onchange="handleFiles(event)">
+</header>
 
-    <div id="statusBar">Количество строк: 0</div>
+<!-- Filters bar -->
+<div class="border-b px-3 py-2 flex gap-2" id="filterBar" style="display:none; background: var(--bg-secondary); border-color: var(--border-header);">
+  <select id="dateFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1">
+    <option value="">Все даты</option>
+  </select>
+  <select id="eventFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1">
+    <option value="">Все события</option>
+  </select>
+</div>
 
-    <div id="errorDisplay"></div>
+<!-- Status bar -->
+<div class="px-3 py-1 text-[11px] flex justify-between border-b" id="statusBar" style="display:none; background: var(--bg-primary); color: var(--text-secondary); border-color: var(--border-header);">
+  <span id="statusText">Строк: 0</span>
+  <span id="deltaTime"></span>
+</div>
 
-    <!-- Контейнер для фильтров по колонкам -->
-    <div id="columnFilters"></div>
-
-    <div id="tableView">
-        <div id="tableContainer">
-        <table id="logTable">
-            <thead>
-                <tr id="tableHeader">
-                    <!-- Заголовки будут заполнены скриптом -->
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- Данные будут заполнены скриптом -->
-            </tbody>
-        </table>
+<!-- Main content -->
+<main class="flex-1 scroll-area" id="mainContent" style="height: calc(100vh - 130px - env(safe-area-inset-top) - env(safe-area-inset-bottom));">
+  
+  <!-- Welcome screen -->
+  <div id="welcomeScreen" class="h-full flex flex-col items-center justify-center p-6 text-center">
+    <div class="text-6xl mb-4">📋</div>
+    <h2 class="text-lg font-semibold mb-2">Добро пожаловать</h2>
+    <p class="text-sm mb-6" style="color: var(--text-secondary);">Откройте CSV лог-файлы для просмотра и анализа</p>
+    <button onclick="document.getElementById('fileInput').click()" class="btn-primary">
+      📂 Открыть CSV логи
+    </button>
+    <div class="mt-4 text-xs" style="color: var(--text-muted); max-width: 280px;">
+       Нажмите на логотип <b>СЛ</b> для смены темы
+    </div>
+  </div>
+  
+  <!-- Log view -->
+  <div id="logView" style="display:none;" class="pb-2"></div>
+  
+  <!-- Graph view -->
+  <div id="graphView" style="display:none;" class="p-3">
+    <div class="rounded-lg p-3 mb-3" style="background: var(--bg-secondary);">
+      <div class="flex justify-between items-center mb-2">
+        <div class="text-sm font-semibold">График скорости</div>
+        <div class="text-xs" style="color: var(--text-secondary);" id="graphBlockInfo">Блок 0 из 0</div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="prevBlock()" class="btn-secondary text-xs !py-2 flex-1">◀ Назад</button>
+        <button onclick="currentBlock()" class="btn-secondary text-xs !py-2 flex-1">● Текущий</button>
+        <button onclick="nextBlock()" class="btn-secondary text-xs !py-2 flex-1">Вперед ▶</button>
+      </div>
+    </div>
+    <div class="rounded-lg p-2" style="background: var(--bg-secondary);">
+      <canvas id="speedChart" style="max-height: 300px;"></canvas>
+    </div>
+    <div id="graphEmpty" class="text-center py-10 text-sm" style="color: var(--text-muted);">
+      Выберите блок ENGINE;START в логе
+    </div>
+  </div>
+  
+  <!-- Monitor view -->
+  <div id="monitorView" style="display:none;" class="p-2">
+    <div class="rounded-lg p-2 mb-2" style="background: var(--bg-secondary);">
+      <div class="flex justify-between items-center mb-2">
+        <div class="flex gap-1 items-center">
+          <button onclick="togglePlay()" id="playBtn" class="bg-blue-500 text-white w-9 h-9 rounded-full flex items-center justify-center text-lg">▶</button>
+          <input type="range" id="speedSlider" min="0" max="9" value="6" class="w-24" oninput="updateSpeed()">
+          <span class="text-xs" style="color: var(--text-secondary);" id="speedLabel">250мс</span>
         </div>
+        <button onclick="showAllEvents()" class="btn-secondary text-xs !py-1 !px-2">≡</button>
+      </div>
+      <div class="flex gap-1 flex-wrap">
+        <div class="status-ind" id="statusMain">Запуск</div>
+        <div class="status-ind" id="statusPos">Позиц.</div>
+        <div class="status-ind" id="statusMulti">Прогон</div>
+        <div class="px-2 rounded text-xs" style="background: var(--bg-tertiary);" id="modeInd">--</div>
+        <div class="px-2 rounded text-xs" style="background: var(--bg-tertiary);" id="weightInd">--</div>
+      </div>
+      <div class="flex gap-1 mt-2 items-center">
+        <div class="text-[10px]" style="color: var(--text-secondary);">Д1:</div>
+        <div class="door-indicator" id="door1Ind">
+          <div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div>
+        </div>
+        <div class="text-[10px] ml-1" style="color: var(--text-secondary);">Д2:</div>
+        <div class="door-indicator" id="door2Ind">
+          <div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div><div class="door-cell"></div>
+        </div>
+      </div>
     </div>
-
-    <!-- Контейнер для графика -->
-    <div id="chartContainer">
-        <button id="closeChartBtn">&times;</button>
-        <div id="chartTitle">График изменения скорости</div>
-        <canvas id="myChart"></canvas>
+    <div class="rounded-lg overflow-hidden" style="background: var(--bg-secondary);">
+      <div class="scroll-area" id="shaftContainer" style="max-height: calc(100vh - 350px);"></div>
     </div>
+    <div class="rounded-lg mt-2 p-2" style="background: var(--bg-secondary);">
+      <div class="text-xs font-semibold mb-1" style="color: var(--text-secondary);">События:</div>
+      <div class="scroll-area rounded p-1" id="eventsArea" style="max-height: 150px; font-family: monospace; background: var(--event-bg);"></div>
+    </div>
+  </div>
+  
+  <!-- Errors view -->
+  <div id="errorsView" style="display:none;" class="p-3">
+    <div class="mb-3">
+      <input type="text" id="errorSearch" placeholder="Код ошибки (4 символа)" maxlength="4" oninput="searchError()">
+    </div>
+    <div class="rounded-lg p-3" id="errorDisplay" style="background: var(--error-display-bg);">
+      <div class="text-center text-sm py-6" style="color: var(--text-muted);">
+        Введите код ошибки для поиска
+      </div>
+    </div>
+    <div class="mt-3">
+      <div class="text-xs font-semibold mb-2" style="color: var(--text-secondary);">Последние ошибки:</div>
+      <div id="errorList" class="space-y-2"></div>
+    </div>
+    <div class="mt-4 rounded-lg p-3" style="background: var(--error-display-bg);">
+      <div class="text-xs font-semibold mb-2" style="color: var(--text-secondary);">📚 Справочник ошибок</div>
+      <div class="text-xs mb-2" style="color: var(--text-muted);">
+        Загружено кодов: <span id="errDbCount">0</span>
+      </div>
+      <div class="text-xs" style="color: var(--text-muted);" id="errStatus">
+        Ожидание загрузки err.csv...
+      </div>
+    </div>
+  </div>
+  
+</main>
 
-    <!-- Подключаем Chart.js для построения графика -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Bottom tabs -->
+<nav class="flex border-t" style="background: var(--tab-bg); border-color: var(--tab-border); padding-bottom: env(safe-area-inset-bottom);">
+  <button class="tab-btn active" onclick="switchTab('log')" data-tab="log">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    <span>Лог</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('graph')" data-tab="graph">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+    <span>График</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('monitor')" data-tab="monitor">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+    <span>Монитор</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('errors')" data-tab="errors">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    <span>Ошибки</span>
+  </button>
+</nav>
 
-    <script>
-        // --- Глобальные переменные ---
-        let allRows = [];
-        let filteredRows = [];
-        let errorDatabase = {}; // База данных ошибок
-        let currentFilters = {};
-        let columnNames = [];
-        const FIXED_COLS = 17;
-        let chartInstance = null;
-        let isSelectingRange = false; // Флаг для выделения диапазона
-        let lastCheckedIndex = -1; // Индекс последнего кликнутого чекбокса
-        let firstCheckedIndex = -1; // Индекс первого отмеченного чекбокса для диапазона
+<!-- Row details modal -->
+<div class="modal-overlay" id="rowModal" onclick="if(event.target===this)closeModal('rowModal')">
+  <div class="modal-content">
+    <div class="p-3 border-b flex justify-between items-center" style="border-color: var(--border-header);">
+      <div class="font-semibold text-sm">Детали строки</div>
+      <button onclick="closeModal('rowModal')" class="text-xl" style="color: var(--text-secondary);">×</button>
+    </div>
+    <div class="p-3 scroll-area" id="rowDetails" style="max-height: 70vh;"></div>
+  </div>
+</div>
 
-        // --- Инициализация ---
-        document.addEventListener('DOMContentLoaded', function() {
-            loadErrorDatabase(); // Автоматически загружаем базу ошибок
-            setupEventListeners();
-        });
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
-        // --- Загрузка базы ошибок из файла err.csv ---
-        function loadErrorDatabase() {
-            fetch('err.csv')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Файл err.csv не найден');
-                    }
-                    return response.text();
-                })
-                .then(text => {
-                    try {
-                        const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
-                        const db = {};
-                        let currentError = null;
-                        let insideBlock = false;
+<script>
+// ============ THEME ============
+let currentTheme = 'dark';
 
-                        for (const line of lines) {
-                            if (line.includes("{{")) {
-                                currentError = { code: "", description: "", causes: [], solutions: [] };
-                                insideBlock = true;
-                                continue;
-                            }
-                            if (line.includes("}}")) {
-                                if (currentError && currentError.code) {
-                                    db[currentError.code] = currentError;
-                                }
-                                insideBlock = false;
-                                continue;
-                            }
-                            if (insideBlock && line.trim() !== "") {
-                                // Простой парсинг CSV с учетом кавычек
-                                const parts = [];
-                                let part = '';
-                                let inQuotes = false;
-                                for (let i = 0; i < line.length; i++) {
-                                    const char = line[i];
-                                    if (char === '"') {
-                                        inQuotes = !inQuotes;
-                                    } else if (char === ';' && !inQuotes) {
-                                        parts.push(part.trim());
-                                        part = '';
-                                    } else {
-                                        part += char;
-                                    }
-                                }
-                                parts.push(part.trim()); // Добавляем последнюю часть
+function getTheme() {
+  try {
+    return localStorage.getItem('sl-theme') || 'dark';
+  } catch(e) {
+    return 'dark';
+  }
+}
 
-                                if (currentError.code === "" && parts[0] && parts[0].length === 4) {
-                                    let isValidCode = true;
-                                    for (let i = 0; i < 4; i++) {
-                                        if (!(/[0-9X]/.test(parts[0][i]))) {
-                                            isValidCode = false;
-                                            break;
-                                        }
-                                    }
-                                    if (isValidCode) {
-                                        currentError.code = parts[0];
-                                        if (parts[1]) currentError.description = parts[1];
-                                    }
-                                }
-                                if (parts[2]) currentError.causes.push(parts[2]);
-                                if (parts[3]) currentError.solutions.push(parts[3]);
-                            }
-                        }
-                        errorDatabase = db;
-                        console.log("База ошибок загружена:", errorDatabase);
-                    } catch (err) {
-                        console.error("Ошибка при парсинге err.csv:", err);
-                    }
-                })
-                .catch(error => {
-                    console.error("Ошибка при загрузке err.csv:", error);
-                });
+function setTheme(theme) {
+  currentTheme = theme;
+  try {
+    localStorage.setItem('sl-theme', theme);
+  } catch(e) {}
+  
+  const html = document.documentElement;
+  if (theme === 'light') {
+    html.setAttribute('data-theme', 'light');
+  } else {
+    html.removeAttribute('data-theme');
+  }
+  
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.textContent = theme === 'dark' ? '🌙' : '☀️';
+    icon.classList.remove('spin');
+    void icon.offsetWidth; // trigger reflow
+    icon.classList.add('spin');
+  }
+  
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = theme === 'dark' ? '#1f2937' : '#ffffff';
+  
+  // Re-render chart if exists
+  if (speedChart) {
+    setTimeout(() => renderGraph(), 100);
+  }
+  
+  console.log('Theme set to:', theme, 'data-theme attr:', html.getAttribute('data-theme'));
+}
+
+function toggleTheme() {
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  setTheme(newTheme);
+  showToast(newTheme === 'dark' ? ' Тёмная тема' : '️ Светлая тема');
+}
+
+// Init theme on load
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = getTheme();
+  setTheme(saved);
+  // Try to load err.csv automatically
+  loadErrCsvAuto();
+});
+
+// ============ STATE ============
+const HEADERS = ['ВРЕМЯ','СОБЫТИЕ','СООБЩЕНИЕ','РЕЖИМ','ЭТАЖ','НАПРАВЛ.','ЦЕЛЬ','ДТО','ЦБ','ВЕС','СКОРОСТЬ','М/С','ЭНКОД','ДВЕРЬ1','ДВЕРЬ2','EX1','EX2'];
+const FIXED_COLS = 17;
+
+let allRows = [];
+let filteredRows = [];
+let errorEntries = [];
+let speedBlocks = [];
+let currentBlockIndex = 0;
+let speedChart = null;
+
+let monitorState = {
+  floor: '', mode: '--', weight: '', direction: '',
+  orders: new Set(),
+  callUp: {}, callDown: {},
+  door1: {}, door2: {},
+  open: false, close: false, cancel: false,
+  dto: {}, dve: {}, dne: {},
+  main: false, pos: false, multirun: false,
+  floors: [],
+  playing: false, timer: null, currentIndex: 0, interval: 250
+};
+
+const errorDB = {
+  '0001': { desc: 'Включение/пересброс питания КЦ', causes: ['Пропадание питания'], solutions: ['Проверить питание'] },
+  '0101': { desc: 'Ошибка датчика позиции', causes: ['Неисправность ДТО'], solutions: ['Проверить датчик'] },
+  '0202': { desc: 'Ошибка двери', causes: ['Заклинивание двери'], solutions: ['Проверить механизм'] },
+  '0303': { desc: 'Ошибка привода', causes: ['Перегрев привода'], solutions: ['Дать остыть'] },
+};
+
+const specialEvents = {
+  'BUTTONS': 'Нажатие служебных кнопок',
+  'CALL': 'Нажатие кнопки вызова',
+  'CORR': 'Корректировка',
+  'DNE': 'Срабатывание ДНЭ',
+  'DOOR1': 'Первая дверь кабины',
+  'DOOR2': 'Вторая дверь кабины',
+  'DTO': 'Срабатывание ДТО',
+  'DVE': 'Срабатывание ДВЭ',
+  'ENGINE': 'Работа главного привода',
+  'LOG': 'Действие с логом',
+  'MAIN': 'Включение КЦ',
+  'MODE': 'Переключение режима',
+  'MULTIRUN': 'Включение прогона',
+  'ORDER': 'Нажатие кнопки приказа',
+  'POS': 'Позиционирование',
+  'SD': 'Работа с флеш-картой',
+  'ERROR CLEAR': 'Сброс ошибки',
+  'ERROR R CLEAR': 'Сброс самосбрасывающейся ошибки',
+  'ERROR C CLEAR': 'Сброс критической ошибки',
+  'WARNING CLEAR': 'Сброс предупреждения'
+};
+
+// ============ AUTO LOAD ERR.CSV ============
+async function loadErrCsvAuto() {
+  const statusEl = document.getElementById('errStatus');
+  try {
+    const response = await fetch('./err.csv');
+    if (!response.ok) {
+      if (statusEl) statusEl.textContent = 'err.csv не найден рядом с файлом';
+      return;
+    }
+    const text = await response.text();
+    parseErrCsv(text);
+    document.getElementById('errDbCount').textContent = Object.keys(errorDB).length;
+    if (statusEl) statusEl.textContent = '✅ err.csv загружен автоматически';
+    console.log('err.csv loaded, codes:', Object.keys(errorDB).length);
+  } catch(e) {
+    console.log('Could not auto-load err.csv:', e.message);
+    if (statusEl) statusEl.textContent = 'Не удалось загрузить err.csv (CORS или файл отсутствует)';
+  }
+}
+
+// ============ ERR.CSV PARSING ============
+function parseErrCsv(text) {
+  const lines = text.split(/\r?\n/);
+  let insideBlock = false;
+  let currentCode = '';
+  let currentDesc = '';
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    
+    if (trimmed.includes('{{')) {
+      insideBlock = true;
+      currentCode = '';
+      currentDesc = '';
+      continue;
+    }
+    if (trimmed.includes('}}')) {
+      insideBlock = false;
+      currentCode = '';
+      currentDesc = '';
+      continue;
+    }
+    
+    if (!insideBlock) continue;
+    
+    const parts = trimmed.split(';').map(p => p.trim().replace(/^"|"$/g, ''));
+    if (parts.length < 2) continue;
+    
+    const code = parts[0].trim();
+    if (code.length !== 4) continue;
+    if (!/^[0-9X]{4}$/.test(code)) continue;
+    
+    const desc = parts[1] || '';
+    const cause = parts[2] || '';
+    const solution = parts[3] || '';
+    
+    if (!errorDB[code]) {
+      errorDB[code] = { desc, causes: [], solutions: [] };
+    }
+    if (desc) errorDB[code].desc = desc;
+    if (cause) errorDB[code].causes.push(cause);
+    if (solution) errorDB[code].solutions.push(solution);
+  }
+  
+  // Also support simple format without {{ }}
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith(';') || trimmed.startsWith('#')) continue;
+    if (trimmed.includes('{{') || trimmed.includes('}}')) continue;
+    
+    const parts = trimmed.split(';').map(p => p.trim().replace(/^"|"$/g, ''));
+    if (parts.length < 2) continue;
+    
+    const code = parts[0].trim();
+    if (code.length !== 4 || !/^[0-9X]{4}$/.test(code)) continue;
+    
+    const desc = parts[1] || '';
+    const cause = parts[2] || '';
+    const solution = parts[3] || '';
+    
+    if (!errorDB[code]) {
+      errorDB[code] = { desc, causes: [], solutions: [] };
+    }
+    if (desc && !errorDB[code].desc) errorDB[code].desc = desc;
+    if (cause) errorDB[code].causes.push(cause);
+    if (solution) errorDB[code].solutions.push(solution);
+  }
+}
+
+// ============ FILE HANDLING ============
+async function handleFiles(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  
+  showToast(`Загрузка ${files.length} файлов...`);
+  allRows = [];
+  
+  files.sort((a, b) => {
+    const da = extractDate(a.name);
+    const db = extractDate(b.name);
+    return da.localeCompare(db);
+  });
+  
+  for (const file of files) {
+    // Skip err.csv if user accidentally selects it
+    if (file.name.toLowerCase() === 'err.csv') continue;
+    
+    try {
+      const text = await file.text();
+      const dateStr = formatDate(extractDate(file.name));
+      
+      allRows.push(makeRow(`Дата: ${dateStr}`));
+      
+      const lines = text.split(/\r?\n/);
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        if (line.includes('TIME;') || line.includes('ВРЕМЯ;')) continue;
+        
+        const cols = line.split(';').map(c => c.trim());
+        while (cols.length < FIXED_COLS) cols.push('');
+        if (cols.length > FIXED_COLS) cols.length = FIXED_COLS;
+        allRows.push(cols);
+      }
+    } catch (err) {
+      console.error('Error reading file:', err);
+    }
+  }
+  
+  filteredRows = [...allRows];
+  updateUI();
+  showToast(`Загружено строк: ${allRows.length}`);
+  e.target.value = '';
+}
+
+function makeRow(first) {
+  const r = [first];
+  for (let i = 1; i < FIXED_COLS; i++) r.push('');
+  return r;
+}
+
+function extractDate(filename) {
+  const name = filename.replace(/\.[^.]+$/, '');
+  for (let i = 0; i + 8 <= name.length; i++) {
+    const part = name.substr(i, 8);
+    if (/^\d{8}$/.test(part)) {
+      const y = part.substr(0, 4);
+      const m = part.substr(4, 2);
+      const d = part.substr(6, 2);
+      if (y > '1900' && m >= '01' && m <= '12' && d >= '01' && d <= '31') {
+        return part;
+      }
+    }
+  }
+  return '';
+}
+
+function formatDate(dateStr) {
+  if (dateStr.length !== 8) return 'Неизвестная дата';
+  return dateStr.substr(6, 2) + '.' + dateStr.substr(4, 2) + '.' + dateStr.substr(0, 4);
+}
+
+// ============ UI UPDATE ============
+function updateUI() {
+  const hasData = allRows.length > 0;
+  document.getElementById('welcomeScreen').style.display = hasData ? 'none' : 'flex';
+  document.getElementById('logView').style.display = hasData ? 'block' : 'none';
+  document.getElementById('filterBar').style.display = hasData ? 'flex' : 'none';
+  document.getElementById('statusBar').style.display = hasData ? 'flex' : 'none';
+  document.getElementById('saveBtn').style.display = hasData ? 'inline-block' : 'none';
+  
+  if (hasData) {
+    populateFilters();
+    renderLog();
+    updateStatus();
+    extractFloors();
+    buildErrorList();
+  }
+  document.getElementById('errDbCount').textContent = Object.keys(errorDB).length;
+}
+
+function populateFilters() {
+  const dates = new Set();
+  const events = new Set();
+  for (const row of allRows) {
+    if (row[0].startsWith('Дата: ')) {
+      dates.add(row[0].substr(6));
+    } else if (row[1]) {
+      events.add(row[1]);
+    }
+  }
+  
+  const dateSel = document.getElementById('dateFilter');
+  const eventSel = document.getElementById('eventFilter');
+  
+  dateSel.innerHTML = '<option value="">Все даты</option>';
+  [...dates].sort().forEach(d => {
+    dateSel.innerHTML += `<option value="${d}">${d}</option>`;
+  });
+  
+  eventSel.innerHTML = '<option value="">Все события</option>';
+  [...events].sort().forEach(e => {
+    eventSel.innerHTML += `<option value="${e}">${e}</option>`;
+  });
+}
+
+function applyFilters() {
+  const date = document.getElementById('dateFilter').value;
+  const event = document.getElementById('eventFilter').value;
+  
+  filteredRows = [];
+  let currentDate = '';
+  let includeDate = true;
+  
+  for (const row of allRows) {
+    if (row[0].startsWith('Дата: ')) {
+      currentDate = row[0].substr(6);
+      includeDate = !date || currentDate === date;
+      if (includeDate) filteredRows.push(row);
+      continue;
+    }
+    if (!includeDate) continue;
+    if (event && row[1] !== event) continue;
+    filteredRows.push(row);
+  }
+  
+  renderLog();
+  updateStatus();
+  buildErrorList();
+}
+
+function shouldShowMessageBadge(ev, text) {
+  if (!text) return false;
+  if (text === ev) return false;
+  if (ev === 'ENGINE' && (text === 'START' || text === 'STOP' || text === 'SPEED' || text === 'NEW SPEED')) return true;
+  if (ev.startsWith('ERROR') || ev === 'WARNING') return true;
+  if (ev === 'MODE') return false;
+  if (text.length <= 30) return true;
+  return false;
+}
+
+function getMessageBadgeClass(ev, text) {
+  if (ev === 'ENGINE' && text === 'STOP') return 'badge-stop';
+  if (ev === 'ENGINE' && text === 'START') return 'badge-start';
+  if (ev === 'ENGINE') return 'badge-green';
+  if (ev === 'ERROR C') return 'badge-error';
+  if (ev === 'ERROR R') return 'badge-orange';
+  if (ev === 'ERROR') return 'badge-error';
+  if (ev === 'WARNING') return 'badge-warning';
+  if (ev === 'MULTIRUN') return 'badge-orange';
+  if (ev === 'POS') return 'badge-blue';
+  if (ev === 'MODE') return 'badge-purple';
+  if (ev === 'CALL' || ev === 'ORDER') return 'badge-info';
+  return 'badge-info';
+}
+
+function renderLog() {
+  const container = document.getElementById('logView');
+  let html = '';
+  
+  filteredRows.forEach((row, idx) => {
+    const isDate = row[0].startsWith('Дата: ');
+    let cls = 'log-card';
+    
+    if (isDate) {
+      cls += ' date-header';
+      html += `<div class="${cls} py-2 px-3 mt-2 mb-1">
+        <div class="text-xs">📅 ${row[0].substr(6)}</div>
+      </div>`;
+      return;
+    }
+    
+    const ev = row[1] || '';
+    const text = row[2] || '';
+    const time = row[0] || '';
+    const floor = row[4] || '';
+    const dir = row[5] || '';
+    const mode = row[3] || '';
+    
+    if (ev === 'ENGINE') {
+      if (text === 'START') cls += ' engine-start';
+      else if (text === 'STOP') cls += ' engine-stop';
+    } else if (ev === 'ERROR C' || ev === 'ERROR') cls += ' error-c';
+    else if (ev === 'ERROR R') cls += ' error-r';
+    else if (ev === 'WARNING') cls += ' warning';
+    
+    const evColor = getEventColor(ev);
+    
+    let badgeHtml = '';
+    if (shouldShowMessageBadge(ev, text)) {
+      const badgeClass = getMessageBadgeClass(ev, text);
+      let badgeText = text;
+      if (ev.startsWith('ERROR') || ev === 'WARNING') {
+        const code = extractErrorCode(text);
+        if (code) badgeText = code;
+      }
+      badgeHtml = `<span class="badge ${badgeClass}">${badgeText}</span>`;
+    }
+    
+    let metaHtml = '';
+    const metaParts = [];
+    if (floor && floor !== '63') metaParts.push(`Э:${floor}`);
+    if (dir) metaParts.push(dir === 'UP' ? '▲' : dir === 'DN' ? '▼' : dir);
+    if (mode && mode !== '--') metaParts.push(mode);
+    if (metaParts.length) {
+      metaHtml = `<span class="meta-text ml-1">${metaParts.join(' ')}</span>`;
+    }
+    
+    const titleAttr = (text && !badgeHtml) ? ` title="${text.replace(/"/g,'&quot;')}"` : '';
+    
+    html += `<div class="${cls} flex items-center gap-1.5 overflow-hidden" onclick="selectRow(${idx})"${titleAttr}>
+      <span class="text-[10px] font-mono flex-shrink-0" style="color: var(--text-muted);">${time.length >= 8 ? time.substr(0,8) : time}</span>
+      <span class="text-xs font-semibold ${evColor} flex-shrink-0">${ev}</span>
+      ${badgeHtml}
+      ${metaHtml}
+    </div>`;
+  });
+  
+  container.innerHTML = html || '<div class="text-center py-10 text-sm" style="color: var(--text-muted);">Нет данных для отображения</div>';
+}
+
+function getEventColor(ev) {
+  if (ev.startsWith('ERROR')) return 'text-red-400';
+  if (ev === 'WARNING') return 'text-blue-400';
+  if (ev === 'ENGINE') return 'text-green-400';
+  if (ev === 'MULTIRUN') return 'text-orange-400';
+  if (ev === 'POS') return 'text-blue-400';
+  if (ev === 'MODE') return 'text-purple-400';
+  if (ev === 'CALL' || ev === 'ORDER') return 'text-cyan-400';
+  if (ev === 'DOOR1' || ev === 'DOOR2') return 'text-yellow-400';
+  if (ev === 'DTO' || ev === 'DVE' || ev === 'DNE') return 'text-indigo-400';
+  if (ev === 'MAIN') return 'text-emerald-400';
+  return '';
+}
+
+function selectRow(idx) {
+  const row = filteredRows[idx];
+  if (!row || row[0].startsWith('Дата: ')) return;
+  
+  const details = document.getElementById('rowDetails');
+  let html = '<div class="space-y-2">';
+  
+  for (let i = 0; i < FIXED_COLS; i++) {
+    const val = row[i] || '—';
+    const label = HEADERS[i] || `Кол.${i+1}`;
+    if (!val || val === '—') continue;
+    html += `<div class="flex justify-between py-1 border-b" style="border-color: var(--border-header);">
+      <span class="text-xs" style="color: var(--text-secondary);">${label}</span>
+      <span class="text-xs text-right max-w-[60%] break-words">${val}</span>
+    </div>`;
+  }
+  
+  const ev = row[1];
+  if (ev && (ev.startsWith('ERROR') || ev === 'WARNING')) {
+    const code = extractErrorCode(row[2]);
+    const info = errorDB[code];
+    if (info) {
+      html += `<div class="mt-3 p-2 rounded" style="background: var(--error-info-bg);">
+        <div class="text-xs font-semibold text-red-400 mb-1">Информация об ошибке ${code}</div>
+        <div class="text-xs" style="color: var(--text-primary);">${info.desc}</div>
+        ${info.causes ? `<div class="text-xs mt-1" style="color: var(--text-secondary);">Причины: ${info.causes.join(', ')}</div>` : ''}
+      </div>`;
+    }
+  }
+  
+  html += '</div>';
+  details.innerHTML = html;
+  document.getElementById('rowModal').classList.add('show');
+  
+  updateTimeDelta(idx);
+}
+
+function extractErrorCode(msg) {
+  if (!msg) return '';
+  for (let i = 0; i <= msg.length - 4; i++) {
+    const part = msg.substr(i, 4);
+    if (/^[A-Z0-9]{4}$/.test(part)) return part;
+  }
+  return '';
+}
+
+function updateTimeDelta(idx) {
+  const row = filteredRows[idx];
+  if (row) {
+    document.getElementById('deltaTime').textContent = row[0] || '';
+  }
+}
+
+function updateStatus() {
+  let logCount = 0, errors = 0, critical = 0, selfReset = 0, warnings = 0, cycles = 0;
+  for (const row of filteredRows) {
+    if (row[0].startsWith('Дата: ')) continue;
+    if (!row[0]) continue;
+    logCount++;
+    const ev = row[1];
+    if (ev === 'ERROR C') critical++;
+    else if (ev === 'ERROR R') selfReset++;
+    else if (ev === 'WARNING') warnings++;
+    if (ev === 'ERROR' || ev === 'ERROR C' || ev === 'ERROR R' || ev === 'WARNING') errors++;
+    
+    if (ev === 'MULTIRUN' && row[2] === 'STOP' && row[14]) {
+      const m = row[14].match(/Cycles\s+(\d+)/);
+      if (m) cycles += parseInt(m[1]);
+    }
+  }
+  
+  document.getElementById('statusText').textContent = 
+    `Строк: ${logCount} | Ошибок: ${errors} | Крит: ${critical} | Пред: ${warnings} | Циклов: ${cycles}`;
+  
+  const dates = new Set();
+  for (const row of allRows) {
+    if (row[0].startsWith('Дата: ')) dates.add(row[0].substr(6));
+  }
+  const dateArr = [...dates].sort();
+  if (dateArr.length === 1) {
+    document.getElementById('headerInfo').textContent = `Лог за ${dateArr[0]}`;
+  } else if (dateArr.length > 1) {
+    document.getElementById('headerInfo').textContent = `${dateArr[0]} — ${dateArr[dateArr.length-1]}`;
+  }
+}
+
+// ============ TABS ============
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('logView').style.display = tab === 'log' ? 'block' : 'none';
+  document.getElementById('graphView').style.display = tab === 'graph' ? 'block' : 'none';
+  document.getElementById('monitorView').style.display = tab === 'monitor' ? 'block' : 'none';
+  document.getElementById('errorsView').style.display = tab === 'errors' ? 'block' : 'none';
+  document.getElementById('welcomeScreen').style.display = 'none';
+  
+  if (tab === 'graph') renderGraph();
+  if (tab === 'monitor') renderShaft();
+  if (tab === 'errors') document.getElementById('errDbCount').textContent = Object.keys(errorDB).length;
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+// ============ GRAPH ============
+function parseTimeToMs(t) {
+  if (!t || t.length < 12) return 0;
+  try {
+    const h = parseInt(t.substr(0, 2));
+    const m = parseInt(t.substr(3, 2));
+    const s = parseInt(t.substr(6, 2));
+    const ms = parseInt(t.substr(9, 3));
+    return (h * 3600 + m * 60 + s) * 1000 + ms;
+  } catch { return 0; }
+}
+
+function findSpeedBlocks() {
+  speedBlocks = [];
+  for (let i = 0; i < filteredRows.length; i++) {
+    const row = filteredRows[i];
+    if (row[1] === 'ENGINE' && row[2] === 'START') {
+      const firstSpeeds = [];
+      let firstEnd = -1;
+      for (let j = i + 1; j < filteredRows.length; j++) {
+        const r = filteredRows[j];
+        if (r[1] === 'ENGINE' && r[2] === 'SPEED') {
+          const speeds = [];
+          for (let k = 3; k < r.length; k++) {
+            if (r[k]) speeds.push(parseFloat(r[k]) || 0);
+          }
+          if (speeds.length >= 13) {
+            firstSpeeds.push(speeds);
+            if (firstSpeeds.length === 2) { firstEnd = j; break; }
+          }
         }
-
-        // --- Настройка обработчиков событий ---
-        function setupEventListeners() {
-            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
-            document.getElementById('saveButton').addEventListener('click', saveToFile);
-            document.getElementById('chartButton').addEventListener('click', showChart);
-            document.getElementById('refreshButton').addEventListener('click', refreshData);
-            document.getElementById('dateFilter').addEventListener('change', applyFilters);
-            document.getElementById('errorFilter').addEventListener('change', selectErrorRow);
-            document.getElementById('errorSearchButton').addEventListener('click', performErrorSearch);
-            document.getElementById('errorSearchInput').addEventListener('keydown', function(event) {
-                if (event.key === 'Enter') {
-                    performErrorSearch();
-                }
-            });
-            document.getElementById('closeChartBtn').addEventListener('click', closeChart);
+      }
+      if (firstSpeeds.length !== 2) continue;
+      
+      let blockEnd = filteredRows.length - 1;
+      for (let j = firstEnd + 1; j < filteredRows.length; j++) {
+        if (filteredRows[j][1] === 'ENGINE' && filteredRows[j][2] === 'START') {
+          blockEnd = j - 1; break;
         }
-
-        // --- Функция для извлечения даты из имени файла ---
-        function extractDateFromFileName(fileName) {
-            // Ищем первые 8 цифр в имени файла (YYYYMMDD)
-            const match = fileName.match(/(\d{8})/);
-            if (match) {
-                const dateStr = match[1];
-                if (dateStr.length === 8) {
-                    const year = dateStr.substring(0, 4);
-                    const month = dateStr.substring(4, 6);
-                    const day = dateStr.substring(6, 8);
-                    
-                    // Проверяем валидность даты
-                    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                    if (date.getFullYear() == year && 
-                        date.getMonth() == parseInt(month) - 1 && 
-                        date.getDate() == day) {
-                        return `${day}.${month}.${year}`;
-                    }
-                }
-            }
-            return null;
+      }
+      
+      const lastSpeeds = [];
+      let lastStart = -1;
+      for (let j = blockEnd; j > firstEnd; j--) {
+        const r = filteredRows[j];
+        if (r[1] === 'ENGINE' && r[2] === 'SPEED') {
+          const speeds = [];
+          for (let k = 3; k < r.length; k++) {
+            if (r[k]) speeds.push(parseFloat(r[k]) || 0);
+          }
+          if (speeds.length >= 13) {
+            lastSpeeds.unshift(speeds);
+            if (lastSpeeds.length === 2) { lastStart = j - 1; break; }
+          }
         }
-
-        // --- Обработка выбора файлов логов ---
-        function handleFileSelect(event) {
-            const files = Array.from(event.target.files);
-            if (files.length === 0) return;
-
-            const fileNames = files.map(f => f.name).join(', ');
-            document.getElementById('fileNameDisplay').textContent = `Выбраны файлы: ${fileNames}`;
-
-            resetData();
-            parseFiles(files)
-                .then(() => {
-                    console.log("Все строки загружены:", allRows);
-                    populateDateFilter();
-                    populateEventCheckboxes();
-                    createTableHeaders();
-                    createColumnFilters();
-                    initializeFilters();
-                    applyFilters();
-                })
-                .catch(error => {
-                    console.error("Ошибка при парсинге файлов:", error);
-                    alert("Ошибка при загрузке файлов. Проверьте консоль браузера.");
-                });
+      }
+      
+      if (lastSpeeds.length === 2 && lastStart > firstEnd) {
+        const block = {
+          startIndex: i,
+          endIndex: lastStart,
+          speedData: [...firstSpeeds, ...lastSpeeds],
+          intermediate: []
+        };
+        
+        let firstTime = -1;
+        for (let j = firstEnd + 1; j <= lastStart; j++) {
+          const r = filteredRows[j];
+          if (r[0] && !r[0].startsWith('Дата:')) {
+            const t = parseTimeToMs(r[0]);
+            if (firstTime < 0) firstTime = t;
+            const relTime = (t - firstTime) / 1000;
+            const speed = parseFloat(r[11]) || 0;
+            let label = '';
+            if (r[1] && r[2] && r[4]) label = `${r[1]}-${r[2]}:${r[4]}`;
+            block.intermediate.push({ time: relTime, speed, label, event: r[1], text: r[2] });
+          }
         }
+        
+        speedBlocks.push(block);
+      }
+    }
+  }
+}
 
-        // --- Парсинг файлов логов ---
-        function parseFiles(files) {
-            return Promise.all(files.map(file => parseCSV(file)))
-                .then(results => {
-                    allRows = [];
-                    
-                    // Обрабатываем каждый файл
-                    files.forEach((file, fileIndex) => {
-                        const fileRows = results[fileIndex];
-                        const fileDate = extractDateFromFileName(file.name);
-                        
-                        if (fileDate) {
-                            // Добавляем строку с датой в начало данных файла
-                            allRows.push([`Дата: ${fileDate}`, "", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
-                        }
-                        
-                        // Добавляем все строки из файла
-                        allRows = allRows.concat(fileRows);
-                    });
-                });
+function analyzeBlock(idx) {
+  if (idx < 0 || idx >= speedBlocks.length) return null;
+  const block = speedBlocks[idx];
+  const points = [];
+  let t = 0;
+  
+  for (let i = 0; i < 2 && i < block.speedData.length; i++) {
+    for (const s of block.speedData[i]) {
+      if (points.length >= 26) break;
+      points.push({ time: t, speed: s, label: '' });
+      t += 0.25;
+    }
+  }
+  
+  const startT = t;
+  for (const ip of block.intermediate) {
+    points.push({ time: startT + ip.time, speed: ip.speed, label: ip.label });
+  }
+  if (block.intermediate.length) t = startT + block.intermediate[block.intermediate.length-1].time + 0.25;
+  
+  for (let i = 2; i < 4 && i < block.speedData.length; i++) {
+    for (const s of block.speedData[i]) {
+      if (points.length >= 26 + block.intermediate.length + 26) break;
+      points.push({ time: t, speed: s, label: '' });
+      t += 0.25;
+    }
+  }
+  
+  return points;
+}
+
+function renderGraph() {
+  findSpeedBlocks();
+  const canvas = document.getElementById('speedChart');
+  const emptyMsg = document.getElementById('graphEmpty');
+  
+  if (speedBlocks.length === 0) {
+    canvas.style.display = 'none';
+    emptyMsg.style.display = 'block';
+    document.getElementById('graphBlockInfo').textContent = 'Блоков не найдено';
+    if (speedChart) { speedChart.destroy(); speedChart = null; }
+    return;
+  }
+  
+  if (currentBlockIndex >= speedBlocks.length) currentBlockIndex = 0;
+  
+  canvas.style.display = 'block';
+  emptyMsg.style.display = 'none';
+  document.getElementById('graphBlockInfo').textContent = `Блок ${currentBlockIndex+1} из ${speedBlocks.length}`;
+  
+  const points = analyzeBlock(currentBlockIndex);
+  if (!points || !points.length) return;
+  
+  const labels = points.map(p => p.time.toFixed(1));
+  const data = points.map(p => p.speed);
+  
+  const isDark = currentTheme === 'dark';
+  
+  if (speedChart) speedChart.destroy();
+  
+  speedChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Скорость (м/с)',
+        data: data,
+        borderColor: isDark ? '#00c3f5' : '#0284c7',
+        backgroundColor: isDark ? 'rgba(0, 195, 245, 0.1)' : 'rgba(2, 132, 199, 0.1)',
+        pointBackgroundColor: isDark ? '#b5e61d' : '#65a30d',
+        pointRadius: 2,
+        borderWidth: 2,
+        tension: 0.1,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.parsed.y.toFixed(2)} м/с`
+          }
         }
-
-        // --- Парсинг одного CSV файла ---
-        function parseCSV(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const text = e.target.result;
-                        const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
-                        const rows = lines.map(line => {
-                            // Простой парсинг CSV (без учёта кавычек и экранирования)
-                            return line.split(';').map(cell => cell.trim());
-                        });
-                        resolve(rows);
-                    } catch (err) {
-                        reject(new Error("Ошибка парсинга CSV: " + file.name));
-                    }
-                };
-                reader.onerror = function(e) {
-                    reject(new Error("Ошибка чтения файла: " + file.name));
-                };
-                reader.readAsText(file, 'UTF-8');
-            });
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'сек', color: isDark ? '#9ca3af' : '#4b5563' },
+          ticks: { color: isDark ? '#9ca3af' : '#4b5563', maxTicksLimit: 6 },
+          grid: { color: isDark ? 'rgba(75,85,99,0.3)' : 'rgba(0,0,0,0.1)' }
+        },
+        y: {
+          title: { display: true, text: 'м/с', color: isDark ? '#9ca3af' : '#4b5563' },
+          ticks: { color: isDark ? '#9ca3af' : '#4b5563' },
+          grid: { color: isDark ? 'rgba(75,85,99,0.3)' : 'rgba(0,0,0,0.1)' }
         }
+      }
+    }
+  });
+}
 
-        // --- Сброс данных ---
-        function resetData() {
-            allRows = [];
-            filteredRows = [];
-            currentFilters = {};
-            firstCheckedIndex = -1;
-            lastCheckedIndex = -1;
-            document.getElementById('tableBody').innerHTML = '';
-            document.getElementById('statusBar').textContent = 'Количество строк: 0';
-            document.getElementById('errorDisplay').textContent = '';
-            document.getElementById('columnFilters').innerHTML = '';
-            closeChart(); // Закрываем график при сбросе
+function prevBlock() {
+  if (currentBlockIndex > 0) { currentBlockIndex--; renderGraph(); }
+}
+function nextBlock() {
+  if (currentBlockIndex < speedBlocks.length - 1) { currentBlockIndex++; renderGraph(); }
+}
+function currentBlock() {
+  renderGraph();
+}
+
+// ============ MONITOR ============
+function extractFloors() {
+  const floors = new Set();
+  for (const row of allRows) {
+    const f = (row[4] || '').trim();
+    if (!f || f === '63') continue;
+    if (isValidFloor(f)) floors.add(floorToInt(f));
+  }
+  monitorState.floors = [...floors].sort((a, b) => a - b);
+}
+
+function isValidFloor(f) {
+  if (f.length !== 2) return false;
+  if (f === 'П2' || f === 'П1') return true;
+  if (f[0] === '-' && f[1] >= '1' && f[1] <= '4') return true;
+  if (f[0] >= '0' && f[0] <= '9' && f[1] >= '0' && f[1] <= '9') return true;
+  return false;
+}
+
+function floorToInt(f) {
+  if (f === 'П2') return 26;
+  if (f === 'П1') return 25;
+  if (f[0] === '-') return -(f[1] - '0');
+  return (f[0] - '0') * 10 + (f[1] - '0');
+}
+
+function floorToString(n) {
+  if (n === 26) return 'П2';
+  if (n === 25) return 'П1';
+  if (n < 0) return '-' + (-n);
+  return n.toString().padStart(2, '0');
+}
+
+function renderShaft() {
+  const container = document.getElementById('shaftContainer');
+  if (!monitorState.floors.length) {
+    container.innerHTML = '<div class="text-center text-sm py-6" style="color: var(--text-muted);">Нет данных об этажах</div>';
+    return;
+  }
+  
+  let html = '';
+  const floors = [...monitorState.floors].reverse();
+  
+  floors.forEach((fNum, idx) => {
+    const fStr = floorToString(fNum);
+    const isCurrentFloor = fStr === monitorState.floor;
+    const isBottom = idx === floors.length - 1;
+    const isTop = idx === 0;
+    
+    const callUpActive = monitorState.callUp[fStr];
+    const callDownActive = monitorState.callDown[fStr];
+    const orderActive = monitorState.orders.has(fStr);
+    
+    const dir = isCurrentFloor ? (monitorState.direction === 'UP' ? '▲' : monitorState.direction === 'DN' ? '▼' : '') : '';
+    
+    let sensors = '';
+    if (isBottom) {
+      sensors = `
+        <div class="shaft-sensor ${monitorState.dne[fStr]?'active':''}">ДНЭ</div>
+        <div class="shaft-sensor ${monitorState.dto[fStr]?'active':''}">ДТО</div>`;
+    } else if (isTop) {
+      sensors = `
+        <div class="shaft-sensor ${monitorState.dto[fStr]?'active':''}">ДТО</div>
+        <div class="shaft-sensor ${monitorState.dve[fStr]?'active':''}">ДВЭ</div>`;
+    } else {
+      sensors = `<div class="shaft-sensor ${monitorState.dto[fStr]?'active':''}" style="height:100%">ДТО</div>`;
+    }
+    
+    html += `<div class="shaft-floor">
+      <div class="shaft-floor-num">${fStr}</div>
+      <div class="shaft-call-btn ${callUpActive?'active':''}">▲</div>
+      <div class="shaft-call-btn ${callDownActive?'active':''}">▼</div>
+      <div class="shaft-order" style="color:${orderActive?'var(--shaft-order-color)':'transparent'}">●</div>
+      <div class="shaft-floor-ind" style="background:${isCurrentFloor?'var(--shaft-ind-bg)':'var(--shaft-call-bg)'};color:${isCurrentFloor?'var(--shaft-ind-text)':'var(--shaft-call-text)'}">${isCurrentFloor?fStr:''}</div>
+      <div class="shaft-dir" style="background:${isCurrentFloor?'var(--shaft-ind-bg)':'var(--shaft-call-bg)'};color:${isCurrentFloor?'var(--shaft-ind-text)':'var(--shaft-call-text)'}">${dir}</div>
+      <div style="display:flex;flex-direction:column;height:100%;gap:1px;">${sensors}</div>
+    </div>`;
+  });
+  
+  container.innerHTML = html;
+  updateMonitorIndicators();
+}
+
+function updateMonitorIndicators() {
+  document.getElementById('modeInd').textContent = monitorState.mode;
+  document.getElementById('weightInd').textContent = monitorState.weight || '--';
+  
+  document.getElementById('statusMain').className = 'status-ind' + (monitorState.main ? ' active-main' : '');
+  document.getElementById('statusPos').className = 'status-ind' + (monitorState.pos ? ' active-pos' : '');
+  document.getElementById('statusMulti').className = 'status-ind' + (monitorState.multirun ? ' active-multi' : '');
+  
+  const d1 = monitorState.door1[monitorState.floor] || '';
+  const d2 = monitorState.door2[monitorState.floor] || '';
+  updateDoorIndicator('door1Ind', d1);
+  updateDoorIndicator('door2Ind', d2);
+}
+
+function updateDoorIndicator(id, state) {
+  const s = state.toLowerCase();
+  const cells = document.getElementById(id).children;
+  for (let i = 0; i < 4; i++) {
+    let yellow = false;
+    if (i === 0 || i === 3) yellow = s === 'opened';
+    else yellow = s === 'closing' || s === 'opened' || s === 'opening';
+    cells[i].className = 'door-cell' + (yellow ? ' yellow' : '');
+  }
+}
+
+function processRowForMonitor(row) {
+  if (!row || row.length < 15) return;
+  const time = row[0], ev = row[1], text = row[2], mode = row[3];
+  const floor = row[4], dir = row[5], target = row[6];
+  const weight = row[9], door1 = row[13], door2 = row[14];
+  
+  if (mode === 'NR') monitorState.mode = 'НР';
+  else if (mode === 'SR') monitorState.mode = 'СР';
+  
+  if (weight) monitorState.weight = weight;
+  if (dir === 'UP' || dir === 'DN') monitorState.direction = dir;
+  if (floor && isValidFloor(floor)) monitorState.floor = floor;
+  
+  if (ev === 'DVE') {
+    const topFloor = floorToString(monitorState.floors[monitorState.floors.length-1]);
+    monitorState.dve[topFloor] = text === 'IN';
+  } else if (ev === 'DTO') {
+    monitorState.dto[floor] = text === 'IN';
+  } else if (ev === 'DNE') {
+    const botFloor = floorToString(monitorState.floors[0]);
+    monitorState.dne[botFloor] = text === 'IN';
+  } else if (ev === 'ORDER') {
+    monitorState.orders.add(text);
+  } else if (ev === 'CALL') {
+    if (dir === 'UP') monitorState.callUp[text] = true;
+    else if (dir === 'DOWN' || dir === 'DN') monitorState.callDown[text] = true;
+    else { monitorState.callUp[text] = true; monitorState.callDown[text] = true; }
+  } else if (ev === 'ENGINE' && text === 'STOP' && target && isValidFloor(target)) {
+    monitorState.callUp[target] = false;
+    monitorState.callDown[target] = false;
+    monitorState.orders.delete(target);
+  } else if (ev === 'BUTTONS') {
+    if (text === 'OPEN ON') monitorState.open = true;
+    else if (text === 'OPEN OFF') monitorState.open = false;
+    else if (text === 'CLOSE ON') monitorState.close = true;
+    else if (text === 'CLOSE OFF') monitorState.close = false;
+    else if (text === 'CANCEL ON') monitorState.cancel = true;
+    else if (text === 'CANCEL OFF') monitorState.cancel = false;
+  } else if (ev === 'DOOR1' && text === 'NEW STATE') {
+    monitorState.door1[floor] = door1;
+  } else if (ev === 'DOOR2' && text === 'NEW STATE') {
+    monitorState.door2[floor] = door2;
+  } else if (ev === 'MAIN') {
+    monitorState.main = true;
+  } else if (ev === 'POS') {
+    if (text === 'START') monitorState.pos = true;
+    else if (text.startsWith('SET Floor')) monitorState.pos = false;
+  } else if (ev === 'MULTIRUN') {
+    if (text === 'START') monitorState.multirun = true;
+    else if (text.startsWith('STOP')) monitorState.multirun = false;
+  }
+  
+  if (door1 && floor) monitorState.door1[floor] = door1;
+  if (door2 && floor) monitorState.door2[floor] = door2;
+}
+
+function togglePlay() {
+  if (monitorState.playing) {
+    stopPlay();
+  } else {
+    startPlay();
+  }
+}
+
+function startPlay() {
+  if (!filteredRows.length) { showToast('Нет данных'); return; }
+  monitorState.playing = true;
+  document.getElementById('playBtn').textContent = '■';
+  
+  if (monitorState.currentIndex >= filteredRows.length) monitorState.currentIndex = 0;
+  
+  document.getElementById('eventsArea').innerHTML = '';
+  
+  monitorState.timer = setInterval(() => {
+    if (monitorState.currentIndex >= filteredRows.length) {
+      stopPlay();
+      return;
+    }
+    const row = filteredRows[monitorState.currentIndex];
+    if (!row[0].startsWith('Дата: ') && row[0]) {
+      processRowForMonitor(row);
+      addEventToArea(row);
+    }
+    monitorState.currentIndex++;
+    renderShaft();
+  }, monitorState.interval);
+}
+
+function stopPlay() {
+  monitorState.playing = false;
+  document.getElementById('playBtn').textContent = '▶';
+  if (monitorState.timer) { clearInterval(monitorState.timer); monitorState.timer = null; }
+}
+
+function updateSpeed() {
+  const pos = parseInt(document.getElementById('speedSlider').value);
+  const intervals = [3500, 1200, 950, 775, 575, 400, 250, 125, 50, 5];
+  monitorState.interval = intervals[pos];
+  document.getElementById('speedLabel').textContent = monitorState.interval + 'мс';
+  
+  if (monitorState.playing) {
+    clearInterval(monitorState.timer);
+    monitorState.timer = setInterval(() => {
+      if (monitorState.currentIndex >= filteredRows.length) { stopPlay(); return; }
+      const row = filteredRows[monitorState.currentIndex];
+      if (!row[0].startsWith('Дата: ') && row[0]) {
+        processRowForMonitor(row);
+        addEventToArea(row);
+      }
+      monitorState.currentIndex++;
+      renderShaft();
+    }, monitorState.interval);
+  }
+}
+
+function addEventToArea(row) {
+  const ev = row[1], text = row[2], mode = row[3];
+  const time = row[0];
+  const area = document.getElementById('eventsArea');
+  
+  let line = '';
+  const shortTime = time.length >= 8 ? time.substr(0, 8) : time;
+  
+  if (ev === 'MODE' && text === 'NEW') {
+    const modeName = mode === 'SR' ? 'СР' : mode === 'NR' ? 'НР' : mode === 'EVAC' ? 'ЭВАКУАЦИЯ' : mode;
+    line = `<span class="event-time">${shortTime}</span> <span class="event-mode">Режим ${modeName}</span>`;
+  } else if (ev === 'POS' && text.startsWith('SET Floor')) {
+    line = `<span class="event-time">${shortTime}</span> <span class="event-pos">Позиционирование</span>`;
+  } else if (ev === 'MULTIRUN') {
+    if (text === 'START') line = `<span class="event-time">${shortTime}</span> <span class="event-multirun">Включение прогона</span>`;
+    else if (text.startsWith('STOP')) line = `<span class="event-time">${shortTime}</span> <span class="event-multirun">Выключение прогона</span>`;
+  } else if (ev === 'ERROR' || ev === 'ERROR C' || ev === 'ERROR R') {
+    const code = extractErrorCode(text);
+    line = `<span class="event-time">${shortTime}</span> <span class="event-error">ERROR</span> ${code}`;
+  } else if (ev === 'WARNING') {
+    const code = extractErrorCode(text);
+    line = `<span class="event-time">${shortTime}</span> <span class="event-warning">WARNING</span> ${code}`;
+  }
+  
+  if (line) {
+    area.innerHTML += `<div class="event-line">${line}</div>`;
+    area.scrollTop = area.scrollHeight;
+  }
+}
+
+function showAllEvents() {
+  const area = document.getElementById('eventsArea');
+  area.innerHTML = '';
+  for (const row of filteredRows) {
+    if (!row[0].startsWith('Дата: ') && row[0]) {
+      addEventToArea(row);
+    }
+  }
+  showToast('Показаны все события');
+}
+
+// ============ ERRORS ============
+function searchError() {
+  const input = document.getElementById('errorSearch').value.toUpperCase();
+  const display = document.getElementById('errorDisplay');
+  
+  if (input.length < 4) {
+    display.innerHTML = '<div class="text-center text-sm py-6" style="color: var(--text-muted);">Введите 4 символа кода</div>';
+    return;
+  }
+  
+  let code = input;
+  let info = errorDB[code];
+  
+  if (!info && code.length === 4) {
+    const template = code.substr(0, 2) + 'XX';
+    if (errorDB[template]) info = errorDB[template];
+  }
+  
+  const special = specialEvents[code];
+  
+  if (info) {
+    display.innerHTML = `
+      <div class="text-xs mb-1" style="color: var(--text-secondary);">Код ошибки</div>
+      <div class="text-lg font-bold text-red-400 mb-2">${code}</div>
+      <div class="text-sm mb-3">${info.desc}</div>
+      ${info.causes && info.causes.length ? `
+        <div class="text-xs font-semibold mt-2" style="color: var(--text-secondary);">Причины / Решения:</div>
+        <div class="mt-1 space-y-1">
+          ${info.causes.map((c, i) => `<div class="text-xs p-2 rounded" style="background: var(--error-info-bg);">
+            ${i+1}. ${c}${info.solutions[i] ? ' <span class="text-green-400">►</span> ' + info.solutions[i] : ''}
+          </div>`).join('')}
+        </div>` : ''}
+    `;
+  } else if (special) {
+    display.innerHTML = `
+      <div class="text-xs mb-1" style="color: var(--text-secondary);">Событие</div>
+      <div class="text-lg font-bold text-blue-400 mb-2">${code}</div>
+      <div class="text-sm">${special}</div>
+    `;
+  } else {
+    display.innerHTML = `
+      <div class="text-center py-6">
+        <div class="text-3xl mb-2">🔍</div>
+        <div class="text-sm" style="color: var(--text-muted);">Код ${code} не найден в базе</div>
+        <div class="text-xs mt-2" style="color: var(--text-secondary);">Загрузите err.csv для полной базы</div>
+      </div>
+    `;
+  }
+}
+
+function buildErrorList() {
+  errorEntries = [];
+  let currentDate = '';
+  for (let i = 0; i < filteredRows.length; i++) {
+    const row = filteredRows[i];
+    if (row[0].startsWith('Дата: ')) { currentDate = row[0].substr(6); continue; }
+    const ev = row[1];
+    if (ev === 'ERROR' || ev === 'ERROR C' || ev === 'ERROR R' || ev === 'WARNING') {
+      errorEntries.push({
+        date: currentDate,
+        type: ev,
+        time: row[0],
+        message: row[2] || '',
+        rowIndex: i
+      });
+    }
+  }
+  
+  const list = document.getElementById('errorList');
+  if (!errorEntries.length) {
+    list.innerHTML = '<div class="text-center text-sm py-4" style="color: var(--text-muted);">Ошибок не найдено</div>';
+    return;
+  }
+  
+  list.innerHTML = errorEntries.slice(-20).reverse().map(e => {
+    const msg = e.message.length > 40 ? e.message.substr(0, 37) + '...' : e.message;
+    const color = e.type === 'ERROR C' ? 'red' : e.type === 'ERROR R' ? 'orange' : e.type === 'WARNING' ? 'blue' : 'red';
+    return `<div class="rounded p-2 border-l-4 border-${color}-500 cursor-pointer" style="background: var(--error-list-bg);" onclick="goToError(${e.rowIndex})">
+      <div class="flex justify-between items-center">
+        <span class="text-xs font-bold text-${color}-400">${e.type}</span>
+        <span class="text-[10px]" style="color: var(--text-muted);">${e.date} ${e.time.substr(0,8)}</span>
+      </div>
+      <div class="text-xs mt-1 truncate" style="color: var(--text-primary);">${msg}</div>
+    </div>`;
+  }).join('');
+}
+
+function goToError(idx) {
+  switchTab('log');
+  setTimeout(() => {
+    const cards = document.querySelectorAll('#logView .log-card');
+    let visualIdx = 0;
+    for (let i = 0; i < filteredRows.length; i++) {
+      if (i === idx) {
+        if (cards[visualIdx]) {
+          cards[visualIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+          cards[visualIdx].classList.add('selected');
+          setTimeout(() => cards[visualIdx].classList.remove('selected'), 2000);
         }
-
-        // --- Извлечение уникальных дат ---
-        function populateDateFilter() {
-            const dateSelect = document.getElementById('dateFilter');
-            dateSelect.innerHTML = '<option value="Все даты">Все даты</option>';
-            
-            // Извлекаем даты из строк "Дата: ..."
-            const uniqueDates = [...new Set(
-                allRows
-                    .filter(row => row[0] && row[0].startsWith("Дата: "))
-                    .map(row => row[0].replace("Дата: ", ""))
-            )];
-
-            // Сортируем даты в хронологическом порядке
-            uniqueDates.sort((a, b) => {
-                const dateA = new Date(a.split('.').reverse().join('-'));
-                const dateB = new Date(b.split('.').reverse().join('-'));
-                return dateA - dateB;
-            });
-
-            uniqueDates.forEach(date => {
-                const option = document.createElement('option');
-                option.value = date;
-                option.textContent = date;
-                dateSelect.appendChild(option);
-            });
-        }
-
-        // --- Извлечение уникальных событий (заглушка для чекбоксов) ---
-        function populateEventCheckboxes() {
-            // В этом примере фильтрация по событиям через чекбоксы не реализована полностью,
-            // но можно заполнить список уникальных событий здесь.
-            console.log("Заполнение чекбоксов событий (заглушка)");
-        }
-
-        // --- Создание заголовков таблицы ---
-        function createTableHeaders() {
-            const headerRow = document.getElementById('tableHeader');
-            headerRow.innerHTML = '';
-
-            // Добавляем заголовок для столбца чекбоксов
-            const checkboxHeader = document.createElement('th');
-            checkboxHeader.className = 'checkbox-header';
-            const selectAllCheckbox = document.createElement('input');
-            selectAllCheckbox.type = 'checkbox';
-            selectAllCheckbox.id = 'selectAllCheckbox';
-            selectAllCheckbox.addEventListener('change', toggleSelectAll);
-            checkboxHeader.appendChild(selectAllCheckbox);
-            headerRow.appendChild(checkboxHeader);
-
-            // Определяем имена колонок
-            if (allRows.length > 0 && allRows[0][0] !== "ВРЕМЯ") {
-                columnNames = ["ВРЕМЯ", "СОБЫТИЕ", "СООБЩЕНИЕ", "РЕЖИМ", "ЭТАЖ ТЕКУЩ.", "НАПРАВЛ.", "ЭТАЖ НАПРАВ.", "ДТО", "ЦБ", "ВЕС", "СКОРОСТЬ", "М/С", "ЭНКОД.", "ДВЕРЬ 1", "ДВЕРЬ 2"];
-                while(columnNames.length < FIXED_COLS) columnNames.push(`Доп.${columnNames.length - 14}`);
-            } else if (allRows.length > 0) {
-                columnNames = [...allRows[0]]; // Копируем заголовки
-                allRows.shift(); // Удаляем строку заголовков из данных
-            } else {
-                columnNames = ["ВРЕМЯ", "СОБЫТИЕ", "СООБЩЕНИЕ", "РЕЖИМ", "ЭТАЖ ТЕКУЩ.", "НАПРАВЛ.", "ЭТАж НАПРАВ.", "ДТО", "ЦБ", "ВЕС", "СКОРОСТЬ", "М/С", "ЭНКОД.", "ДВЕРЬ 1", "ДВЕРЬ 2"];
-                while(columnNames.length < FIXED_COLS) columnNames.push(`Доп.${columnNames.length - 14}`);
-            }
-
-            columnNames.forEach((name, index) => {
-                const th = document.createElement('th');
-                th.textContent = name;
-                th.dataset.colIndex = index;
-                th.addEventListener('click', () => sortTable(index));
-                headerRow.appendChild(th);
-            });
-        }
-
-        // --- Создание фильтров по колонкам ---
-        function createColumnFilters() {
-            const filterRow = document.getElementById('columnFilters');
-            filterRow.innerHTML = '';
-
-            columnNames.forEach((name, index) => {
-                // Пропускаем фильтр для времени (колонка 0)
-                if (index === 0) return;
-
-                const uniqueValues = [...new Set(
-                    allRows
-                        .filter(row => row[index] !== undefined && row[index] !== "")
-                        .map(row => row[index])
-                )];
-                if (uniqueValues.length === 0) return;
-
-                const filterGroup = document.createElement('div');
-                filterGroup.className = 'filter-group';
-
-                const label = document.createElement('span');
-                label.className = 'filter-label';
-                label.textContent = name;
-                label.title = name; // Для полного отображения при наведении
-                filterGroup.appendChild(label);
-
-                const select = document.createElement('select');
-                select.className = 'filter-select';
-                select.dataset.colIndex = index;
-
-                const optionAll = document.createElement('option');
-                optionAll.value = "Все";
-                optionAll.textContent = `[Все ${uniqueValues.length}]`;
-                select.appendChild(optionAll);
-
-                uniqueValues.forEach(value => {
-                    const option = document.createElement('option');
-                    option.value = value;
-                    option.textContent = value.length > 15 ? value.substring(0, 12) + "..." : value; // Ограничиваем длину
-                    option.title = value; // Полный текст при наведении
-                    select.appendChild(option);
-                });
-
-                select.addEventListener('change', function() {
-                    currentFilters[index] = this.value;
-                    applyFilters();
-                });
-
-                filterGroup.appendChild(select);
-                filterRow.appendChild(filterGroup);
-            });
-        }
-
-        // --- Инициализация фильтров ---
-        function initializeFilters() {
-            for(let i = 0; i < FIXED_COLS; i++) {
-                currentFilters[i] = "Все";
-            }
-        }
-
-        // --- Применение фильтров ---
-        function applyFilters() {
-            const selectedDate = document.getElementById('dateFilter').value;
-
-            filteredRows = allRows.filter(row => {
-                // Если выбрана конкретная дата, показываем только строки для этой даты
-                if (selectedDate !== "Все даты") {
-                    // Показываем строку с датой
-                    if (row[0] && row[0].startsWith("Дата: ") && row[0].includes(selectedDate)) {
-                        return true;
-                    }
-                    // Показываем строки данных только если предыдущая строка даты соответствует выбранной
-                    const currentIndex = allRows.indexOf(row);
-                    let shouldShow = false;
-                    for (let i = currentIndex - 1; i >= 0; i--) {
-                        if (allRows[i][0] && allRows[i][0].startsWith("Дата: ")) {
-                            shouldShow = allRows[i][0].includes(selectedDate);
-                            break;
-                        }
-                    }
-                    if (!shouldShow) return false;
-                }
-                
-                // Если это строка с датой, всегда показываем её
-                if(row[0] && row[0].startsWith("Дата: ")) return true;
-
-                // Применяем фильтры по колонкам
-                for (let i = 1; i < FIXED_COLS; i++) {
-                    const filterValue = currentFilters[i];
-                    if (filterValue && filterValue !== "Все" && row[i] !== filterValue) {
-                        return false;
-                    }
-                }
-                return true;
-            });
-
-            renderTable();
-            populateErrorFilter();
-            updateStatusBar();
-            updateSelectAllCheckboxState(); // Обновляем состояние "выделить все"
-        }
-
-        // --- Рендер таблицы ---
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-
-            filteredRows.forEach((row, rowIndex) => {
-                const tr = document.createElement('tr');
-                tr.dataset.rowIndex = rowIndex;
-
-                // Добавляем чекбокс
-                const checkboxCell = document.createElement('td');
-                checkboxCell.className = 'checkbox-cell';
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.dataset.rowIndex = rowIndex;
-                checkbox.addEventListener('click', handleRowCheckboxClick); // Используем click
-                checkboxCell.appendChild(checkbox);
-                tr.appendChild(checkboxCell);
-
-                // Добавляем классы для цветового кодирования
-                if (row[1]) {
-                    if (row[1] === "ERROR C" || row[1] === "ERROR") {
-                        tr.classList.add('error-critical');
-                    } else if (row[1] === "ERROR R") {
-                        tr.classList.add('error-resetting');
-                    } else if (row[1] === "WARNING") {
-                        tr.classList.add('warning');
-                    } else if (row[1] === "ENGINE" && row[2] === "START") {
-                        tr.classList.add('engine-start');
-                    } else if (row[1] === "ENGINE" && row[2] === "STOP") {
-                        tr.classList.add('engine-stop');
-                    }
-                }
-
-                // Добавляем ячейки данных
-                for (let i = 0; i < FIXED_COLS; i++) {
-                    const td = document.createElement('td');
-                    td.textContent = row[i] !== undefined ? row[i] : "";
-                    tr.appendChild(td);
-                }
-
-                // Обработчик клика для выделения строки
-                tr.addEventListener('click', function(event) {
-                    // Игнорируем клик, если он был по чекбоксу
-                    if (event.target.type === 'checkbox') return;
-
-                    document.querySelectorAll('#tableBody tr').forEach(r => r.classList.remove('selected'));
-                    this.classList.add('selected');
-
-                    const clickedRowIndex = parseInt(this.dataset.rowIndex);
-                    const clickedRow = filteredRows[clickedRowIndex];
-                    if (clickedRow && clickedRow.length >= 3) {
-                        let errorCode = clickedRow[1];
-                        if ((clickedRow[1].includes("ERROR") || clickedRow[1].includes("WARNING")) &&
-                            !["ERROR CLEAR", "WARNING CLEAR", "ERROR C CLEAR", "ERROR R CLEAR"].includes(clickedRow[1])) {
-                            const potentialCodeMatch = clickedRow[2].match(/\b[A-Za-z0-9]{4}\b/);
-                            if (potentialCodeMatch) {
-                                errorCode = potentialCodeMatch[0];
-                            }
-                        }
-                        displayErrorInfo(errorCode);
-                    } else {
-                        document.getElementById('errorDisplay').textContent = '';
-                    }
-                    updateStatusBarWithDelta(); // Пересчитываем Δt при клике
-                });
-
-                tbody.appendChild(tr);
-            });
-        }
-
-        // --- Обработчик клика по чекбоксу строки ---
-        function handleRowCheckboxClick(event) {
-            event.stopPropagation(); // Останавливаем всплытие, чтобы не сработал клик по строке
-            const checkbox = event.target;
-            const rowIndex = parseInt(checkbox.dataset.rowIndex, 10);
-            const checkboxes = Array.from(document.querySelectorAll('#tableBody input[type="checkbox"]'));
-
-            // Логика для автоматического выбора диапазона для графика
-            if (checkbox.checked) {
-                if (firstCheckedIndex === -1) {
-                    // Первый выбранный чекбокс
-                    firstCheckedIndex = rowIndex;
-                } else if (firstCheckedIndex !== rowIndex) {
-                    // Второй выбранный чекбокс - выбираем весь диапазон между ними
-                    const start = Math.min(firstCheckedIndex, rowIndex);
-                    const end = Math.max(firstCheckedIndex, rowIndex);
-                    
-                    // Снимаем все остальные выделения
-                    checkboxes.forEach(cb => cb.checked = false);
-                    
-                    // Выделяем диапазон
-                    for (let i = start; i <= end; i++) {
-                        if (checkboxes[i]) {
-                            checkboxes[i].checked = true;
-                        }
-                    }
-                    
-                    // Визуально подсвечиваем диапазон
-                    highlightRangeRows(start, end);
-                    
-                    lastCheckedIndex = rowIndex;
-                } else {
-                    // Тот же чекбокс снова - оставляем как есть
-                    lastCheckedIndex = rowIndex;
-                }
-            } else {
-                // Если снимаем выделение с первого чекбокса, сбрасываем весь диапазон
-                if (rowIndex === firstCheckedIndex) {
-                    checkboxes.forEach(cb => cb.checked = false);
-                    firstCheckedIndex = -1;
-                    lastCheckedIndex = -1;
-                    clearRangeHighlight();
-                } else if (event.shiftKey && lastCheckedIndex !== -1) {
-                    // Стандартная логика для Shift+клик
-                    const start = Math.min(lastCheckedIndex, rowIndex);
-                    const end = Math.max(lastCheckedIndex, rowIndex);
-                    for (let i = start; i <= end; i++) {
-                        checkboxes[i].checked = checkbox.checked;
-                    }
-                }
-            }
-
-            updateStatusBarWithDelta(); // Пересчитываем Δt при изменении выделения
-            updateSelectAllCheckboxState(); // Обновляем "выделить все"
-        }
-
-        // --- Подсветка диапазона строк ---
-        function highlightRangeRows(start, end) {
-            clearRangeHighlight();
-            const rows = document.querySelectorAll('#tableBody tr');
-            for (let i = start; i <= end; i++) {
-                if (rows[i]) {
-                    rows[i].classList.add('checkbox-range-selection');
-                }
-            }
-        }
-
-        // --- Очистка подсветки диапазона ---
-        function clearRangeHighlight() {
-            document.querySelectorAll('#tableBody tr').forEach(row => {
-                row.classList.remove('checkbox-range-selection');
-            });
-        }
-
-        // --- Переключение "Выделить все" ---
-        function toggleSelectAll() {
-            const isChecked = document.getElementById('selectAllCheckbox').checked;
-            document.querySelectorAll('#tableBody input[type="checkbox"]').forEach(cb => {
-                cb.checked = isChecked;
-            });
-            firstCheckedIndex = -1; // Сбрасываем индексы
-            lastCheckedIndex = -1;
-            clearRangeHighlight();
-            updateStatusBarWithDelta();
-        }
-
-        // --- Обновление состояния "Выделить все" ---
-        function updateSelectAllCheckboxState() {
-            const checkboxes = document.querySelectorAll('#tableBody input[type="checkbox"]');
-            const checkedCount = document.querySelectorAll('#tableBody input[type="checkbox"]:checked').length;
-            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-            if (checkedCount === 0) {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = false;
-            } else if (checkedCount === checkboxes.length) {
-                selectAllCheckbox.checked = true;
-                selectAllCheckbox.indeterminate = false;
-            } else {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = true;
-            }
-        }
-
-
-        // --- Вычисление разницы времени Δt ---
-        function calculateTimeDifference() {
-             const selectedCheckboxes = document.querySelectorAll('#tableBody input[type="checkbox"]:checked');
-             if (selectedCheckboxes.length < 2) return "";
-
-             const selectedIndices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.rowIndex, 10));
-             const firstIndex = Math.min(...selectedIndices);
-             const lastIndex = Math.max(...selectedIndices);
-
-             if (firstIndex >= filteredRows.length || lastIndex >= filteredRows.length) return "";
-
-             const firstRow = filteredRows[firstIndex];
-             const lastRow = filteredRows[lastIndex];
-
-             if (!firstRow[0] || firstRow[0].startsWith("Дата:") || !lastRow[0] || lastRow[0].startsWith("Дата:")) return "";
-
-             const firstTime = firstRow[0];
-             const lastTime = lastRow[0];
-
-             const parseTime = (timeStr) => {
-                 if (timeStr.length < 12) return 0;
-                 try {
-                     const hours = parseInt(timeStr.substr(0, 2), 10);
-                     const minutes = parseInt(timeStr.substr(3, 2), 10);
-                     const seconds = parseInt(timeStr.substr(6, 2), 10);
-                     const milliseconds = parseInt(timeStr.substr(9, 3), 10);
-                     return (hours * 3600 + minutes * 60 + seconds) * 1000 + milliseconds;
-                 } catch (e) {
-                     return 0;
-                 }
-             };
-
-             try {
-                 const firstMs = parseTime(firstTime);
-                 const lastMs = parseTime(lastTime);
-                 const diffMs = lastMs - firstMs;
-
-                 if (diffMs < 0) return "";
-
-                 const totalSeconds = Math.floor(diffMs / 1000);
-                 const ms = diffMs % 1000;
-                 const minutes = Math.floor(totalSeconds / 60);
-                 const seconds = totalSeconds % 60;
-
-                 return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
-             } catch (e) {
-                 console.error("Ошибка при вычислении Δt:", e);
-                 return "";
-             }
-        }
-
-        // --- Обновление строки состояния с Δt ---
-        function updateStatusBarWithDelta() {
-             const baseStatus = document.getElementById('statusBar').textContent.split(' | Δt:')[0];
-             const timeDiff = calculateTimeDifference();
-             let newStatus = baseStatus;
-             if (timeDiff) newStatus += ` | Δt: ${timeDiff}`;
-             document.getElementById('statusBar').textContent = newStatus;
-        }
-
-
-        // --- Обновление строки состояния ---
-        function updateStatusBar() {
-            const displayedCount = filteredRows.filter(row => !row[0] || !row[0].startsWith("Дата:")).length;
-            let errorCount = 0, criticalCount = 0, resettingCount = 0, warnCount = 0;
-            filteredRows.forEach(row => {
-                 if (row[1]) {
-                     if (row[1] === "ERROR C") { criticalCount++; errorCount++; }
-                     else if (row[1] === "ERROR R") { resettingCount++; errorCount++; }
-                     else if (row[1] === "WARNING") { warnCount++; errorCount++; }
-                     else if (row[1] === "ERROR") { errorCount++; }
-                 }
-            });
-            const statusText = `СТРОК: ${displayedCount} | ОШИБОК: ${errorCount} | КРИТИЧЕСКИХ: ${criticalCount} | САМОСБРАСЫВАЮЩИЕСЯ: ${resettingCount} | ПРЕДУПРЕЖДЕНИЙ: ${warnCount}`;
-            document.getElementById('statusBar').textContent = statusText; // Δt будет добавлен в updateStatusBarWithDelta
-        }
-
-        // --- Заполнение фильтра ошибок ---
-        function populateErrorFilter() {
-            const errorSelect = document.getElementById('errorFilter');
-            errorSelect.innerHTML = '<option value="">Все ошибки</option>';
-
-            const errorEntries = [];
-            filteredRows.forEach((row, rowIndex) => {
-                 if (row[1] && (row[1].includes("ERROR") || row[1].includes("WARNING"))) {
-                     let date = "Неизвестная дата";
-                     for(let i=rowIndex-1; i>=0; i--) {
-                         if(filteredRows[i][0] && filteredRows[i][0].startsWith("Дата: ")) {
-                             date = filteredRows[i][0].replace("Дата: ", "");
-                             break;
-                         }
-                     }
-                     const type = row[1];
-                     const message = row[2] || "";
-                     const time = row[0] || "";
-                     errorEntries.push({date, type, message, time, rowIndex});
-                 }
-            });
-
-            errorEntries.forEach(entry => {
-                const option = document.createElement('option');
-                option.value = entry.rowIndex;
-                const displayMessage = entry.message.length > 50 ? entry.message.substring(0, 47) + "..." : entry.message;
-                option.textContent = `${entry.date} | ${entry.type} | ${displayMessage} | ${entry.time}`;
-                errorSelect.appendChild(option);
-            });
-        }
-
-        // --- Выбор строки по ошибке в комбобоксе ---
-        function selectErrorRow() {
-            const selectedIndex = document.getElementById('errorFilter').value;
-            if (selectedIndex === "") return;
-
-            const rowIndex = parseInt(selectedIndex, 10);
-            if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= filteredRows.length) return;
-
-            const tableBody = document.getElementById('tableBody');
-            const rows = tableBody.querySelectorAll('tr');
-            rows.forEach((row, index) => {
-                const rowIdx = parseInt(row.dataset.rowIndex, 10);
-                if (rowIdx === rowIndex) {
-                    // Прокручиваем к строке и выделяем её
-                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    document.querySelectorAll('#tableBody tr').forEach(r => r.classList.remove('selected'));
-                    row.classList.add('selected');
-
-                    // Отмечаем чекбокс
-                    const checkbox = row.querySelector('input[type="checkbox"]');
-                    if (checkbox) checkbox.checked = true;
-                    updateSelectAllCheckboxState();
-
-                    // Отображаем информацию об ошибке
-                    const clickedRow = filteredRows[rowIndex];
-                     if (clickedRow && clickedRow.length >= 3) {
-                         let errorCode = clickedRow[1];
-                         if ((clickedRow[1].includes("ERROR") || clickedRow[1].includes("WARNING")) &&
-                             !["ERROR CLEAR", "WARNING CLEAR", "ERROR C CLEAR", "ERROR R CLEAR"].includes(clickedRow[1])) {
-                             const potentialCodeMatch = clickedRow[2].match(/\b[A-Za-z0-9]{4}\b/);
-                             if (potentialCodeMatch) {
-                                 errorCode = potentialCodeMatch[0];
-                             }
-                         }
-                         displayErrorInfo(errorCode);
-                     }
-                     updateStatusBarWithDelta(); // Обновляем Δt
-                }
-            });
-        }
-
-        // --- Сортировка таблицы ---
-        let sortDirection = {};
-        function sortTable(columnIndex) {
-            const isAscending = sortDirection[columnIndex] !== 'asc';
-            sortDirection = {};
-            sortDirection[columnIndex] = isAscending ? 'asc' : 'desc';
-
-            filteredRows.sort((a, b) => {
-                if (a[0] && a[0].startsWith("Дата:")) return 0;
-                if (b[0] && b[0].startsWith("Дата:")) return 0;
-
-                let valA = a[columnIndex] || '';
-                let valB = b[columnIndex] || '';
-
-                const numA = parseFloat(valA.replace(',', '.'));
-                const numB = parseFloat(valB.replace(',', '.'));
-                if (!isNaN(numA) && !isNaN(numB)) {
-                    return isAscending ? numA - numB : numB - numA;
-                }
-
-                if (valA < valB) return isAscending ? -1 : 1;
-                if (valA > valB) return isAscending ? 1 : -1;
-                return 0;
-            });
-
-            renderTable();
-            // Сбрасываем выделение при сортировке
-            firstCheckedIndex = -1;
-            lastCheckedIndex = -1;
-            clearRangeHighlight();
-            updateSelectAllCheckboxState();
-        }
-
-        // --- Отображение информации об ошибке ---
-        function displayErrorInfo(errorCode) {
-            const errorDisplay = document.getElementById('errorDisplay');
-            if (!errorCode) {
-                errorDisplay.textContent = '';
-                return;
-            }
-
-            let displayText = `Код ошибки: ${errorCode}\n`;
-            // Ищем сначала точное совпадение, потом по шаблону XX
-            const errorInfo = errorDatabase[errorCode] || errorDatabase[errorCode.substring(0, 2) + "XX"];
-
-            if (errorInfo) {
-                if (errorInfo.description) displayText += `${errorInfo.description}\n\n`;
-                else displayText += "\n";
-
-                const maxCount = Math.max(errorInfo.causes.length, errorInfo.solutions.length);
-                for (let i = 0; i < maxCount; i++) {
-                    const cause = errorInfo.causes[i] || "";
-                    const solution = errorInfo.solutions[i] || "";
-                    if (cause || solution) {
-                        displayText += `${i + 1}. `;
-                        if (cause) displayText += cause;
-                        if (cause && solution) displayText += "  ►  ";
-                        if (solution) displayText += solution;
-                        displayText += "\n";
-                    }
-                }
-            } else {
-                const specialEvents = {
-                    "BUTTONS": "Нажатие служебных кнопок",
-                    "CALL": "Нажатие кнопки вызова",
-                    "CORR": "Корректировка",
-                    "DNE": "Срабатывание ДНЭ",
-                    "DOOR1": "Первая дверь кабины",
-                    "DOOR2": "Вторая дверь кабины",
-                    "DTO": "Срабатывание ДТО",
-                    "DVE": "Срабатывание ДВЭ",
-                    "ENGINE": "Работа главного привода",
-                    "LOG": "Действие с логом",
-                    "MAIN": "Включение КЦ",
-                    "MODE": "Переключение режима работы",
-                    "MULTIRUN": "Включение прогона",
-                    "ORDER": "Нажатие кнопки приказа",
-                    "POS": "Позиционирование",
-                    "SD": "Работа с флеш-картой",
-                    "ERROR CLEAR": "Сброс ошибки",
-                    "ERROR R CLEAR": "Сброс самосбрасывающейся ошибки",
-                    "ERROR C CLEAR": "Сброс критической ошибки",
-                    "WARNING CLEAR": "Сброс предупреждения"
-                };
-
-                const specialDescription = specialEvents[errorCode];
-                if (specialDescription) {
-                    displayText = specialDescription;
-                } else {
-                    displayText += `\nОписание не найдено в базе данных ошибок.`;
-                }
-            }
-            errorDisplay.textContent = displayText;
-        }
-
-        // --- Поиск ошибки по коду ---
-        function performErrorSearch() {
-            const searchInput = document.getElementById('errorSearchInput');
-            let code = searchInput.value.trim().toUpperCase();
-            code = code.replace(/\s/g, '');
-            if (code.length < 4) {
-                code = code.padStart(4, '0');
-            } else if (code.length > 4) {
-                code = code.substring(0, 4);
-            }
-            searchInput.value = code;
-
-            if (code.length === 4) {
-                displayErrorInfo(code);
-            }
-        }
-
-        // --- Обновление данных ---
-        function refreshData() {
-            currentFilters = {};
-            firstCheckedIndex = -1;
-            lastCheckedIndex = -1;
-            initializeFilters();
-            document.querySelectorAll('.filter-select').forEach(select => {
-                select.value = "Все";
-            });
-            document.getElementById('dateFilter').value = "Все даты";
-            document.getElementById('errorFilter').value = "";
-            document.getElementById('errorSearchInput').value = "";
-            document.getElementById('errorDisplay').textContent = '';
-            document.getElementById('statusBar').textContent = document.getElementById('statusBar').textContent.split(' | Δt:')[0];
-            
-            // Снять выделение со всех строк и чекбоксов
-            document.querySelectorAll('#tableBody tr').forEach(r => r.classList.remove('selected'));
-            document.querySelectorAll('#tableBody input[type="checkbox"]').forEach(cb => cb.checked = false);
-            document.getElementById('selectAllCheckbox').checked = false;
-            document.getElementById('selectAllCheckbox').indeterminate = false;
-            clearRangeHighlight();
-
-            applyFilters();
-        }
-
-        // --- Сохранение в файл ---
-        function saveToFile() {
-            if (filteredRows.length === 0) {
-                alert("Нет данных для сохранения.");
-                return;
-            }
-
-            let csvContent = "sep=;\n";
-            csvContent += columnNames.join(";") + "\n";
-            filteredRows.forEach(row => {
-                const rowString = row.map(cell => cell !== undefined ? cell : "").join(";");
-                csvContent += rowString + "\n";
-            });
-
-            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "exported_log.csv");
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // --- Показать график ---
-        function showChart() {
-            const selectedCheckboxes = document.querySelectorAll('#tableBody input[type="checkbox"]:checked');
-            if (selectedCheckboxes.length === 0) {
-                alert("Не выделено ни одной строки");
-                return;
-            }
-
-            const selectedIndices = Array.from(selectedCheckboxes).map(cb => parseInt(cb.dataset.rowIndex, 10));
-            selectedIndices.sort((a, b) => a - b); // Сортируем по возрастанию
-
-            if (selectedIndices.length < 4) {
-                 alert("Выделено слишком мало строк для анализа");
-                 return;
-            }
-
-            const selectedData = selectedIndices.map(i => filteredRows[i]);
-
-            // 1. Найти первые две ENGINE;SPEED
-            let firstEngineSpeedData = [];
-            let firstEngineEndIndex = -1;
-            for(let i=0; i<selectedData.length - 1; i++) {
-                const row = selectedData[i];
-                if (row[1] === "ENGINE" && row[2] === "SPEED" && row.length >= 17) {
-                    const speeds = [];
-                    for(let j=3; j<=16; j++) {
-                        const val = parseFloat(row[j]);
-                        if (!isNaN(val)) speeds.push(val);
-                    }
-                    if (speeds.length >= 13) {
-                        firstEngineSpeedData.push(speeds);
-                        if (firstEngineSpeedData.length === 2) {
-                            firstEngineEndIndex = i + 1;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (firstEngineSpeedData.length !== 2) {
-                alert("Не найдены первые две строки ENGINE;SPEED;");
-                return;
-            }
-
-            // 2. Найти последние две ENGINE;SPEED
-            let lastEngineSpeedData = [];
-            let lastEngineStartIndex = -1;
-            for(let i=selectedData.length - 1; i > firstEngineEndIndex; i--) {
-                const row = selectedData[i];
-                if (row[1] === "ENGINE" && row[2] === "SPEED" && row.length >= 17) {
-                    const speeds = [];
-                    for(let j=3; j<=16; j++) {
-                        const val = parseFloat(row[j]);
-                        if (!isNaN(val)) speeds.push(val);
-                    }
-                    if (speeds.length >= 13) {
-                        lastEngineSpeedData.unshift(speeds);
-                        if (lastEngineSpeedData.length === 2) {
-                            lastEngineStartIndex = i - 1;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (lastEngineSpeedData.length !== 2) {
-                alert("Не найдены последние две строки ENGINE;SPEED;");
-                return;
-            }
-
-            // 3. Проверка на наличие строк между блоками
-            if (lastEngineStartIndex <= firstEngineEndIndex) {
-                alert("Не найдены строки событий между блоками ENGINE;SPEED;");
-                return;
-            }
-
-            // 4. Сбор промежуточных точек
-            let intermediatePoints = [];
-            let firstEventTime = null;
-            let stopCollecting = false;
-            for(let i = firstEngineEndIndex + 1; i <= lastEngineStartIndex && !stopCollecting; i++) {
-                const row = selectedData[i];
-                if (row[1] === "ENGINE" && row[2] === "NEW SPEED") {
-                    stopCollecting = true;
-                    continue;
-                }
-
-                if (row[0]) {
-                    const eventTime = parseTimeToMsWeb(row[0]);
-                    if (firstEventTime === null) {
-                        firstEventTime = eventTime;
-                    }
-                    const relativeTime = (eventTime - firstEventTime) / 1000.0;
-                    const speed = parseFloat(row[11]) || 0.0;
-                    const event = row[1] || "";
-                    const text = row[2] || "";
-                    const floor = row[4] || "";
-
-                    intermediatePoints.push({
-                        relativeTime: relativeTime,
-                        speed: speed,
-                        event: event,
-                        text: text,
-                        floor: floor
-                    });
-                }
-            }
-
-            // --- Формирование данных для Chart.js ---
-            let chartDataPoints = [];
-            let currentTime = 0.0;
-            const timeStep = 0.250;
-
-            for(let i=0; i<2; i++) {
-                for(let j=0; j<firstEngineSpeedData[i].length; j++) {
-                     chartDataPoints.push({
-                         x: currentTime,
-                         y: firstEngineSpeedData[i][j],
-                         label: ""
-                     });
-                     currentTime += timeStep;
-                }
-            }
-
-            const intermediateStartTime = currentTime;
-            intermediatePoints.forEach(ip => {
-                const absTime = intermediateStartTime + ip.relativeTime;
-                const label = ip.event && ip.text && ip.floor ? `${ip.event}-${ip.text}:${ip.floor}` : "";
-                chartDataPoints.push({
-                    x: absTime,
-                    y: ip.speed,
-                    label: label
-                });
-            });
-
-            if (intermediatePoints.length > 0) {
-                currentTime = intermediateStartTime + intermediatePoints[intermediatePoints.length - 1].relativeTime + timeStep;
-            } else {
-                currentTime = intermediateStartTime;
-            }
-
-            for(let i=0; i<2; i++) {
-                 for(let j=0; j<lastEngineSpeedData[i].length; j++) {
-                      chartDataPoints.push({
-                          x: currentTime,
-                          y: lastEngineSpeedData[i][j],
-                          label: ""
-                      });
-                      currentTime += timeStep;
-                 }
-            }
-
-            // --- Отображение графика ---
-            renderChart(chartDataPoints);
-        }
-
-        // --- Рендеринг графика с Chart.js ---
-        function renderChart(chartDataPoints) {
-            const chartContainer = document.getElementById('chartContainer');
-            const ctx = document.getElementById('myChart').getContext('2d');
-
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-
-            chartContainer.style.display = 'block';
-
-            const data = chartDataPoints.map(p => ({x: p.x, y: p.y}));
-            const pointLabels = chartDataPoints.map(p => p.label);
-
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    datasets: [{
-                        label: 'Скорость (м/с)',
-                        data: data,
-                        borderColor: 'rgb(255, 99, 132)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                        borderWidth: 2,
-                        pointBackgroundColor: function(context) {
-                             const index = context.dataIndex;
-                             const point = chartDataPoints[index];
-                             return point.label === "" ? 'blue' : 'red';
-                        },
-                        pointRadius: 4,
-                        fill: false,
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            position: 'bottom',
-                            title: {
-                                display: true,
-                                text: 'Время (сек)'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Скорость (м/с)'
-                            }
-                        }
-                    },
-                    plugins: {
-                         tooltip: {
-                             callbacks: {
-                                 title: function(context) {
-                                     const index = context[0].dataIndex;
-                                     const point = chartDataPoints[index];
-                                     return point.label || `Время: ${point.x.toFixed(2)} сек`;
-                                 },
-                                 label: function(context) {
-                                     return `Скорость: ${context.parsed.y.toFixed(2)} м/с`;
-                                 }
-                             }
-                         },
-                         legend: {
-                             display: true,
-                             position: 'top',
-                         }
-                    },
-                    animation: {
-                        duration: 500
-                    }
-                }
-            });
-        }
-
-        // --- Закрыть график ---
-        function closeChart() {
-            const chartContainer = document.getElementById('chartContainer');
-            chartContainer.style.display = 'none';
-            if (chartInstance) {
-                chartInstance.destroy();
-                chartInstance = null;
-            }
-        }
-
-        // --- Функция для парсинга времени в миллисекунды (для графика) ---
-        function parseTimeToMsWeb(timeStr) {
-             if (timeStr.length < 12) return 0.0;
-             try {
-                 const hours = parseInt(timeStr.substr(0, 2), 10);
-                 const minutes = parseInt(timeStr.substr(3, 2), 10);
-                 const seconds = parseInt(timeStr.substr(6, 2), 10);
-                 const milliseconds = parseInt(timeStr.substr(9, 3), 10);
-                 return (hours * 3600.0 + minutes * 60.0 + seconds) * 1000.0 + milliseconds;
-             } catch (e) {
-                 console.error("Ошибка парсинга времени:", timeStr, e);
-                 return 0.0;
-             }
-        }
-
-    </script>
+        break;
+      }
+      visualIdx++;
+    }
+  }, 100);
+}
+
+// ============ SAVE ============
+function saveCSV() {
+  let csv = 'ВРЕМЯ;СОБЫТИЕ;СООБЩЕНИЕ;РЕЖИМ;ЭТАЖ ТЕКУЩ.;НАПРАВЛ.;ЭТАЖ НАПРАВ.;ДТО;ЦБ;ВЕС;СКОРОСТЬ;М/С;ЭНКОД.;ДВЕРЬ 1;ДВЕРЬ 2;EX1;EX2\n';
+  for (const row of filteredRows) {
+    csv += row.join(';') + '\n';
+  }
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'log_export.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Файл сохранен');
+}
+
+// ============ UTILS ============
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+let lastTouch = 0;
+document.addEventListener('touchend', e => {
+  const now = Date.now();
+  if (now - lastTouch <= 300) e.preventDefault();
+  lastTouch = now;
+}, { passive: false });
+
+document.getElementById('speedSlider').value = 6;
+updateSpeed();
+</script>
 
 </body>
 </html>
+
