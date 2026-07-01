@@ -1302,6 +1302,7 @@ updateSpeed();
 
 // ============ CLOUD LOADER ============
 const CORS_PROXIES = [
+  url => `https://sl-log-proxy.zenitogk.workers.dev?url=${encodeURIComponent(url)}`, // Ваш Worker
   url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
 ];
