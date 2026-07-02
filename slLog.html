@@ -291,7 +291,7 @@
   .ios-hint-content .steps { text-align: left; margin: 16px 0; font-size: 14px; line-height: 1.8; color: var(--text-secondary); }
   .ios-hint-content .steps .step-icon { display: inline-block; width: 24px; text-align: center; margin-right: 8px; }
   .ios-hint-content .close-btn { background: var(--bg-tertiary); color: var(--text-primary); border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px; }
-  .error-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; border-left: 4px solid; background: var(--error-list-bg); cursor: pointer; transition: transform 0.1s; }
+  .error-item { display: flex; align-items: center; gap: 8px; border-radius: 8px; border-left: 4px solid; background: var(--error-list-bg); cursor: pointer; transition: transform 0.1s; }
   .error-item:active { transform: scale(0.98); }
   .error-item .error-info { flex: 1; min-width: 0; }
   .error-item .eye-btn { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); border-radius: 6px; font-size: 16px; cursor: pointer; border: none; color: var(--text-primary); }
@@ -357,6 +357,7 @@
 <div class="border-b px-3 py-2 flex gap-2 flex-shrink-0" id="filterBar" style="display:none; background: var(--bg-secondary); border-color: var(--border-header);">
   <select id="dateFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1"><option value="">Все даты</option></select>
   <select id="eventFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1"><option value="">Все события</option></select>
+  <input type="text" id="msgFilter" oninput="applyFilters()" placeholder="Фильтр по сообщению..." class="!py-1 !text-xs flex-1 hidden md:block" style="background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 0 8px;">
 </div>
 <div class="px-3 py-1 text-[11px] flex justify-between border-b flex-shrink-0" id="statusBar" style="display:none; background: var(--bg-primary); color: var(--text-secondary); border-color: var(--border-header);">
   <span id="statusText">Строк: 0</span>
@@ -469,42 +470,31 @@
   </div>
 </div>
 
-
 <div class="modal-overlay" id="cloudModal" onclick="if(event.target===this)closeModal('cloudModal')">
   <div class="cloud-modal-content">
-    
     <div class="p-3 border-b flex justify-between items-center" style="border-color: var(--border-header);">
       <div class="font-semibold text-sm">🌐 Проводник Nextcloud</div>
       <button onclick="closeModal('cloudModal')" class="text-xl" style="color: var(--text-secondary);">×</button>
     </div>
-    
     <div class="p-3 scroll-area" style="flex:1;">
-      
       <div class="text-xs mb-3" style="color: var(--text-secondary);">
         Автоматический поиск логов в директориях Башня, Зенит и Стенд.
       </div>
-
       <button onclick="loadCloudExplorer()" class="btn-primary text-xs w-full" id="cloudScanBtn">🔄 Сканировать хранилище логов</button>
-      
       <div id="cloudStatus" class="text-xs mt-2 text-center" style="color: var(--text-muted);"></div>
       <div class="cloud-progress mt-2" id="cloudProgress" style="display:none;">
         <div class="cloud-progress-bar" id="cloudProgressBar"></div>
       </div>
-      
       <div id="cloudFilesWrap" class="mt-3 p-2 rounded" style="background: var(--bg-input); max-height: 45vh; overflow-y: auto; display: none; text-align: left; font-size: 13px; border: 1px solid var(--border-color);">
-          </div>
-
+      </div>
       <button onclick="downloadSelectedLogs()" class="btn-primary text-xs w-full mt-3" id="cloudLoadBtn" style="display: none; background: #10b981;">⬇️ Открыть выбранные файлы</button>
-      
+      <button onclick="downloadFilesToDisk()" class="btn-primary text-xs w-full mt-2" id="cloudSaveBtn" style="display: none; background: #3b82f6;">💾 Скачать выбранные файлы на ПК</button>
       <div class="mt-4 text-[11px]" style="color: var(--text-muted);">
         💡 Сначала отображаются 10 самых свежих файлов. Ниже можно раскрыть нужную папку, отметить логи галочками и открыть их в парсере.
       </div>
-      
     </div>
   </div>
 </div>
-
-
 
 <div class="toast" id="toast"></div>
 
@@ -627,7 +617,7 @@ let monitorState = {
   main: false, pos: false, multirun: false,
   floors: [], playing: false, timer: null, currentIndex: 0, interval: 250
 };
-const errorDB = {
+let errorDB = {
   '0001': { desc: 'Включение/пересброс питания КЦ', causes: ['Пропадание питания'], solutions: ['Проверить питание'] },
   '0101': { desc: 'Ошибка датчика позиции', causes: ['Неисправность ДТО'], solutions: ['Проверить датчик'] },
   '0202': { desc: 'Ошибка двери', causes: ['Заклинивание двери'], solutions: ['Проверить механизм'] },
@@ -655,38 +645,33 @@ async function loadErrCsvAuto() {
     if (statusEl) statusEl.textContent = '✅ err.csv загружен автоматически';
   } catch(e) { if (statusEl) statusEl.textContent = 'Не удалось загрузить err.csv'; }
 }
+
 function parseErrCsv(text) {
   const lines = text.split(/\r?\n/);
-  let insideBlock = false;
+  let currentCode = null;
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed) continue;
-    if (trimmed.includes('{{')) { insideBlock = true; continue; }
-    if (trimmed.includes('}}')) { insideBlock = false; continue; }
-    if (!insideBlock) continue;
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    if (trimmed.includes('{{') || trimmed.includes('}}')) {
+      currentCode = null;
+      continue;
+    }
     const parts = trimmed.split(';').map(p => p.trim().replace(/^"|"$/g, ''));
-    if (parts.length < 2) continue;
-    const code = parts[0].trim();
-    if (code.length !== 4 || !/^[0-9X]{4}$/.test(code)) continue;
-    const desc = parts[1] || '', cause = parts[2] || '', solution = parts[3] || '';
-    if (!errorDB[code]) errorDB[code] = { desc, causes: [], solutions: [] };
-    if (desc) errorDB[code].desc = desc;
-    if (cause) errorDB[code].causes.push(cause);
-    if (solution) errorDB[code].solutions.push(solution);
-  }
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith(';') || trimmed.startsWith('#')) continue;
-    if (trimmed.includes('{{') || trimmed.includes('}}')) continue;
-    const parts = trimmed.split(';').map(p => p.trim().replace(/^"|"$/g, ''));
-    if (parts.length < 2) continue;
-    const code = parts[0].trim();
-    if (code.length !== 4 || !/^[0-9X]{4}$/.test(code)) continue;
-    const desc = parts[1] || '', cause = parts[2] || '', solution = parts[3] || '';
-    if (!errorDB[code]) errorDB[code] = { desc, causes: [], solutions: [] };
-    if (desc && !errorDB[code].desc) errorDB[code].desc = desc;
-    if (cause) errorDB[code].causes.push(cause);
-    if (solution) errorDB[code].solutions.push(solution);
+    const codePart = parts[0] || '';
+    const namePart = parts[1] || '';
+    const causePart = parts[2] || '';
+    const solPart = parts[3] || '';
+
+    if (codePart && /^[0-9A-ZX]{4}$/.test(codePart.substr(0,4))) {
+      currentCode = codePart.substr(0,4);
+      if (!errorDB[currentCode]) errorDB[currentCode] = { desc: namePart, causes: [], solutions: [] };
+      else if (namePart && !errorDB[currentCode].desc) errorDB[currentCode].desc = namePart;
+    }
+
+    if (currentCode && (causePart || solPart)) {
+      errorDB[currentCode].causes.push(causePart);
+      errorDB[currentCode].solutions.push(solPart);
+    }
   }
 }
 
@@ -760,6 +745,8 @@ function populateFilters() {
 function applyFilters() {
   const date = document.getElementById('dateFilter').value;
   const event = document.getElementById('eventFilter').value;
+  const msgInput = document.getElementById('msgFilter');
+  const msgMatch = msgInput ? msgInput.value.toLowerCase() : '';
   filteredRows = [];
   let currentDate = '', includeDate = true;
   for (const row of allRows) {
@@ -771,13 +758,14 @@ function applyFilters() {
     }
     if (!includeDate) continue;
     if (event && row[1] !== event) continue;
+    if (msgMatch && row[2] && !row[2].toLowerCase().includes(msgMatch)) continue;
     filteredRows.push(row);
   }
   renderLog(); updateStatus(); buildErrorList();
 }
 function shouldShowMessageBadge(ev, text) {
   if (!text || text === ev) return false;
-  if (ev === 'ENGINE' && (text === 'START' || text === 'STOP' || text === 'SPEED' || text === 'NEW SPEED')) return true;
+  if (ev === 'ENGINE' && (text === 'START' || text === 'STOP' || text.startsWith('SPEED') || text === 'NEW SPEED')) return true;
   if (ev.startsWith('ERROR') || ev === 'WARNING') return true;
   if (ev === 'MODE') return false;
   return text.length <= 30;
@@ -809,34 +797,67 @@ function renderLog() {
     }
     const ev = row[1] || '', text = row[2] || '', time = row[0] || '';
     const floor = row[4] || '', dir = row[5] || '', mode = row[3] || '';
+    
     if (ev === 'ENGINE') {
       if (text === 'START') cls += ' engine-start';
       else if (text === 'STOP') cls += ' engine-stop';
     } else if (ev === 'ERROR C' || ev === 'ERROR') cls += ' error-c';
     else if (ev === 'ERROR R') cls += ' error-r';
     else if (ev === 'WARNING') cls += ' warning';
+    
     const evColor = getEventColor(ev);
+    
+    let displayText = text;
+    if (ev === 'ENGINE' && text.startsWith('SPEED')) {
+      displayText = 'SPEED';
+    }
+
     let badgeHtml = '';
     if (shouldShowMessageBadge(ev, text)) {
       const badgeClass = getMessageBadgeClass(ev, text);
-      let badgeText = text;
+      let badgeText = displayText;
       if (ev.startsWith('ERROR') || ev === 'WARNING') {
         const code = extractErrorCode(text);
         if (code) badgeText = code;
       }
       badgeHtml = `<span class="badge ${badgeClass}">${badgeText}</span>`;
     }
-    let metaHtml = '';
-    const metaParts = [];
-    if (floor && floor !== '63') metaParts.push(`Э:${floor}`);
-    if (dir) metaParts.push(dir === 'UP' ? '▲' : dir === 'DN' ? '▼' : dir);
-    if (mode && mode !== '--') metaParts.push(mode);
-    if (metaParts.length) metaHtml = `<span class="meta-text ml-1">${metaParts.join(' ')}</span>`;
+
+    let metaHtmlMobile = '';
+    const metaPartsMobile = [];
+    if (floor && floor !== '63') metaPartsMobile.push(`Э:${floor}`);
+    if (dir) metaPartsMobile.push(dir === 'UP' ? '▲' : dir === 'DN' ? '▼' : dir);
+    if (mode && mode !== '--') metaPartsMobile.push(mode);
+    
+    const weight = row[9] || '';
+    const door1 = row[13] || '';
+    const door2 = row[14] || '';
+
+    if (weight && weight !== '0') metaPartsMobile.push(`Вес:${weight}`);
+    if (door1) metaPartsMobile.push(`Д1:${door1}`);
+    if (door2) metaPartsMobile.push(`Д2:${door2}`);
+
+    if (metaPartsMobile.length) metaHtmlMobile = `<span class="meta-text ml-1 md:hidden">${metaPartsMobile.join(' ')}</span>`;
+    
     const titleAttr = (text && !badgeHtml) ? ` title="${text.replace(/"/g,'&quot;')}"` : '';
-    html += `<div class="${cls} flex items-center gap-1.5 overflow-hidden" onclick="selectRow(${idx})"${titleAttr}>
-      <span class="log-time">${time.length >= 8 ? time.substr(0,8) : time}</span>
-      <span class="text-xs font-semibold ${evColor} flex-shrink-0">${ev}</span>
-      ${badgeHtml}${metaHtml}
+
+    const pcCols = `<div class="hidden md:flex flex-1 items-center gap-3 text-xs" style="color: var(--text-secondary);">
+        <span class="truncate flex-1 min-w-[150px]" title="${text.replace(/"/g,'&quot;')}">${displayText}</span>
+        <span class="w-12">${floor && floor !== '63' ? `Э:${floor}` : ''}</span>
+        <span class="w-8">${dir ? dir : ''}</span>
+        <span class="w-12">${mode && mode !== '--' ? mode : ''}</span>
+        <span class="w-16">${weight && weight !== '0' ? `Вес:${weight}` : ''}</span>
+        <span class="w-20">${door1 ? `Д1:${door1}` : ''}</span>
+        <span class="w-20">${door2 ? `Д2:${door2}` : ''}</span>
+    </div>`;
+
+    html += `<div class="${cls} flex flex-col md:flex-row md:items-center gap-1 md:gap-3 overflow-hidden cursor-pointer" onclick="selectRow(${idx})">
+      <div class="flex items-center gap-1.5 md:w-64 flex-shrink-0"${titleAttr}>
+        <span class="log-time">${time.length >= 8 ? time.substr(0,8) : time}</span>
+        <span class="text-xs font-semibold ${evColor} flex-shrink-0 w-16">${ev}</span>
+        ${badgeHtml}${metaHtmlMobile}
+      </div>
+      ${pcCols}
     </div>`;
   });
   container.innerHTML = html || '<div class="text-center py-10 text-sm" style="color: var(--text-muted);">Нет данных</div>';
@@ -948,10 +969,11 @@ function findSpeedBlocks() {
   for (let i = 0; i < filteredRows.length; i++) {
     const row = filteredRows[i];
     if (row[1] === 'ENGINE' && row[2] === 'START') {
-      const firstSpeeds = []; let firstEnd = -1;
+      const firstSpeeds = [];
+      let firstEnd = -1;
       for (let j = i + 1; j < filteredRows.length; j++) {
         const r = filteredRows[j];
-        if (r[1] === 'ENGINE' && r[2] === 'SPEED') {
+        if (r[1] === 'ENGINE' && r[2].startsWith('SPEED')) {
           const speeds = [];
           for (let k = 3; k < r.length; k++) if (r[k]) speeds.push(parseFloat(r[k]) || 0);
           if (speeds.length >= 13) { firstSpeeds.push(speeds); if (firstSpeeds.length === 2) { firstEnd = j; break; } }
@@ -962,10 +984,11 @@ function findSpeedBlocks() {
       for (let j = firstEnd + 1; j < filteredRows.length; j++) {
         if (filteredRows[j][1] === 'ENGINE' && filteredRows[j][2] === 'START') { blockEnd = j - 1; break; }
       }
-      const lastSpeeds = []; let lastStart = -1;
+      const lastSpeeds = [];
+      let lastStart = -1;
       for (let j = blockEnd; j > firstEnd; j--) {
         const r = filteredRows[j];
-        if (r[1] === 'ENGINE' && r[2] === 'SPEED') {
+        if (r[1] === 'ENGINE' && r[2].startsWith('SPEED')) {
           const speeds = [];
           for (let k = 3; k < r.length; k++) if (r[k]) speeds.push(parseFloat(r[k]) || 0);
           if (speeds.length >= 13) { lastSpeeds.unshift(speeds); if (lastSpeeds.length === 2) { lastStart = j - 1; break; } }
@@ -1124,18 +1147,24 @@ function processRowForMonitor(row) {
     else { monitorState.callUp[text] = true; monitorState.callDown[text] = true; }
   }
   else if (ev === 'ENGINE' && text === 'STOP' && target && isValidFloor(target)) {
-    monitorState.callUp[target] = false; monitorState.callDown[target] = false; monitorState.orders.delete(target);
+    monitorState.callUp[target] = false;
+    monitorState.callDown[target] = false; monitorState.orders.delete(target);
   }
   else if (ev === 'BUTTONS') {
-    if (text === 'OPEN ON') monitorState.open = true; else if (text === 'OPEN OFF') monitorState.open = false;
-    else if (text === 'CLOSE ON') monitorState.close = true; else if (text === 'CLOSE OFF') monitorState.close = false;
-    else if (text === 'CANCEL ON') monitorState.cancel = true; else if (text === 'CANCEL OFF') monitorState.cancel = false;
+    if (text === 'OPEN ON') monitorState.open = true;
+    else if (text === 'OPEN OFF') monitorState.open = false;
+    else if (text === 'CLOSE ON') monitorState.close = true;
+    else if (text === 'CLOSE OFF') monitorState.close = false;
+    else if (text === 'CANCEL ON') monitorState.cancel = true;
+    else if (text === 'CANCEL OFF') monitorState.cancel = false;
   }
   else if (ev === 'DOOR1' && text === 'NEW STATE') monitorState.door1[floor] = door1;
   else if (ev === 'DOOR2' && text === 'NEW STATE') monitorState.door2[floor] = door2;
   else if (ev === 'MAIN') monitorState.main = true;
-  else if (ev === 'POS') { if (text === 'START') monitorState.pos = true; else if (text.startsWith('SET Floor')) monitorState.pos = false; }
-  else if (ev === 'MULTIRUN') { if (text === 'START') monitorState.multirun = true; else if (text.startsWith('STOP')) monitorState.multirun = false; }
+  else if (ev === 'POS') { if (text === 'START') monitorState.pos = true;
+  else if (text.startsWith('SET Floor')) monitorState.pos = false; }
+  else if (ev === 'MULTIRUN') { if (text === 'START') monitorState.multirun = true;
+  else if (text.startsWith('STOP')) monitorState.multirun = false; }
   if (door1 && floor) monitorState.door1[floor] = door1;
   if (door2 && floor) monitorState.door2[floor] = door2;
 }
@@ -1208,7 +1237,8 @@ function searchError() {
   const display = document.getElementById('errorDisplay');
   if (input.length < 4) { display.innerHTML = '<div class="text-center text-sm py-6" style="color: var(--text-muted);">Введите 4 символа кода</div>'; return; }
   let code = input, info = errorDB[code];
-  if (!info && code.length === 4) { const template = code.substr(0, 2) + 'XX'; if (errorDB[template]) info = errorDB[template]; }
+  if (!info && code.length === 4) { const template = code.substr(0, 2) + 'XX';
+  if (errorDB[template]) info = errorDB[template]; }
   const special = specialEvents[code];
   if (info) {
     let causesHtml = '';
@@ -1245,18 +1275,24 @@ function buildErrorList() {
   }
   const list = document.getElementById('errorList');
   if (!errorEntries.length) { list.innerHTML = '<div class="text-center text-sm py-4" style="color: var(--text-muted);">Ошибок не найдено</div>'; return; }
+  
   list.innerHTML = errorEntries.slice(-20).reverse().map(e => {
-    const msg = e.message.length > 40 ? e.message.substr(0, 37) + '...' : e.message;
-    const color = e.type === 'ERROR C' ? 'red' : e.type === 'ERROR R' ? 'orange' : e.type === 'WARNING' ? 'blue' : 'red';
     const code = extractErrorCode(e.message);
+    let cleanMsg = e.message;
+    if (code && cleanMsg.startsWith(code)) {
+      cleanMsg = cleanMsg.substring(code.length).trim();
+    }
+    const msg = cleanMsg.length > 40 ? cleanMsg.substr(0, 37) + '...' : cleanMsg;
+    const color = e.type === 'ERROR C' ? 'red' : e.type === 'ERROR R' ? 'orange' : e.type === 'WARNING' ? 'blue' : 'red';
     const shortTime = e.time.length >= 8 ? e.time.substr(0,8) : e.time;
-    return `<div class="error-item" style="border-left-color: var(--${color === 'red' ? 'error-c-border' : color === 'orange' ? 'error-r-border' : 'warning-border'});" onclick="showErrorInfo('${code}')">
+    
+    return `<div class="error-item py-1.5 px-2" style="border-left-color: var(--${color === 'red' ? 'error-c-border' : color === 'orange' ? 'error-r-border' : 'warning-border'});" onclick="showErrorInfo('${code}')">
       <div class="error-info">
         <div class="flex justify-between items-center">
           <span class="text-xs font-bold text-${color}-400">${e.type}${code ? ' ' + code : ''}</span>
           <span class="text-[10px]" style="color: var(--text-muted);">${e.date} ${shortTime}</span>
         </div>
-        <div class="text-xs mt-1 truncate" style="color: var(--text-primary);">${msg}</div>
+        ${msg ? `<div class="text-xs mt-0.5 truncate" style="color: var(--text-primary);">${msg}</div>` : ''}
       </div>
       <button class="eye-btn" onclick="event.stopPropagation();goToError(${e.rowIndex})" title="Перейти к ошибке в логе">👁️</button>
     </div>`;
@@ -1302,16 +1338,9 @@ document.addEventListener('touchend', e => {
 document.getElementById('speedSlider').value = 6;
 updateSpeed();
 
-
-
-
-  
-// ============ CLOUD LOADER ============
-
 // ============ CLOUD LOADER ============
 const WORKER_URL = 'https://sl-log-proxy.zenitogk.workers.dev';
 const NC_TOKEN = 'mMwPSLCWMs4PM5o';
-
 function showCloudModal() {
   document.getElementById('cloudModal').classList.add('show');
 }
@@ -1321,11 +1350,13 @@ async function loadCloudExplorer() {
   const status = document.getElementById('cloudStatus');
   const wrap = document.getElementById('cloudFilesWrap');
   const loadBtn = document.getElementById('cloudLoadBtn');
+  const saveBtn = document.getElementById('cloudSaveBtn');
   const scanBtn = document.getElementById('cloudScanBtn');
   
   status.textContent = '🔄 Чтение дерева каталогов...';
   wrap.style.display = 'none';
   loadBtn.style.display = 'none';
+  saveBtn.style.display = 'none';
   scanBtn.disabled = true;
 
   try {
@@ -1339,27 +1370,18 @@ async function loadCloudExplorer() {
     }
 
     const files = data.files;
-    
-    // Сортируем от новых к старым
     files.sort((a, b) => b.timestamp - a.timestamp);
-    
-    // Берем 10 самых свежих
     const top10 = files.slice(0, 10);
-    
-    // Группируем остальные по папкам (Башня, Зенит, Стенд)
     const folders = {};
     files.forEach(f => {
       if (!folders[f.folder]) folders[f.folder] = [];
       folders[f.folder].push(f);
     });
-
-    // --- ОБНОВЛЕННЫЕ СТИЛИ ДЛЯ ИДЕАЛЬНОГО ВЫРАВНИВАНИЯ ---
     const labelStyle = "display: flex; align-items: center; gap: 8px; margin: 2px 0; padding: 3px 4px; cursor: pointer; border-radius: 4px; transition: background 0.2s;";
     const checkboxStyle = "margin: 0; width: 14px; height: 14px; flex-shrink: 0; cursor: pointer;";
     const hoverEffect = "this.style.background='rgba(156, 163, 175, 0.1)'";
     const leaveEffect = "this.style.background='transparent'";
 
-    // Генерируем HTML проводника
     let html = '<div style="margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">';
     html += '<strong style="color:#60a5fa; display:block; margin-bottom: 6px;">🔥 Последние 10 логов:</strong>';
     top10.forEach(f => {
@@ -1377,7 +1399,6 @@ async function loadCloudExplorer() {
           📁 ${folderName} <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(${folders[folderName].length} файлов)</span>
         </summary>
         <div style="margin-left: 8px; border-left: 1px dashed #4b5563; padding-left: 12px; margin-top: 4px;">`;
-      
       folders[folderName].forEach(f => {
         html += `<label style="${labelStyle}" onmouseover="${hoverEffect}" onmouseout="${leaveEffect}">
           <input type="checkbox" class="nc-file-cb" value="${f.path}" data-name="${f.name}" data-folder="${f.folder}" style="${checkboxStyle}"> 
@@ -1390,6 +1411,7 @@ async function loadCloudExplorer() {
     wrap.innerHTML = html;
     wrap.style.display = 'block';
     loadBtn.style.display = 'block';
+    saveBtn.style.display = 'block';
     status.textContent = `✅ Найдено файлов: ${files.length}. Выберите нужные.`;
     
   } catch (err) {
@@ -1399,13 +1421,12 @@ async function loadCloudExplorer() {
   }
 }
 
-// 2. Скачивание только отмеченных файлов
+// 2. Скачивание выбранных файлов в интерфейс LogViewer
 async function downloadSelectedLogs() {
   const checkboxes = document.querySelectorAll('.nc-file-cb:checked');
   const status = document.getElementById('cloudStatus');
   const progress = document.getElementById('cloudProgress');
   const bar = document.getElementById('cloudProgressBar');
-  
   if (checkboxes.length === 0) {
     alert('Пожалуйста, выберите хотя бы один файл галочкой.');
     return;
@@ -1426,16 +1447,14 @@ async function downloadSelectedLogs() {
     const folderName = cb.getAttribute('data-folder');
 
     status.textContent = `📥 Скачивание: ${name} ...`;
-    
     try {
       const res = await fetch(`${WORKER_URL}?token=${NC_TOKEN}&file=${encodeURIComponent(path)}`);
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      
       const text = await res.text();
       
       if (text && text.length > 0 && !text.includes('<!DOCTYPE html>')) {
         const fileObj = new File([text], name, { type: 'text/csv' });
-        fileObj.folder = folderName; // Сохраняем папку для внутреннего парсера
+        fileObj.folder = folderName;
         filesToParse.push(fileObj);
         downloaded++;
       } else {
@@ -1451,11 +1470,8 @@ async function downloadSelectedLogs() {
 
   progress.style.display = 'none';
   status.textContent = `✅ Загружено: ${downloaded}. Открываем...`;
-
   if (filesToParse.length > 0) {
     setTimeout(() => closeModal('cloudModal'), 800);
-    
-    // Имитируем выбор файлов через <input type="file"> для совместимости с slLog
     const dt = new DataTransfer();
     filesToParse.forEach(f => dt.items.add(f));
     
@@ -1467,6 +1483,50 @@ async function downloadSelectedLogs() {
   } else {
     status.textContent = `❌ Не удалось загрузить выбранные файлы.`;
   }
+}
+
+// 3. Сохранение выбранных файлов на устройство (ПК/Телефон)
+async function downloadFilesToDisk() {
+  const checkboxes = document.querySelectorAll('.nc-file-cb:checked');
+  if (checkboxes.length === 0) {
+    showToast('Пожалуйста, выберите хотя бы один файл.');
+    return;
+  }
+  const status = document.getElementById('cloudStatus');
+  const progress = document.getElementById('cloudProgress');
+  const bar = document.getElementById('cloudProgressBar');
+
+  status.textContent = `⏳ Скачивание ${checkboxes.length} файлов на устройство...`;
+  progress.style.display = 'block';
+  bar.style.width = '0%';
+
+  for (let i = 0; i < checkboxes.length; i++) {
+    const cb = checkboxes[i];
+    const path = cb.value;
+    const name = cb.getAttribute('data-name');
+    try {
+      const res = await fetch(`${WORKER_URL}?token=${NC_TOKEN}&file=${encodeURIComponent(path)}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (e) {
+      console.error('Ошибка загрузки файла:', name, e);
+    }
+    bar.style.width = Math.round(((i + 1) / checkboxes.length) * 100) + '%';
+    await new Promise(r => setTimeout(r, 400)); // Небольшая пауза для избежания блокировки браузером
+  }
+  
+  progress.style.display = 'none';
+  status.textContent = `✅ Загрузка завершена.`;
+  showToast('Файлы сохранены на устройство');
 }
 
 </script>
