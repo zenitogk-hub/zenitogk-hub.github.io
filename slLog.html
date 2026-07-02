@@ -893,7 +893,7 @@ function renderLog() {
     html += `<div class="${cls} flex flex-col md:flex-row md:items-center gap-1 md:gap-3 overflow-hidden cursor-pointer" onclick="selectRow(${idx})">
       <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 md:w-[340px] flex-shrink-0 w-full"${titleAttr}>
         <span class="log-time">${time.length >= 8 ? time.substr(0,8) : time}</span>
-        <span class="text-xs md:text-xs font-semibold ${evColor} flex-shrink-0 w-[4.5rem] md:w-16">${ev}</span>
+        <span class="text-xs md:text-xs font-semibold ${evColor} flex-shrink-0 w-12 md:w-16">${ev}</span>
         ${badgeHtml}
         ${metaHtmlMobile}
       </div>
