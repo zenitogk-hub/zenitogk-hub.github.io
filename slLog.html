@@ -266,7 +266,11 @@
   .badge-green { background: var(--badge-green-bg); border-color: var(--badge-green-border); color: var(--badge-green-text); }
   .badge-purple { background: var(--badge-purple-bg); border-color: var(--badge-purple-border); color: var(--badge-purple-text); }
   .log-time { font-size: 12px; font-family: 'SF Mono', 'Menlo', 'Consolas', 'Monaco', 'Liberation Mono', monospace; font-weight: var(--log-text-weight); flex-shrink: 0; color: var(--log-meta-text); letter-spacing: 0.3px; }
-  .meta-text { font-size: 12px; color: var(--log-meta-text); white-space: nowrap; font-weight: var(--log-text-weight); }
+  
+  /* Новые стили для бейджей на мобильных устройствах */
+  .meta-badges-container { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; flex: 1; min-width: 0; }
+  .meta-badge { display: inline-flex; align-items: center; padding: 1px 4px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 9px; color: var(--text-secondary); background: transparent; white-space: nowrap; }
+  
   .logo-btn { cursor: pointer; transition: transform 0.2s; user-select: none; }
   .logo-btn:active { transform: scale(0.92); }
   .theme-icon { transition: transform 0.3s; display: inline-block; font-size: 12px; }
@@ -357,7 +361,7 @@
 <div class="border-b px-3 py-2 flex gap-2 flex-shrink-0" id="filterBar" style="display:none; background: var(--bg-secondary); border-color: var(--border-header);">
   <select id="dateFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1"><option value="">Все даты</option></select>
   <select id="eventFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1"><option value="">Все события</option></select>
-  <input type="text" id="msgFilter" oninput="applyFilters()" placeholder="Фильтр по сообщению..." class="!py-1 !text-xs flex-1 hidden md:block" style="background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 0 8px;">
+  <select id="msgFilter" onchange="applyFilters()" class="!py-1 !text-xs flex-1 hidden md:block"><option value="">Все сообщения</option></select>
 </div>
 <div class="px-3 py-1 text-[11px] flex justify-between border-b flex-shrink-0" id="statusBar" style="display:none; background: var(--bg-primary); color: var(--text-secondary); border-color: var(--border-header);">
   <span id="statusText">Строк: 0</span>
@@ -478,8 +482,7 @@
     </div>
     <div class="p-3 scroll-area" style="flex:1;">
       <div class="text-xs mb-3" style="color: var(--text-secondary);">
-        Автоматический поиск логов в директориях Башня, Зенит и Стенд.
-      </div>
+        </div>
       <button onclick="loadCloudExplorer()" class="btn-primary text-xs w-full" id="cloudScanBtn">🔄 Сканировать хранилище логов</button>
       <div id="cloudStatus" class="text-xs mt-2 text-center" style="color: var(--text-muted);"></div>
       <div class="cloud-progress mt-2" id="cloudProgress" style="display:none;">
@@ -730,23 +733,41 @@ function updateUI() {
   document.getElementById('errDbCount').textContent = Object.keys(errorDB).length;
 }
 function populateFilters() {
-  const dates = new Set(), events = new Set();
+  const dates = new Set(), events = new Set(), msgs = new Set();
   for (const row of allRows) {
     if (row[0].startsWith('Дата: ')) dates.add(row[0].substr(6));
-    else if (row[1]) events.add(row[1]);
+    else {
+      if (row[1]) events.add(row[1]);
+      if (row[2]) msgs.add(row[2]);
+    }
   }
+  
   const dateSel = document.getElementById('dateFilter');
   const eventSel = document.getElementById('eventFilter');
+  const msgSel = document.getElementById('msgFilter');
+  
   dateSel.innerHTML = '<option value="">Все даты</option>';
   [...dates].sort().forEach(d => dateSel.innerHTML += `<option value="${d}">${d}</option>`);
+  
   eventSel.innerHTML = '<option value="">Все события</option>';
   [...events].sort().forEach(e => eventSel.innerHTML += `<option value="${e}">${e}</option>`);
+  
+  if (msgSel) {
+    const msgOptions = ['<option value="">Все сообщения</option>'];
+    [...msgs].sort().forEach(m => {
+      const display = m.length > 50 ? m.substr(0, 47) + '...' : m;
+      const safeVal = m.replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      msgOptions.push(`<option value="${safeVal}">${display}</option>`);
+    });
+    msgSel.innerHTML = msgOptions.join('');
+  }
 }
 function applyFilters() {
   const date = document.getElementById('dateFilter').value;
   const event = document.getElementById('eventFilter').value;
-  const msgInput = document.getElementById('msgFilter');
-  const msgMatch = msgInput ? msgInput.value.toLowerCase() : '';
+  const msgSel = document.getElementById('msgFilter');
+  const msgMatch = msgSel ? msgSel.value : '';
+  
   filteredRows = [];
   let currentDate = '', includeDate = true;
   for (const row of allRows) {
@@ -758,7 +779,7 @@ function applyFilters() {
     }
     if (!includeDate) continue;
     if (event && row[1] !== event) continue;
-    if (msgMatch && row[2] && !row[2].toLowerCase().includes(msgMatch)) continue;
+    if (msgMatch && row[2] !== msgMatch) continue;
     filteredRows.push(row);
   }
   renderLog(); updateStatus(); buildErrorList();
@@ -807,38 +828,55 @@ function renderLog() {
     
     const evColor = getEventColor(ev);
     
-    let displayText = text;
-    if (ev === 'ENGINE' && text.startsWith('SPEED')) {
-      displayText = 'SPEED';
-    }
-
-    let badgeHtml = '';
-    if (shouldShowMessageBadge(ev, text)) {
-      const badgeClass = getMessageBadgeClass(ev, text);
-      let badgeText = displayText;
-      if (ev.startsWith('ERROR') || ev === 'WARNING') {
-        const code = extractErrorCode(text);
-        if (code) badgeText = code;
-      }
-      badgeHtml = `<span class="badge ${badgeClass}">${badgeText}</span>`;
-    }
-
+    // Формируем бейджи дополнительных параметров (для мобильных)
     let metaHtmlMobile = '';
     const metaPartsMobile = [];
-    if (floor && floor !== '63') metaPartsMobile.push(`Э:${floor}`);
-    if (dir) metaPartsMobile.push(dir === 'UP' ? '▲' : dir === 'DN' ? '▼' : dir);
-    if (mode && mode !== '--') metaPartsMobile.push(mode);
+    const pushBadge = (str) => {
+      metaPartsMobile.push(`<span class="meta-badge">${str}</span>`);
+    };
+    
+    if (floor && floor !== '63') pushBadge(`Э:${floor}`);
+    if (dir) pushBadge(dir === 'UP' ? '▲' : dir === 'DN' ? '▼' : dir);
+    if (mode && mode !== '--') pushBadge(mode);
     
     const weight = row[9] || '';
     const door1 = row[13] || '';
     const door2 = row[14] || '';
 
-    if (weight && weight !== '0') metaPartsMobile.push(`Вес:${weight}`);
-    if (door1) metaPartsMobile.push(`Д1:${door1}`);
-    if (door2) metaPartsMobile.push(`Д2:${door2}`);
+    // Для мобильного вида сокращаем Вес до "В" для экономии пространства
+    if (weight && weight !== '0') pushBadge(`В:${weight}`);
+    if (door1) pushBadge(`Д1:${door1}`);
+    if (door2) pushBadge(`Д2:${door2}`);
 
-    if (metaPartsMobile.length) metaHtmlMobile = `<span class="meta-text ml-1 md:hidden">${metaPartsMobile.join(' ')}</span>`;
-    
+    if (metaPartsMobile.length) {
+      metaHtmlMobile = `<div class="meta-badges-container md:hidden">${metaPartsMobile.join('')}</div>`;
+    }
+
+    let badgeHtml = '';
+    let displayText = text; // Текст, отображаемый в ПК-колонках
+
+    if (shouldShowMessageBadge(ev, text)) {
+      const badgeClass = getMessageBadgeClass(ev, text);
+      let badgeText = text;
+      let postBadgeText = '';
+
+      // Логика отделения SPEED от остального текста
+      if (ev === 'ENGINE' && text.startsWith('SPEED')) {
+        badgeText = 'SPEED';
+        postBadgeText = text.substring(5).trim();
+      } else if (ev.startsWith('ERROR') || ev === 'WARNING') {
+        const code = extractErrorCode(text);
+        if (code) badgeText = code;
+      }
+      
+      badgeHtml = `<span class="badge ${badgeClass}">${badgeText}</span>`;
+      
+      // Если есть текст после бейджа, оставляем его видимым рядом
+      if (postBadgeText) {
+        badgeHtml += `<span class="text-[10px] ml-1 truncate max-w-[120px]" style="color:var(--text-secondary);">${postBadgeText}</span>`;
+      }
+    }
+
     const titleAttr = (text && !badgeHtml) ? ` title="${text.replace(/"/g,'&quot;')}"` : '';
 
     const pcCols = `<div class="hidden md:flex flex-1 items-center gap-3 text-xs" style="color: var(--text-secondary);">
@@ -851,11 +889,13 @@ function renderLog() {
         <span class="w-20">${door2 ? `Д2:${door2}` : ''}</span>
     </div>`;
 
+    // Использование flex-wrap на родительском контейнере для безопасного переноса бейджей на мобилках
     html += `<div class="${cls} flex flex-col md:flex-row md:items-center gap-1 md:gap-3 overflow-hidden cursor-pointer" onclick="selectRow(${idx})">
-      <div class="flex items-center gap-1.5 md:w-64 flex-shrink-0"${titleAttr}>
+      <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 md:w-[340px] flex-shrink-0 w-full"${titleAttr}>
         <span class="log-time">${time.length >= 8 ? time.substr(0,8) : time}</span>
-        <span class="text-xs font-semibold ${evColor} flex-shrink-0 w-16">${ev}</span>
-        ${badgeHtml}${metaHtmlMobile}
+        <span class="text-[10px] md:text-xs font-semibold ${evColor} flex-shrink-0 w-[4.5rem] md:w-16">${ev}</span>
+        ${badgeHtml}
+        ${metaHtmlMobile}
       </div>
       ${pcCols}
     </div>`;
