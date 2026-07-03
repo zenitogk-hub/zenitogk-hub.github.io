@@ -262,19 +262,21 @@
             75% { transform: translateX(-4px) rotate(-15deg); }
         }
 
-        /* Модальные окна */
+        /* Модальные окна - ТЕПЕРЬ НА ВЕСЬ ЭКРАН */
         .overlay-screen {
-            position: absolute;
-            width: 100%;
-            height: 100%;
+            position: fixed; /* Исправлено: fixed вместо absolute */
+            top: 0; 
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100dvh;
             background: rgba(255, 255, 255, 0.97);
-            top: 0; left: 0;
             display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 20;
-            border-radius: 12px;
+            z-index: 100; /* Исправлено: высокий z-index, чтобы перекрыть все */
         }
         .stars-wrapper { 
             display: flex; 
@@ -295,7 +297,7 @@
         @keyframes popIn { to { opacity: 1; transform: scale(1); } }
         .game-over-text { font-size: 22px; font-weight: bold; margin-bottom: 10px; text-align: center;}
 
-        /* Стили окна настроек (Обновлено для полного экрана) */
+        /* Стили окна настроек */
         .settings-panel {
             background: #fff;
             padding: 20px;
@@ -325,7 +327,7 @@
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.8);
-            z-index: 70;
+            z-index: 150;
             display: none;
             align-items: center;
             justify-content: center;
@@ -361,6 +363,44 @@
         </div>
     </div>
 
+    <!-- Модальные окна вынесены на уровень body для надежности -->
+    <div id="stars-screen" class="overlay-screen">
+        <div id="stars-title" class="game-over-text">Игра окончена!</div>
+        <div class="stars-wrapper" id="stars-area"></div>
+        <button class="btn btn-start" style="width: auto; margin-top: 20px; padding: 10px 40px;" onclick="closeStarsScreen()">ОК</button>
+    </div>
+
+    <div id="settings-screen" class="overlay-screen">
+        <div class="settings-panel">
+            <div class="settings-content">
+                <h3>Настройки игры</h3>
+                <div class="settings-row">
+                    <label>Сложность (допустимо ошибок):</label>
+                    <select id="setting-difficulty">
+                        <option value="20" selected>Легко (20 ошибок)</option>
+                        <option value="10">Нормально (10 ошибок)</option>
+                        <option value="5">Сложно (5 ошибок)</option>
+                        <option value="0">Супер сложно (Без ошибок)</option>
+                    </select>
+                </div>
+                <div class="settings-row checkbox-row">
+                    <input type="checkbox" id="setting-blackkeys">
+                    <label for="setting-blackkeys">Использовать диезы (черные клавиши)</label>
+                </div>
+                <div class="settings-row checkbox-row">
+                    <input type="checkbox" id="setting-hint-white" checked>
+                    <label for="setting-hint-white">Подсказки белых клавиш</label>
+                </div>
+                <div class="settings-row checkbox-row">
+                    <input type="checkbox" id="setting-hint-black" checked>
+                    <label for="setting-hint-black">Подсказки черных клавиш</label>
+                </div>
+                <button class="btn btn-start" onclick="saveSettings()" style="margin-top: 10px;">Сохранить и начать</button>
+                <button class="btn" style="background: #e9ecef; color: #333;" onclick="closeSettings()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
     <div class="main-area">
         <div class="stage">
             <div class="staff-container">
@@ -373,43 +413,6 @@
                     <div class="line"></div>
                 </div>
                 <div id="notes-layer"></div>
-                
-                <div id="stars-screen" class="overlay-screen">
-                    <div id="stars-title" class="game-over-text">Игра окончена!</div>
-                    <div class="stars-wrapper" id="stars-area"></div>
-                    <button class="btn btn-start" style="width: auto; margin-top: 20px; padding: 10px 40px;" onclick="closeStarsScreen()">ОК</button>
-                </div>
-
-                <div id="settings-screen" class="overlay-screen">
-                    <div class="settings-panel">
-                        <div class="settings-content">
-                            <h3>Настройки игры</h3>
-                            <div class="settings-row">
-                                <label>Сложность (допустимо ошибок):</label>
-                                <select id="setting-difficulty">
-                                    <option value="20" selected>Легко (20 ошибок)</option>
-                                    <option value="10">Нормально (10 ошибок)</option>
-                                    <option value="5">Сложно (5 ошибок)</option>
-                                    <option value="0">Супер сложно (Без ошибок)</option>
-                                </select>
-                            </div>
-                            <div class="settings-row checkbox-row">
-                                <input type="checkbox" id="setting-blackkeys">
-                                <label for="setting-blackkeys">Использовать диезы (черные клавиши)</label>
-                            </div>
-                            <div class="settings-row checkbox-row">
-                                <input type="checkbox" id="setting-hint-white" checked>
-                                <label for="setting-hint-white">Подсказки белых клавиш</label>
-                            </div>
-                            <div class="settings-row checkbox-row">
-                                <input type="checkbox" id="setting-hint-black" checked>
-                                <label for="setting-hint-black">Подсказки черных клавиш</label>
-                            </div>
-                            <button class="btn btn-start" onclick="saveSettings()" style="margin-top: 10px;">Сохранить и начать</button>
-                            <button class="btn" style="background: #e9ecef; color: #333;" onclick="closeSettings()">Отмена</button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -511,7 +514,7 @@
     })();
 
     /* ============ ИГРОВАЯ ЛОГИКА ============ */
-    let maxErrors = 20; // Теперь по умолчанию 20 ошибок
+    let maxErrors = 20;
     let useBlackKeys = false;
     let showWhiteHints = true;
     let showBlackHints = true;
@@ -597,7 +600,6 @@
             if (key.type === 'white') {
                 btn.className = 'key-white';
                 
-                // Если подсказки включены, создаем цветной кружок с текстом
                 if (showWhiteHints) {
                     const hint = document.createElement('div');
                     hint.className = 'key-hint';
