@@ -5,11 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
     <title>Детский тренажер нот</title>
     
+    <meta name="theme-color" content="#007bff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Пианино">
+    <meta name="apple-mobile-web-app-title" content="Тренажер Нот">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Тренажер Нот">
+    <meta name="format-detection" content="telephone=no">
     
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Детский тренажер нот","short_name":"Тренажер Нот","start_url":"./","display":"standalone","background_color":"#f0f4f8","theme_color":"#007bff","orientation":"landscape","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3068/3068421.png","sizes":"192x192","type":"image/png"}]}'>
+    <!-- PWA: Иконки (SVG inline) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='38' fill='%23007bff'/><text x='90' y='125' font-family='Arial' font-size='110' fill='white' text-anchor='middle'>♪</text></svg>">
+    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%23007bff'/><text x='32' y='46' font-family='Arial' font-size='44' fill='white' text-anchor='middle'>♪</text></svg>">
+    
+    <!-- PWA: Manifest (создаётся динамически через Blob) -->
+    <link rel="manifest" id="manifest-link">
     
     <style>
         * { 
@@ -124,7 +133,7 @@
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
 
-        /* Нотный стан - высота увеличена до 52%, стан поднят */
+        /* Нотный стан */
         .stage {
             background: #fff;
             border-radius: 12px;
@@ -277,7 +286,7 @@
             overflow-y: auto;
         }
         .star { 
-            font-size: 25px; /* Звездочки сделаны компактнее */
+            font-size: 25px;
             color: #ffca28; 
             opacity: 0; 
             transform: scale(0.3); 
@@ -304,9 +313,47 @@
         .settings-row.checkbox-row { display: flex; align-items: center; gap: 8px; }
         .settings-row.checkbox-row input { width: 18px; height: 18px; }
         .settings-row.checkbox-row label { margin: 0; cursor: pointer; }
+        
+        /* iOS подсказка */
+        .ios-hint-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 70;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .ios-hint-modal.show { display: flex; }
+        .ios-hint-content {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 340px;
+            width: 100%;
+            text-align: center;
+        }
+        .ios-hint-content h3 { margin: 0 0 12px 0; font-size: 18px; color: #333; }
+        .ios-hint-content .steps { text-align: left; margin: 16px 0; font-size: 14px; line-height: 1.8; color: #555; }
+        .ios-hint-content .steps .step-icon { display: inline-block; width: 24px; text-align: center; margin-right: 8px; }
+        .ios-hint-content .close-btn { background: #6c757d; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px; }
     </style>
 </head>
 <body>
+
+    <!-- iOS подсказка -->
+    <div class="ios-hint-modal" id="iosHintModal" onclick="if(event.target===this)closeIosHint()">
+        <div class="ios-hint-content">
+            <h3>📲 Установка на iPhone/iPad</h3>
+            <div class="steps">
+                <div><span class="step-icon">1️⃣</span>Нажмите кнопку <b>«Поделиться»</b> внизу экрана</div>
+                <div><span class="step-icon">2️⃣</span>Прокрутите меню и выберите <b>«На экран Домой»</b></div>
+                <div><span class="step-icon">3️⃣</span>Нажмите <b>«Добавить»</b></div>
+            </div>
+            <button class="close-btn" onclick="closeIosHint()">Понятно</button>
+        </div>
+    </div>
 
     <div class="main-area">
         <div class="stage">
@@ -390,6 +437,74 @@
     </div>
 
 <script>
+    /* ============ PWA: MANIFEST + SERVICE WORKER ============ */
+    (function setupPWA() {
+        // 1. Создаём manifest динамически через Blob
+        const manifest = {
+            name: "Детский тренажер нот",
+            short_name: "Тренажер Нот",
+            description: "Обучающая игра для изучения нот на фортепиано",
+            lang: "ru",
+            dir: "ltr",
+            start_url: "./",
+            scope: "./",
+            display: "standalone",
+            orientation: "landscape",
+            background_color: "#f0f4f8",
+            theme_color: "#007bff",
+            id: "./?pwa=standalone",
+            icons: [
+                {
+                    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%23007bff'/><text x='96' y='135' font-family='Arial' font-size='120' fill='white' text-anchor='middle'>♪</text></svg>",
+                    sizes: "192x192",
+                    type: "image/svg+xml",
+                    purpose: "any"
+                },
+                {
+                    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%23007bff'/><text x='256' y='360' font-family='Arial' font-size='320' fill='white' text-anchor='middle'>♪</text></svg>",
+                    sizes: "512x512",
+                    type: "image/svg+xml",
+                    purpose: "any maskable"
+                }
+            ]
+        };
+        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+        document.getElementById('manifest-link').href = URL.createObjectURL(blob);
+
+        // 2. Регистрируем Service Worker
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE = 'piano-trainer-v1';
+                self.addEventListener('install', e => {
+                    self.skipWaiting();
+                    e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./'])));
+                });
+                self.addEventListener('activate', e => {
+                    e.waitUntil(self.clients.claim());
+                    e.waitUntil(caches.keys().then(keys => Promise.all(
+                        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
+                    )));
+                });
+                self.addEventListener('fetch', e => {
+                    if (e.request.method !== 'GET') return;
+                    e.respondWith(
+                        caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
+                            const copy = resp.clone();
+                            caches.open(CACHE).then(c => c.put(e.request, copy));
+                            return resp;
+                        }).catch(() => caches.match('./')))
+                    );
+                });
+            `;
+            const swBlob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl, { scope: './' })
+                .then(reg => console.log('SW registered'))
+                .catch(err => console.log('SW failed:', err.message));
+        }
+    })();
+
+    /* ============ ИГРОВАЯ ЛОГИКА ============ */
     let maxErrors = 10;
     let useBlackKeys = false;
     let showWhiteHints = true;
@@ -624,7 +739,6 @@
             noteEl.className = 'note';
             noteEl.id = `note-${index}`;
             
-            // Базовая высота поднята, чтобы нижние ноты не обрезались
             const basePathY = 110; 
             noteEl.style.top = (basePathY - noteObj.step * 10) + 'px';
             noteEl.style.left = (index * spacingX + 15) + 'px';
@@ -771,18 +885,30 @@
         if (isPlaying) renderNotes();
     });
 
-    // PWA логика
+    /* ============ PWA: УСТАНОВКА ============ */
     let deferredPrompt;
     const installBtn = document.getElementById('btn-install');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        installBtn.style.display = 'block'; 
+        if (!isStandalone) {
+            installBtn.style.display = 'block';
+        }
     });
 
     installBtn.addEventListener('click', async () => {
-        if (!deferredPrompt) return;
+        if (!deferredPrompt) {
+            // Fallback для iOS или если событие не сработало
+            if (isIOS) {
+                document.getElementById('iosHintModal').classList.add('show');
+            } else {
+                alert('Откройте меню браузера и выберите "Установить приложение" или "Добавить на главный экран"');
+            }
+            return;
+        }
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
@@ -796,7 +922,25 @@
         deferredPrompt = null;
     });
 
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    function showInstallHint() {
+        if (isStandalone) {
+            alert('Приложение уже установлено');
+            return;
+        }
+        if (isIOS) {
+            document.getElementById('iosHintModal').classList.add('show');
+        } else if (deferredPrompt) {
+            installBtn.style.display = 'block';
+        } else {
+            alert('Откройте меню браузера и выберите "Установить приложение"');
+        }
+    }
+
+    function closeIosHint() {
+        document.getElementById('iosHintModal').classList.remove('show');
+    }
+
+    if (isStandalone) {
         installBtn.style.display = 'none';
     }
 </script>
