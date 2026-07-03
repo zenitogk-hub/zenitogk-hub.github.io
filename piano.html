@@ -66,6 +66,7 @@
 
         .character-box {
             font-size: 70px;
+            width: 85px; /* Зафиксировали ширину для центрирования украшений */
             height: 85px;
             display: flex;
             align-items: center;
@@ -77,13 +78,49 @@
         .character-box.bounce { transform: scale(1.2) translateY(-10px); }
         .character-box.shake { animation: shake 0.3s; }
 
+        /* Контейнер для украшений */
         .accessory-layer {
             position: absolute;
-            top: -5px;
-            right: -10px;
-            font-size: 40px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
             z-index: 10;
+        }
+
+        /* Индивидуальные настройки для каждого украшения */
+        .accessory-item {
+            position: absolute;
+            display: block;
+        }
+
+        .acc-hat {
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 55px;
+        }
+
+        .acc-glasses {
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 65px;
+        }
+
+        .acc-bow {
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+        }
+
+        .acc-flower {
+            top: 0px;
+            right: -10px;
+            font-size: 35px;
+            transform: rotate(20deg);
         }
 
         .stats-box {
@@ -455,7 +492,7 @@
     <div class="sidebar">
         <div class="character-box" id="character">
             <span id="char-face">😋</span>
-            <span class="accessory-layer" id="accessory-layer"></span>
+            <div class="accessory-layer" id="accessory-layer"></div>
         </div>
         
         <div class="error-container">
@@ -533,7 +570,7 @@
     let emotionTimeout;
 
     let inventory = {}; 
-    let currentAccessory = null;
+    let equippedAccessories = {}; // Изменено на объект для поддержки нескольких надетых вещей
     const shopItems = [
         { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50 },
         { id: 'glasses', name: 'Очки', emoji: '🕶️', price: 100 },
@@ -842,8 +879,6 @@
     }
 
     function openShop() {
-        // Убрано: if(isPlaying) stopGame(); 
-        // Теперь магазин открывается поверх игры, не прерывая ее.
         renderShop();
         document.getElementById('shop-screen').style.display = 'flex';
     }
@@ -860,7 +895,7 @@
         shopItems.forEach(item => {
             const el = document.createElement('div');
             const isOwned = inventory[item.id];
-            const isEquipped = currentAccessory === item.id;
+            const isEquipped = equippedAccessories[item.id];
             
             el.className = `shop-item ${isOwned ? 'owned' : ''} ${isEquipped ? 'equipped' : ''}`;
             el.innerHTML = `
@@ -871,11 +906,11 @@
             
             el.onclick = () => {
                 if (isEquipped) {
-                    currentAccessory = null;
+                    delete equippedAccessories[item.id]; // Снимаем предмет
                     updateAccessoryDisplay();
                     renderShop();
                 } else if (isOwned) {
-                    currentAccessory = item.id;
+                    equippedAccessories[item.id] = true; // Надеваем предмет (теперь можно несколько)
                     updateAccessoryDisplay();
                     renderShop();
                 } else {
@@ -895,11 +930,20 @@
 
     function updateAccessoryDisplay() {
         const accLayer = document.getElementById('accessory-layer');
-        if (currentAccessory) {
-            const item = shopItems.find(i => i.id === currentAccessory);
-            accLayer.innerText = item.emoji;
-        } else {
-            accLayer.innerText = '';
+        accLayer.innerHTML = ''; // Очищаем старые украшения
+
+        // Добавляем все надетые предметы как отдельные элементы
+        for (const [accId, isEquipped] of Object.entries(equippedAccessories)) {
+            if (isEquipped) {
+                const item = shopItems.find(i => i.id === accId);
+                if (item) {
+                    const el = document.createElement('span');
+                    // Добавляем общий класс и специфичный класс для позиционирования
+                    el.className = `accessory-item acc-${item.id}`; 
+                    el.innerText = item.emoji;
+                    accLayer.appendChild(el);
+                }
+            }
         }
     }
 
@@ -987,7 +1031,7 @@
 
     // --- Настройки ---
     function openSettings() {
-        if(isPlaying) stopGame(); // Настройки по-прежнему сбрасывают текущий раунд
+        if(isPlaying) stopGame(); 
         document.getElementById('settings-screen').style.display = 'flex';
     }
 
