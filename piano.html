@@ -66,13 +66,14 @@
 
         .character-box {
             font-size: 70px;
-            width: 85px; /* Зафиксировали ширину для центрирования украшений */
+            width: 85px; 
             height: 85px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: transform 0.2s;
             position: relative;
+            margin-bottom: 15px; /* Отступ, чтобы бабочка не наезжала на ошибки */
         }
         
         .character-box.bounce { transform: scale(1.2) translateY(-10px); }
@@ -96,29 +97,29 @@
         }
 
         .acc-hat {
-            top: -20px;
+            top: -40px; /* Подняли шляпу */
             left: 50%;
             transform: translateX(-50%);
             font-size: 55px;
         }
 
         .acc-glasses {
-            top: 22px;
+            top: 5px; /* Подняли очки */
             left: 50%;
             transform: translateX(-50%);
             font-size: 65px;
         }
 
         .acc-bow {
-            bottom: -5px;
+            bottom: -25px; /* Опустили бабочку */
             left: 50%;
             transform: translateX(-50%);
             font-size: 40px;
         }
 
         .acc-flower {
-            top: 0px;
-            right: -10px;
+            top: -5px;
+            right: -15px;
             font-size: 35px;
             transform: rotate(20deg);
         }
@@ -135,6 +136,16 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+        }
+
+        .level-display {
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+        }
+        .level-display span {
+            color: #007bff;
+            font-size: 16px;
         }
 
         .coins-display {
@@ -394,6 +405,7 @@
         .shop-item:hover { border-color: #ffc107; }
         .shop-item.owned { background: #d4edda; border-color: #28a745; }
         .shop-item.equipped { background: #cce5ff; border-color: #007bff; }
+        .shop-item.consumable { background: #fff3cd; border-color: #ffeeba; }
         .shop-item-emoji { font-size: 35px; margin-bottom: 5px; }
         .shop-item-name { font-size: 13px; font-weight: bold; color: #333; margin-bottom: 5px; }
         .shop-item-price { font-size: 12px; color: #666; font-weight: bold; }
@@ -446,7 +458,7 @@
     <div id="shop-screen" class="overlay-screen">
         <div class="modal-panel">
             <div class="modal-content" style="max-width: 500px;">
-                <h3>Магазин украшений 🛒</h3>
+                <h3>Магазин 🛒</h3>
                 <p style="font-weight:bold; color:#ff8c00; margin:0;">Твои монетки: 🪙 <span id="shop-coins">0</span></p>
                 <div class="shop-grid" id="shop-grid"></div>
                 <button class="btn btn-start" style="width: auto; padding: 10px 40px;" onclick="closeShop()">Закрыть магазин</button>
@@ -506,6 +518,7 @@
         </div>
 
         <div class="stats-box">
+            <div class="level-display">Уровень: <span id="sidebar-level">1</span></div>
             <div class="coins-display">🪙 <span id="sidebar-coins">0</span></div>
             <div id="stars-display" class="sidebar-stars empty">Пока нет звёзд</div>
         </div>
@@ -562,6 +575,7 @@
 
     let coinsCount = 0;
     let spentStars = 0;
+    let boughtStars = 0; // Купленные звезды
     let currentMelody = [];
     let currentNoteIndex = 0;
     let completedScreens = 0; 
@@ -570,8 +584,10 @@
     let emotionTimeout;
 
     let inventory = {}; 
-    let equippedAccessories = {}; // Изменено на объект для поддержки нескольких надетых вещей
+    let equippedAccessories = {}; 
+    
     const shopItems = [
+        { id: 'star', name: 'Звезда', emoji: '⭐', price: 200 },
         { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50 },
         { id: 'glasses', name: 'Очки', emoji: '🕶️', price: 100 },
         { id: 'bow', name: 'Бантик', emoji: '🎀', price: 150 },
@@ -744,8 +760,10 @@
         currentNoteIndex = 0;
         completedScreens = 0;
         spentStars = 0;
+        boughtStars = 0; // Сбрасываем купленные звезды при новой игре
         errorsCount = 0;
         
+        document.getElementById('sidebar-level').innerText = "1";
         updateErrorBar();
         setEmotion(getIdleEmotion());
         generateScreenMelody();
@@ -776,7 +794,7 @@
             showStarsReward(0, true);
         } else {
             setEmotion(EMOTION_IDLE);
-            showStarsReward(Math.max(0, completedScreens - spentStars), false);
+            showStarsReward(Math.max(0, completedScreens - spentStars + boughtStars), false);
         }
     }
 
@@ -848,6 +866,7 @@
 
             if (currentNoteIndex >= MELODY_LENGTH) {
                 completedScreens++;
+                document.getElementById('sidebar-level').innerText = completedScreens + 1; // Обновляем уровень
                 currentNoteIndex = 0;
                 setTimeout(() => {
                     if (isPlaying) generateScreenMelody();
@@ -894,23 +913,55 @@
         
         shopItems.forEach(item => {
             const el = document.createElement('div');
-            const isOwned = inventory[item.id];
-            const isEquipped = equippedAccessories[item.id];
+            const isConsumable = item.id === 'star';
+            const isOwned = !isConsumable && inventory[item.id];
+            const isEquipped = !isConsumable && equippedAccessories[item.id];
             
-            el.className = `shop-item ${isOwned ? 'owned' : ''} ${isEquipped ? 'equipped' : ''}`;
+            let extraClass = '';
+            let priceText = '';
+
+            if (isConsumable) {
+                extraClass = 'consumable';
+                priceText = '🪙 ' + item.price;
+            } else {
+                if (isEquipped) {
+                    extraClass = 'equipped';
+                    priceText = 'Надето';
+                } else if (isOwned) {
+                    extraClass = 'owned';
+                    priceText = 'Куплено';
+                } else {
+                    priceText = '🪙 ' + item.price;
+                }
+            }
+
+            el.className = `shop-item ${extraClass}`;
             el.innerHTML = `
                 <div class="shop-item-emoji">${item.emoji}</div>
                 <div class="shop-item-name">${item.name}</div>
-                <div class="shop-item-price">${isOwned ? (isEquipped ? 'Надето' : 'Куплено') : '🪙 ' + item.price}</div>
+                <div class="shop-item-price">${priceText}</div>
             `;
             
             el.onclick = () => {
+                if (isConsumable) {
+                    if (coinsCount >= item.price) {
+                        coinsCount -= item.price;
+                        boughtStars++;
+                        updateCoinsDisplay();
+                        updateStatus();
+                        renderShop();
+                    } else {
+                        alert('Недостаточно монеток! Зарабатывай их правильными нажатиями.');
+                    }
+                    return;
+                }
+
                 if (isEquipped) {
-                    delete equippedAccessories[item.id]; // Снимаем предмет
+                    delete equippedAccessories[item.id];
                     updateAccessoryDisplay();
                     renderShop();
                 } else if (isOwned) {
-                    equippedAccessories[item.id] = true; // Надеваем предмет (теперь можно несколько)
+                    equippedAccessories[item.id] = true;
                     updateAccessoryDisplay();
                     renderShop();
                 } else {
@@ -920,7 +971,7 @@
                         updateCoinsDisplay();
                         renderShop();
                     } else {
-                        alert('Недостаточно монеток! Играй без ошибок, чтобы заработать больше.');
+                        alert('Недостаточно монеток!');
                     }
                 }
             };
@@ -930,15 +981,13 @@
 
     function updateAccessoryDisplay() {
         const accLayer = document.getElementById('accessory-layer');
-        accLayer.innerHTML = ''; // Очищаем старые украшения
+        accLayer.innerHTML = ''; 
 
-        // Добавляем все надетые предметы как отдельные элементы
         for (const [accId, isEquipped] of Object.entries(equippedAccessories)) {
             if (isEquipped) {
                 const item = shopItems.find(i => i.id === accId);
-                if (item) {
+                if (item && item.id !== 'star') {
                     const el = document.createElement('span');
-                    // Добавляем общий класс и специфичный класс для позиционирования
                     el.className = `accessory-item acc-${item.id}`; 
                     el.innerText = item.emoji;
                     accLayer.appendChild(el);
@@ -965,7 +1014,7 @@
     function updateStatus() {
         if (!isPlaying) return;
         const starsDisplay = document.getElementById('stars-display');
-        const availableStars = completedScreens - spentStars;
+        const availableStars = completedScreens - spentStars + boughtStars; // Учитываем купленные звезды
         
         if (availableStars <= 0) {
             starsDisplay.innerHTML = 'Пока нет звёзд';
