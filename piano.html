@@ -13,11 +13,9 @@
     <meta name="application-name" content="Тренажер Нот">
     <meta name="format-detection" content="telephone=no">
     
-    <!-- PWA: Иконки (SVG inline) -->
     <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='38' fill='%23007bff'/><text x='90' y='125' font-family='Arial' font-size='110' fill='white' text-anchor='middle'>♪</text></svg>">
     <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%23007bff'/><text x='32' y='46' font-family='Arial' font-size='44' fill='white' text-anchor='middle'>♪</text></svg>">
     
-    <!-- PWA: Manifest -->
     <link rel="manifest" id="manifest-link">
     
     <style>
@@ -408,7 +406,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно магазина -->
     <div id="shop-screen" class="overlay-screen">
         <div class="modal-panel">
             <div class="modal-content" style="max-width: 500px;">
@@ -416,6 +413,21 @@
                 <p style="font-weight:bold; color:#ff8c00; margin:0;">Твои монетки: 🪙 <span id="shop-coins">0</span></p>
                 <div class="shop-grid" id="shop-grid"></div>
                 <button class="btn btn-start" style="width: auto; padding: 10px 40px;" onclick="closeShop()">Закрыть магазин</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="iosHintModal" class="overlay-screen">
+        <div class="modal-panel">
+            <div class="modal-content">
+                <h3>Установка на iPhone / iPad</h3>
+                <p>Чтобы играть во весь экран без адресной строки:</p>
+                <ol style="text-align: left; margin: 15px 0; line-height: 1.5;">
+                    <li>Нажмите кнопку <strong>«Поделиться»</strong> (квадрат со стрелкой вверх) в браузере Safari.</li>
+                    <li>Прокрутите меню вниз и выберите <strong>«На экран „Домой“»</strong>.</li>
+                    <li>Нажмите <strong>«Добавить»</strong> в правом верхнем углу.</li>
+                </ol>
+                <button class="btn btn-start" onclick="closeIosHint()">Понятно</button>
             </div>
         </div>
     </div>
@@ -441,7 +453,6 @@
     </div>
 
     <div class="sidebar">
-        <!-- Обертка персонажа с украшениями -->
         <div class="character-box" id="character">
             <span id="char-face">😋</span>
             <span class="accessory-layer" id="accessory-layer"></span>
@@ -457,13 +468,13 @@
             </div>
         </div>
 
-        <!-- Статистика: монетки и звезды -->
         <div class="stats-box">
             <div class="coins-display">🪙 <span id="sidebar-coins">0</span></div>
             <div id="stars-display" class="sidebar-stars empty">Пока нет звёзд</div>
         </div>
 
         <div style="width: 100%;">
+            <button class="btn btn-install" id="btn-install">📥 Установить игру</button>
             <button class="btn btn-shop" onclick="openShop()">🛒 Магазин</button>
             <button class="btn btn-settings" onclick="openSettings()">⚙️ Настройки</button>
             <button class="btn btn-start" id="btn-start" onclick="startGame()">▶ Начать игру</button>
@@ -472,6 +483,32 @@
     </div>
 
 <script>
+    /* ============ ОПРЕДЕЛЕНИЕ PWA СРЕДЫ ============ */
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    let deferredPrompt = null;
+    const installBtn = document.getElementById('btn-install');
+
+    // Автоматическое создание манифеста динамически
+    const manifestObj = {
+        "name": "Детский тренажер нот",
+        "short_name": "Тренажер Нот",
+        "start_url": window.location.href,
+        "display": "standalone",
+        "background_color": "#007bff",
+        "theme-color": "#007bff",
+        "orientation": "landscape",
+        "icons": [
+            {
+                "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='38' fill='%23007bff'/><text x='90' y='125' font-family='Arial' font-size='110' fill='white' text-anchor='middle'>♪</text></svg>",
+                "sizes": "180x180",
+                "type": "image/svg+xml"
+            }
+        ]
+    };
+    const blobManifest = new Blob([JSON.stringify(manifestObj)], {type: 'application/json'});
+    document.getElementById('manifest-link').setAttribute('href', URL.createObjectURL(blobManifest));
+
     /* ============ ИГРОВАЯ ЛОГИКА ============ */
     let maxErrors = 20;
     let useBlackKeys = false;
@@ -487,7 +524,6 @@
     const EMOTION_CRY = '😭';
     const EMOTION_FEAR = '😰';
 
-    // Новые глобальные переменные
     let coinsCount = 0;
     let spentStars = 0;
     let currentMelody = [];
@@ -772,7 +808,7 @@
             setEmotion(EMOTION_HAPPY, 'bounce');
             currentNoteIndex++;
 
-            // Заработок монеток
+            // Заработок монеток (+5 за верную ноту)
             coinsCount += 5;
             updateCoinsDisplay();
 
@@ -869,13 +905,13 @@
         }
     }
 
-    // --- Работа со звездочками ---
+    // --- Списание ошибок звездами ---
     function spendStarForErrors() {
         if (errorsCount <= 0) {
             alert("Счетчик ошибок и так пуст! Молодец!");
             return;
         }
-        if (confirm("Потратить 1 звёздочку, чтобы убрать 5 ошибок?")) {
+        if (confirm("Потратить 1 звёздочку, чтобы убрать 5 ошибок из счётчика?")) {
             spentStars++;
             errorsCount = Math.max(0, errorsCount - 5);
             updateErrorBar();
@@ -977,6 +1013,47 @@
         if (isPlaying) renderNotes();
     });
 
+    /* ============ ЛОГИКА PWA УСТАНОВКИ ============ */
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (!isStandalone) {
+            installBtn.style.display = 'block';
+        }
+    });
+
+    installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) {
+            if (isIOS) {
+                document.getElementById('iosHintModal').style.display = 'flex';
+            } else {
+                alert('Откройте меню браузера и выберите "Установить приложение" или "Добавить на главный экран"');
+            }
+            return;
+        }
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            installBtn.style.display = 'none';
+        }
+        deferredPrompt = null;
+    });
+
+    window.addEventListener('appinstalled', () => {
+        installBtn.style.display = 'none';
+        deferredPrompt = null;
+    });
+
+    function closeIosHint() {
+        document.getElementById('iosHintModal').style.display = 'none';
+    }
+
+    // Логика отображения при первоначальной загрузке страницы
+    if (isStandalone) {
+        installBtn.style.display = 'none';
+    } else if (isIOS) {
+        installBtn.style.display = 'block'; // На iOS кнопка вызовет модалку с инструкцией добавления
+    }
 </script>
 </body>
 </html>
