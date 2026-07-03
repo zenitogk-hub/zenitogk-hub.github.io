@@ -489,7 +489,6 @@
     let deferredPrompt = null;
     const installBtn = document.getElementById('btn-install');
 
-    // Автоматическое создание манифеста динамически
     const manifestObj = {
         "name": "Детский тренажер нот",
         "short_name": "Тренажер Нот",
@@ -533,7 +532,6 @@
     let isPlaying = false;
     let emotionTimeout;
 
-    // Инвентарь и магазин
     let inventory = {}; 
     let currentAccessory = null;
     const shopItems = [
@@ -808,7 +806,6 @@
             setEmotion(EMOTION_HAPPY, 'bounce');
             currentNoteIndex++;
 
-            // Заработок монеток (+5 за верную ноту)
             coinsCount += 5;
             updateCoinsDisplay();
 
@@ -845,7 +842,8 @@
     }
 
     function openShop() {
-        if(isPlaying) stopGame();
+        // Убрано: if(isPlaying) stopGame(); 
+        // Теперь магазин открывается поверх игры, не прерывая ее.
         renderShop();
         document.getElementById('shop-screen').style.display = 'flex';
     }
@@ -989,7 +987,7 @@
 
     // --- Настройки ---
     function openSettings() {
-        if(isPlaying) stopGame();
+        if(isPlaying) stopGame(); // Настройки по-прежнему сбрасывают текущий раунд
         document.getElementById('settings-screen').style.display = 'flex';
     }
 
@@ -1048,11 +1046,10 @@
         document.getElementById('iosHintModal').style.display = 'none';
     }
 
-    // Логика отображения при первоначальной загрузке страницы
     if (isStandalone) {
         installBtn.style.display = 'none';
     } else if (isIOS) {
-        installBtn.style.display = 'block'; // На iOS кнопка вызовет модалку с инструкцией добавления
+        installBtn.style.display = 'block';
     }
 </script>
 </body>
