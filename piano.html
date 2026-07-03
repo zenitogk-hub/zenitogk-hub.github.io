@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
-<head> 
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
     <title>Детский тренажер нот</title>
@@ -81,12 +81,32 @@
         .stats-box {
             width: 100%;
             background: #f8f9fa;
-            padding: 8px;
+            padding: 10px 8px;
             border-radius: 8px;
             text-align: center;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .stats-text { margin: 4px 0; font-size: 14px; font-weight: bold; color: #444; }
+        /* Новые стили для звездочек в боковом меню */
+        .sidebar-stars {
+            font-size: 20px;
+            color: #ffca28;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2px;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+            line-height: 1.2;
+        }
+        .sidebar-stars.empty {
+            color: #aaa;
+            font-size: 14px;
+            text-shadow: none;
+            font-weight: bold;
+        }
 
         .error-container { width: 100%; }
         .error-label {
@@ -264,7 +284,7 @@
 
         /* Модальные окна */
         .overlay-screen {
-            position: fixed; 
+            position: fixed;
             top: 0; 
             left: 0;
             right: 0;
@@ -276,7 +296,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 100;
+            z-index: 100; 
         }
         .stars-wrapper { 
             display: flex; 
@@ -350,7 +370,6 @@
 </head>
 <body>
 
-    <!-- iOS подсказка -->
     <div class="ios-hint-modal" id="iosHintModal" onclick="if(event.target===this)closeIosHint()">
         <div class="ios-hint-content">
             <h3>📲 Установка на iPhone/iPad</h3>
@@ -363,7 +382,6 @@
         </div>
     </div>
 
-    <!-- Модальные окна -->
     <div id="stars-screen" class="overlay-screen">
         <div id="stars-title" class="game-over-text">Игра окончена!</div>
         <div class="stars-wrapper" id="stars-area"></div>
@@ -434,9 +452,9 @@
             </div>
         </div>
 
+        <!-- Обновленный блок статистики -->
         <div class="stats-box">
-            <p class="stats-text" id="status-screens">Пройдено: 0</p>
-            <p class="stats-text" id="status-note">Нота: 0 / 12</p>
+            <div id="stars-display" class="sidebar-stars empty">Пока нет звёзд</div>
         </div>
 
         <div style="width: 100%;">
@@ -731,14 +749,11 @@
         
         if (isGameOver) {
             setEmotion(EMOTION_CRY, 'shake');
-            // Передаем реальное количество пройденных экранов (звездочек), а не 0
-            showStarsReward(completedScreens, true);
+            showStarsReward(0, true);
         } else {
             setEmotion(EMOTION_IDLE);
             showStarsReward(completedScreens, false);
         }
-        
-        document.getElementById('status-note').innerText = `Нота: 0 / ${MELODY_LENGTH}`;
     }
 
     function renderNotes() {
@@ -840,31 +855,26 @@
         screen.style.display = 'flex';
 
         if (isGameOver) {
-            // Устанавливаем запрошенный текст при проигрыше
-            title.innerText = "Не пройдено и нот 😭";
+            title.innerText = "Игра окончена из-за ошибок! 😭";
             title.style.color = "#dc3545";
-        } else {
-            title.style.color = "#28a745";
-            if (count === 0) {
-                title.innerText = "Игра завершена! ✨";
-                area.innerHTML = '<span style="font-size:15px; color:#666;">Попробуй пройти хотя бы один экран!</span>';
-                return;
-            }
-            title.innerText = "Отличный результат! Твои звёзды:";
+            return;
         }
 
-        // Отрисовка заработанных звездочек независимо от того, проиграл ли игрок
-        if (count > 0) {
-            for (let i = 0; i < count; i++) {
-                setTimeout(() => {
-                    const star = document.createElement('span');
-                    star.className = 'star';
-                    star.innerHTML = '⭐';
-                    area.appendChild(star);
-                }, i * 150); 
-            }
-        } else if (isGameOver) {
-            area.innerHTML = '<span style="font-size:15px; color:#666;">К сожалению, заработанных звезд пока нет.</span>';
+        title.style.color = "#28a745";
+        if (count === 0) {
+            title.innerText = "Игра завершена! ✨";
+            area.innerHTML = '<span style="font-size:15px; color:#666;">Попробуй пройти хотя бы один экран!</span>';
+            return;
+        }
+
+        title.innerText = "Отличный результат! Твои звёзды:";
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const star = document.createElement('span');
+                star.className = 'star';
+                star.innerHTML = '⭐';
+                area.appendChild(star);
+            }, i * 150); 
         }
     }
 
@@ -894,10 +904,24 @@
         startGame();
     }
 
+    // Обновленная функция для вывода звезд вместо текста
     function updateStatus() {
         if (!isPlaying) return;
-        document.getElementById('status-screens').innerText = `Пройдено: ${completedScreens}`;
-        document.getElementById('status-note').innerText = `Нота: ${currentNoteIndex + 1} / ${MELODY_LENGTH}`;
+        const starsDisplay = document.getElementById('stars-display');
+        
+        if (completedScreens === 0) {
+            starsDisplay.innerHTML = 'Пока нет звёзд';
+            starsDisplay.className = 'sidebar-stars empty';
+        } else {
+            starsDisplay.className = 'sidebar-stars';
+            // Если звезд меньше или равно 10 — рисуем их визуально
+            if (completedScreens <= 10) {
+                starsDisplay.innerHTML = '⭐'.repeat(completedScreens);
+            } else {
+                // Если звезд много, выводим компактный счетчик
+                starsDisplay.innerHTML = `⭐ x ${completedScreens}`;
+            }
+        }
     }
 
     window.addEventListener('resize', () => {
