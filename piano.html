@@ -73,7 +73,8 @@
             justify-content: center;
             transition: transform 0.2s;
             position: relative;
-            margin-bottom: 15px; /* Отступ, чтобы бабочка не наезжала на ошибки */
+            margin-bottom: 15px;
+            cursor: pointer; /* Указатель при наведении на персонажа */
         }
         
         .character-box.bounce { transform: scale(1.2) translateY(-10px); }
@@ -97,21 +98,21 @@
         }
 
         .acc-hat {
-            top: -40px; /* Подняли шляпу */
+            top: -40px;
             left: 50%;
             transform: translateX(-50%);
             font-size: 55px;
         }
 
         .acc-glasses {
-            top: 5px; /* Подняли очки */
+            top: 5px;
             left: 50%;
             transform: translateX(-50%);
             font-size: 65px;
         }
 
         .acc-bow {
-            bottom: -25px; /* Опустили бабочку */
+            bottom: -25px;
             left: 50%;
             transform: translateX(-50%);
             font-size: 40px;
@@ -418,6 +419,20 @@
 </head>
 <body>
 
+    <!-- Универсальное диалоговое окно -->
+    <div id="dialog-screen" class="overlay-screen" style="z-index: 200; background: rgba(0,0,0,0.5);">
+        <div class="modal-panel" style="background: transparent;">
+            <div class="modal-content" style="background: #fff; border-radius: 12px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                <h3 id="dialog-title" style="margin-top: 0;"></h3>
+                <p id="dialog-message" style="margin-bottom: 20px; color: #555; line-height: 1.5;"></p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn btn-start" id="dialog-btn-yes" style="margin: 0; width: auto; padding: 10px 30px;">ОК</button>
+                    <button class="btn btn-stop" id="dialog-btn-no" style="margin: 0; width: auto; padding: 10px 30px; display: none;">Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="stars-screen" class="overlay-screen">
         <div id="stars-title" class="game-over-text">Игра окончена!</div>
         <div class="stars-wrapper" id="stars-area"></div>
@@ -502,7 +517,8 @@
     </div>
 
     <div class="sidebar">
-        <div class="character-box" id="character">
+        <!-- Клик по персонажу теперь тоже вызывает использование звезды -->
+        <div class="character-box" id="character" onclick="attemptSpendStar(false)">
             <span id="char-face">😋</span>
             <div class="accessory-layer" id="accessory-layer"></div>
         </div>
@@ -558,6 +574,30 @@
     const blobManifest = new Blob([JSON.stringify(manifestObj)], {type: 'application/json'});
     document.getElementById('manifest-link').setAttribute('href', URL.createObjectURL(blobManifest));
 
+    /* ============ СИСТЕМА ДИАЛОГОВ ============ */
+    function showDialog(title, message, showCancelBtn, onConfirm, onCancel) {
+        document.getElementById('dialog-title').innerText = title;
+        document.getElementById('dialog-message').innerText = message;
+        
+        const btnYes = document.getElementById('dialog-btn-yes');
+        const btnNo = document.getElementById('dialog-btn-no');
+        
+        btnYes.innerText = showCancelBtn ? 'Да' : 'ОК';
+        btnNo.style.display = showCancelBtn ? 'block' : 'none';
+        
+        btnYes.onclick = () => {
+            document.getElementById('dialog-screen').style.display = 'none';
+            if (onConfirm) onConfirm();
+        };
+        
+        btnNo.onclick = () => {
+            document.getElementById('dialog-screen').style.display = 'none';
+            if (onCancel) onCancel();
+        };
+        
+        document.getElementById('dialog-screen').style.display = 'flex';
+    }
+
     /* ============ ИГРОВАЯ ЛОГИКА ============ */
     let maxErrors = 20;
     let useBlackKeys = false;
@@ -575,7 +615,7 @@
 
     let coinsCount = 0;
     let spentStars = 0;
-    let boughtStars = 0; // Купленные звезды
+    let boughtStars = 0;
     let currentMelody = [];
     let currentNoteIndex = 0;
     let completedScreens = 0; 
@@ -760,7 +800,7 @@
         currentNoteIndex = 0;
         completedScreens = 0;
         spentStars = 0;
-        boughtStars = 0; // Сбрасываем купленные звезды при новой игре
+        boughtStars = 0; 
         errorsCount = 0;
         
         document.getElementById('sidebar-level').innerText = "1";
@@ -866,7 +906,7 @@
 
             if (currentNoteIndex >= MELODY_LENGTH) {
                 completedScreens++;
-                document.getElementById('sidebar-level').innerText = completedScreens + 1; // Обновляем уровень
+                document.getElementById('sidebar-level').innerText = completedScreens + 1;
                 currentNoteIndex = 0;
                 setTimeout(() => {
                     if (isPlaying) generateScreenMelody();
@@ -883,7 +923,14 @@
             void currentEl.offsetWidth; 
             currentEl.classList.add('error');
 
-            if (maxErrors === 0 || errorsCount >= maxErrors) {
+            if (maxErrors > 0 && errorsCount >= maxErrors) {
+                const availableStars = completedScreens - spentStars + boughtStars;
+                if (availableStars > 0) {
+                    attemptSpendStar(true); // Автоматическое предложение спасения
+                } else {
+                    stopGame(true);
+                }
+            } else if (maxErrors === 0) {
                 stopGame(true);
             } else {
                 setEmotion(EMOTION_SAD, 'shake');
@@ -951,7 +998,7 @@
                         updateStatus();
                         renderShop();
                     } else {
-                        alert('Недостаточно монеток! Зарабатывай их правильными нажатиями.');
+                        showDialog("Упс!", "Недостаточно монеток! Зарабатывай их правильными нажатиями.", false);
                     }
                     return;
                 }
@@ -971,7 +1018,7 @@
                         updateCoinsDisplay();
                         renderShop();
                     } else {
-                        alert('Недостаточно монеток!');
+                        showDialog("Упс!", "Недостаточно монеток! Зарабатывай их правильными нажатиями.", false);
                     }
                 }
             };
@@ -996,25 +1043,50 @@
         }
     }
 
-    // --- Списание ошибок звездами ---
-    function spendStarForErrors() {
-        if (errorsCount <= 0) {
-            alert("Счетчик ошибок и так пуст! Молодец!");
+    // --- Механика списания ошибок звездой ---
+    function attemptSpendStar(isGameOverRescue = false) {
+        if (!isPlaying && !isGameOverRescue) return;
+
+        const availableStars = completedScreens - spentStars + boughtStars;
+        
+        if (availableStars <= 0) {
+            if (isGameOverRescue) {
+                stopGame(true);
+            } else {
+                showDialog("Нет звёздочек", "Пройди экран без ошибок или купи звезду в магазине!", false);
+            }
             return;
         }
-        if (confirm("Потратить 1 звёздочку, чтобы убрать 5 ошибок из счётчика?")) {
-            spentStars++;
-            errorsCount = Math.max(0, errorsCount - 5);
-            updateErrorBar();
-            setEmotion(getIdleEmotion());
-            updateStatus();
+
+        if (errorsCount <= 0 && !isGameOverRescue) {
+            showDialog("Всё отлично!", "Счетчик ошибок и так пуст. Продолжай играть!", false);
+            return;
         }
+
+        showDialog(
+            isGameOverRescue ? "Слишком много ошибок!" : "Списание ошибок",
+            "Хочешь потратить 1 ⭐, чтобы убрать 5 ошибок и играть дальше?",
+            true, // Показываем кнопку "Отмена"
+            () => { // Если игрок согласился
+                spentStars++;
+                errorsCount = Math.max(0, errorsCount - 5);
+                updateErrorBar();
+                setEmotion(getIdleEmotion());
+                updateStatus();
+                // Если мы спасали игру, то игра продолжается
+            },
+            () => { // Если игрок отказался
+                if (isGameOverRescue) {
+                    stopGame(true); // Конец игре
+                }
+            }
+        );
     }
 
     function updateStatus() {
         if (!isPlaying) return;
         const starsDisplay = document.getElementById('stars-display');
-        const availableStars = completedScreens - spentStars + boughtStars; // Учитываем купленные звезды
+        const availableStars = completedScreens - spentStars + boughtStars; 
         
         if (availableStars <= 0) {
             starsDisplay.innerHTML = 'Пока нет звёзд';
@@ -1029,7 +1101,7 @@
                     star.innerText = '⭐';
                     star.style.cursor = 'pointer';
                     star.title = "Нажми, чтобы списать 5 ошибок!";
-                    star.onclick = spendStarForErrors;
+                    star.onclick = () => attemptSpendStar(false);
                     starsDisplay.appendChild(star);
                 }
             } else {
@@ -1037,7 +1109,7 @@
                 starBtn.innerText = `⭐ x ${availableStars}`;
                 starBtn.style.cursor = 'pointer';
                 starBtn.title = "Нажми, чтобы списать 5 ошибок!";
-                starBtn.onclick = spendStarForErrors;
+                starBtn.onclick = () => attemptSpendStar(false);
                 starsDisplay.appendChild(starBtn);
             }
         }
@@ -1118,7 +1190,7 @@
             if (isIOS) {
                 document.getElementById('iosHintModal').style.display = 'flex';
             } else {
-                alert('Откройте меню браузера и выберите "Установить приложение" или "Добавить на главный экран"');
+                showDialog("Установка", 'Откройте меню браузера и выберите "Установить приложение" или "Добавить на главный экран"', false);
             }
             return;
         }
