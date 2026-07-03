@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='38' fill='%23007bff'/><text x='90' y='125' font-family='Arial' font-size='110' fill='white' text-anchor='middle'>♪</text></svg>">
     <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%23007bff'/><text x='32' y='46' font-family='Arial' font-size='44' fill='white' text-anchor='middle'>♪</text></svg>">
     
-    <!-- PWA: Manifest (создаётся динамически через Blob) -->
+    <!-- PWA: Manifest -->
     <link rel="manifest" id="manifest-link">
     
     <style>
@@ -73,10 +73,20 @@
             align-items: center;
             justify-content: center;
             transition: transform 0.2s;
+            position: relative;
         }
         
         .character-box.bounce { transform: scale(1.2) translateY(-10px); }
         .character-box.shake { animation: shake 0.3s; }
+
+        .accessory-layer {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            font-size: 40px;
+            pointer-events: none;
+            z-index: 10;
+        }
 
         .stats-box {
             width: 100%;
@@ -84,22 +94,35 @@
             padding: 10px 8px;
             border-radius: 8px;
             text-align: center;
-            min-height: 48px;
+            min-height: 60px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 8px;
         }
 
-        /* Новые стили для звездочек в боковом меню */
+        .coins-display {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ff8c00;
+        }
+
         .sidebar-stars {
             font-size: 20px;
             color: #ffca28;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 2px;
+            gap: 4px;
             text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
             line-height: 1.2;
+        }
+        .sidebar-stars span {
+            transition: transform 0.2s;
+        }
+        .sidebar-stars span:hover {
+            transform: scale(1.2);
         }
         .sidebar-stars.empty {
             color: #aaa;
@@ -149,6 +172,7 @@
         .btn-start { background: #007bff; color: white; }
         .btn-stop { background: #dc3545; color: white; display: none; }
         .btn-settings { background: #6c757d; color: white; }
+        .btn-shop { background: #ffc107; color: #333; }
         .btn-install { background: #28a745; color: white; display: none; animation: pulse 2s infinite; }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
@@ -252,6 +276,7 @@
         }
         .key-black:active { background: #444; border-bottom-width: 1px; transform: translateY(3px); }
 
+        .key-hint, .key-black-hint { pointer-events: none; }
         .key-hint {
             width: 85%;
             max-width: 32px;
@@ -265,15 +290,8 @@
             color: #fff;
             text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
             box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.15);
-            pointer-events: none;
         }
-        
-        .key-black-hint {
-            font-size: 9px;
-            font-weight: bold;
-            color: #aaa;
-            pointer-events: none;
-        }
+        .key-black-hint { font-size: 9px; font-weight: bold; color: #aaa; }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0) rotate(-15deg); }
@@ -285,12 +303,8 @@
         /* Модальные окна */
         .overlay-screen {
             position: fixed;
-            top: 0; 
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100vw;
-            height: 100dvh;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw; height: 100dvh;
             background: rgba(255, 255, 255, 0.97);
             display: none;
             flex-direction: column;
@@ -298,27 +312,8 @@
             align-items: center;
             z-index: 100; 
         }
-        .stars-wrapper { 
-            display: flex; 
-            gap: 4px; 
-            margin-top: 10px; 
-            flex-wrap: wrap; 
-            justify-content: center;
-            max-height: 50vh;
-            overflow-y: auto;
-        }
-        .star { 
-            font-size: 25px;
-            color: #ffca28; 
-            opacity: 0; 
-            transform: scale(0.3); 
-            animation: popIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
-        @keyframes popIn { to { opacity: 1; transform: scale(1); } }
-        .game-over-text { font-size: 22px; font-weight: bold; margin-bottom: 10px; text-align: center;}
-
-        /* Стили окна настроек */
-        .settings-panel {
+        
+        .modal-panel {
             background: #fff;
             padding: 20px;
             width: 100%;
@@ -329,58 +324,52 @@
             align-items: center;
             justify-content: center;
         }
-        .settings-content {
+        
+        .modal-content {
             width: 100%;
             max-width: 400px;
             text-align: center;
         }
-        .settings-content h3 { margin-top: 0; margin-bottom: 15px; color: #333; }
+
+        /* Настройки */
         .settings-row { margin-bottom: 10px; text-align: left; }
         .settings-row label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
-        .settings-row select, .settings-row input[type="checkbox"] { padding: 6px; width: 100%; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;}
+        .settings-row select { padding: 6px; width: 100%; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;}
         .settings-row.checkbox-row { display: flex; align-items: center; gap: 8px; }
         .settings-row.checkbox-row input { width: 18px; height: 18px; }
         .settings-row.checkbox-row label { margin: 0; cursor: pointer; }
-        
-        /* iOS подсказка */
-        .ios-hint-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 150;
-            display: none;
-            align-items: center;
+
+        /* Магазин */
+        .shop-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
             justify-content: center;
-            padding: 20px;
+            margin: 20px 0;
         }
-        .ios-hint-modal.show { display: flex; }
-        .ios-hint-content {
-            background: #fff;
-            border-radius: 16px;
-            padding: 24px;
-            max-width: 340px;
-            width: 100%;
-            text-align: center;
+        .shop-item {
+            background: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 15px 10px;
+            width: 110px;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .ios-hint-content h3 { margin: 0 0 12px 0; font-size: 18px; color: #333; }
-        .ios-hint-content .steps { text-align: left; margin: 16px 0; font-size: 14px; line-height: 1.8; color: #555; }
-        .ios-hint-content .steps .step-icon { display: inline-block; width: 24px; text-align: center; margin-right: 8px; }
-        .ios-hint-content .close-btn { background: #6c757d; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+        .shop-item:hover { border-color: #ffc107; }
+        .shop-item.owned { background: #d4edda; border-color: #28a745; }
+        .shop-item.equipped { background: #cce5ff; border-color: #007bff; }
+        .shop-item-emoji { font-size: 35px; margin-bottom: 5px; }
+        .shop-item-name { font-size: 13px; font-weight: bold; color: #333; margin-bottom: 5px; }
+        .shop-item-price { font-size: 12px; color: #666; font-weight: bold; }
+
+        .stars-wrapper { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; justify-content: center; max-height: 50vh; overflow-y: auto; }
+        .star { font-size: 25px; color: #ffca28; opacity: 0; transform: scale(0.3); animation: popIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { to { opacity: 1; transform: scale(1); } }
+        .game-over-text { font-size: 22px; font-weight: bold; margin-bottom: 10px; text-align: center;}
     </style>
 </head>
 <body>
-
-    <div class="ios-hint-modal" id="iosHintModal" onclick="if(event.target===this)closeIosHint()">
-        <div class="ios-hint-content">
-            <h3>📲 Установка на iPhone/iPad</h3>
-            <div class="steps">
-                <div><span class="step-icon">1️⃣</span>Нажмите кнопку <b>«Поделиться»</b> внизу экрана</div>
-                <div><span class="step-icon">2️⃣</span>Прокрутите меню и выберите <b>«На экран Домой»</b></div>
-                <div><span class="step-icon">3️⃣</span>Нажмите <b>«Добавить»</b></div>
-            </div>
-            <button class="close-btn" onclick="closeIosHint()">Понятно</button>
-        </div>
-    </div>
 
     <div id="stars-screen" class="overlay-screen">
         <div id="stars-title" class="game-over-text">Игра окончена!</div>
@@ -389,8 +378,8 @@
     </div>
 
     <div id="settings-screen" class="overlay-screen">
-        <div class="settings-panel">
-            <div class="settings-content">
+        <div class="modal-panel">
+            <div class="modal-content">
                 <h3>Настройки игры</h3>
                 <div class="settings-row">
                     <label>Сложность (допустимо ошибок):</label>
@@ -419,6 +408,18 @@
         </div>
     </div>
 
+    <!-- Модальное окно магазина -->
+    <div id="shop-screen" class="overlay-screen">
+        <div class="modal-panel">
+            <div class="modal-content" style="max-width: 500px;">
+                <h3>Магазин украшений 🛒</h3>
+                <p style="font-weight:bold; color:#ff8c00; margin:0;">Твои монетки: 🪙 <span id="shop-coins">0</span></p>
+                <div class="shop-grid" id="shop-grid"></div>
+                <button class="btn btn-start" style="width: auto; padding: 10px 40px;" onclick="closeShop()">Закрыть магазин</button>
+            </div>
+        </div>
+    </div>
+
     <div class="main-area">
         <div class="stage">
             <div class="staff-container">
@@ -440,7 +441,11 @@
     </div>
 
     <div class="sidebar">
-        <div class="character-box" id="character">😋</div>
+        <!-- Обертка персонажа с украшениями -->
+        <div class="character-box" id="character">
+            <span id="char-face">😋</span>
+            <span class="accessory-layer" id="accessory-layer"></span>
+        </div>
         
         <div class="error-container">
             <div class="error-label">
@@ -452,85 +457,21 @@
             </div>
         </div>
 
-        <!-- Обновленный блок статистики -->
+        <!-- Статистика: монетки и звезды -->
         <div class="stats-box">
+            <div class="coins-display">🪙 <span id="sidebar-coins">0</span></div>
             <div id="stars-display" class="sidebar-stars empty">Пока нет звёзд</div>
         </div>
 
         <div style="width: 100%;">
+            <button class="btn btn-shop" onclick="openShop()">🛒 Магазин</button>
             <button class="btn btn-settings" onclick="openSettings()">⚙️ Настройки</button>
-            <button class="btn btn-install" id="btn-install">📥 Установить игру</button>
             <button class="btn btn-start" id="btn-start" onclick="startGame()">▶ Начать игру</button>
             <button class="btn btn-stop" id="btn-stop" onclick="stopGame()">⏹ Завершить</button>
         </div>
     </div>
 
 <script>
-    /* ============ PWA: MANIFEST + SERVICE WORKER ============ */
-    (function setupPWA() {
-        const manifest = {
-            name: "Детский тренажер нот",
-            short_name: "Тренажер Нот",
-            description: "Обучающая игра для изучения нот на фортепиано",
-            lang: "ru",
-            dir: "ltr",
-            start_url: "./",
-            scope: "./",
-            display: "standalone",
-            orientation: "landscape",
-            background_color: "#f0f4f8",
-            theme_color: "#007bff",
-            id: "./?pwa=standalone",
-            icons: [
-                {
-                    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%23007bff'/><text x='96' y='135' font-family='Arial' font-size='120' fill='white' text-anchor='middle'>♪</text></svg>",
-                    sizes: "192x192",
-                    type: "image/svg+xml",
-                    purpose: "any"
-                },
-                {
-                    src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%23007bff'/><text x='256' y='360' font-family='Arial' font-size='320' fill='white' text-anchor='middle'>♪</text></svg>",
-                    sizes: "512x512",
-                    type: "image/svg+xml",
-                    purpose: "any maskable"
-                }
-            ]
-        };
-        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-        document.getElementById('manifest-link').href = URL.createObjectURL(blob);
-
-        if ('serviceWorker' in navigator) {
-            const swCode = `
-                const CACHE = 'piano-trainer-v1';
-                self.addEventListener('install', e => {
-                    self.skipWaiting();
-                    e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./'])));
-                });
-                self.addEventListener('activate', e => {
-                    e.waitUntil(self.clients.claim());
-                    e.waitUntil(caches.keys().then(keys => Promise.all(
-                        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
-                    )));
-                });
-                self.addEventListener('fetch', e => {
-                    if (e.request.method !== 'GET') return;
-                    e.respondWith(
-                        caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
-                            const copy = resp.clone();
-                            caches.open(CACHE).then(c => c.put(e.request, copy));
-                            return resp;
-                        }).catch(() => caches.match('./')))
-                    );
-                });
-            `;
-            const swBlob = new Blob([swCode], { type: 'application/javascript' });
-            const swUrl = URL.createObjectURL(swBlob);
-            navigator.serviceWorker.register(swUrl, { scope: './' })
-                .then(reg => console.log('SW registered'))
-                .catch(err => console.log('SW failed:', err.message));
-        }
-    })();
-
     /* ============ ИГРОВАЯ ЛОГИКА ============ */
     let maxErrors = 20;
     let useBlackKeys = false;
@@ -545,6 +486,26 @@
     const EMOTION_SAD = '😣';
     const EMOTION_CRY = '😭';
     const EMOTION_FEAR = '😰';
+
+    // Новые глобальные переменные
+    let coinsCount = 0;
+    let spentStars = 0;
+    let currentMelody = [];
+    let currentNoteIndex = 0;
+    let completedScreens = 0; 
+    let errorsCount = 0;
+    let isPlaying = false;
+    let emotionTimeout;
+
+    // Инвентарь и магазин
+    let inventory = {}; 
+    let currentAccessory = null;
+    const shopItems = [
+        { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50 },
+        { id: 'glasses', name: 'Очки', emoji: '🕶️', price: 100 },
+        { id: 'bow', name: 'Бантик', emoji: '🎀', price: 150 },
+        { id: 'flower', name: 'Заколка', emoji: '🌸', price: 200 }
+    ];
 
     const gameNotes = [
         { id: 0, name: 'До', step: -2, midi: 60, color: '#e63946', isBlack: false },
@@ -582,7 +543,6 @@
         { midi: 67, type: 'white', name: 'Соль', color: '#00b4d8' }, { midi: 68, type: 'black', name: 'Соль#' },
         { midi: 69, type: 'white', name: 'Ля', color: '#3d5a80' }, { midi: 70, type: 'black', name: 'Ля#' },
         { midi: 71, type: 'white', name: 'Си', color: '#9b5de5' },
-        
         { midi: 72, type: 'white', name: 'До', color: '#e63946' }, { midi: 73, type: 'black', name: 'До#' },
         { midi: 74, type: 'white', name: 'Ре', color: '#f4a261' }, { midi: 75, type: 'black', name: 'Ре#' },
         { midi: 76, type: 'white', name: 'Ми', color: '#e9c46a' },
@@ -591,13 +551,6 @@
         { midi: 81, type: 'white', name: 'Ля', color: '#3d5a80' }, { midi: 82, type: 'black', name: 'Ля#' },
         { midi: 83, type: 'white', name: 'Си', color: '#9b5de5' }
     ];
-
-    let currentMelody = [];
-    let currentNoteIndex = 0;
-    let completedScreens = 0; 
-    let errorsCount = 0;
-    let isPlaying = false;
-    let emotionTimeout;
 
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let actx;
@@ -617,7 +570,6 @@
 
             if (key.type === 'white') {
                 btn.className = 'key-white';
-                
                 if (showWhiteHints) {
                     const hint = document.createElement('div');
                     hint.className = 'key-hint';
@@ -625,7 +577,6 @@
                     hint.innerText = key.name;
                     btn.appendChild(hint);
                 }
-                
                 kbContainer.appendChild(btn);
                 whiteKeyIndex++;
             } else {
@@ -640,7 +591,6 @@
                     hint.innerText = key.name;
                     btn.appendChild(hint);
                 }
-
                 kbContainer.appendChild(btn);
             }
         });
@@ -676,15 +626,17 @@
     }
 
     function setEmotion(emoji, animClass = '') {
-        const charEl = document.getElementById('character');
-        charEl.innerText = emoji;
-        charEl.className = 'character-box ' + animClass;
+        const charFace = document.getElementById('char-face');
+        const charBox = document.getElementById('character');
+        
+        charFace.innerText = emoji;
+        charBox.className = 'character-box ' + animClass;
         
         clearTimeout(emotionTimeout);
         if (isPlaying && emoji !== EMOTION_CRY) {
             emotionTimeout = setTimeout(() => {
-                charEl.innerText = getIdleEmotion();
-                charEl.className = 'character-box';
+                charFace.innerText = getIdleEmotion();
+                charBox.className = 'character-box';
             }, 1000);
         }
     }
@@ -707,7 +659,7 @@
         }
         
         if(isPlaying) {
-            document.getElementById('character').innerText = getIdleEmotion();
+            document.getElementById('char-face').innerText = getIdleEmotion();
         }
     }
 
@@ -720,6 +672,7 @@
         isPlaying = true;
         currentNoteIndex = 0;
         completedScreens = 0;
+        spentStars = 0;
         errorsCount = 0;
         
         updateErrorBar();
@@ -752,7 +705,7 @@
             showStarsReward(0, true);
         } else {
             setEmotion(EMOTION_IDLE);
-            showStarsReward(completedScreens, false);
+            showStarsReward(Math.max(0, completedScreens - spentStars), false);
         }
     }
 
@@ -779,9 +732,7 @@
                 noteEl.appendChild(acc);
             }
 
-            if (noteObj.step === -2) {
-                createLedgerLine(noteEl, '8px');
-            } else if (noteObj.step === 10) { 
+            if (noteObj.step === -2 || noteObj.step === 10) {
                 createLedgerLine(noteEl, '8px');
             } else if (noteObj.step === 11) { 
                 createLedgerLine(noteEl, '18px');
@@ -821,6 +772,10 @@
             setEmotion(EMOTION_HAPPY, 'bounce');
             currentNoteIndex++;
 
+            // Заработок монеток
+            coinsCount += 5;
+            updateCoinsDisplay();
+
             if (currentNoteIndex >= MELODY_LENGTH) {
                 completedScreens++;
                 currentNoteIndex = 0;
@@ -847,6 +802,120 @@
         }
     }
 
+    // --- Монетки и Магазин ---
+    function updateCoinsDisplay() {
+        document.getElementById('sidebar-coins').innerText = coinsCount;
+        document.getElementById('shop-coins').innerText = coinsCount;
+    }
+
+    function openShop() {
+        if(isPlaying) stopGame();
+        renderShop();
+        document.getElementById('shop-screen').style.display = 'flex';
+    }
+
+    function closeShop() {
+        document.getElementById('shop-screen').style.display = 'none';
+    }
+
+    function renderShop() {
+        updateCoinsDisplay();
+        const grid = document.getElementById('shop-grid');
+        grid.innerHTML = '';
+        
+        shopItems.forEach(item => {
+            const el = document.createElement('div');
+            const isOwned = inventory[item.id];
+            const isEquipped = currentAccessory === item.id;
+            
+            el.className = `shop-item ${isOwned ? 'owned' : ''} ${isEquipped ? 'equipped' : ''}`;
+            el.innerHTML = `
+                <div class="shop-item-emoji">${item.emoji}</div>
+                <div class="shop-item-name">${item.name}</div>
+                <div class="shop-item-price">${isOwned ? (isEquipped ? 'Надето' : 'Куплено') : '🪙 ' + item.price}</div>
+            `;
+            
+            el.onclick = () => {
+                if (isEquipped) {
+                    currentAccessory = null;
+                    updateAccessoryDisplay();
+                    renderShop();
+                } else if (isOwned) {
+                    currentAccessory = item.id;
+                    updateAccessoryDisplay();
+                    renderShop();
+                } else {
+                    if (coinsCount >= item.price) {
+                        coinsCount -= item.price;
+                        inventory[item.id] = true;
+                        updateCoinsDisplay();
+                        renderShop();
+                    } else {
+                        alert('Недостаточно монеток! Играй без ошибок, чтобы заработать больше.');
+                    }
+                }
+            };
+            grid.appendChild(el);
+        });
+    }
+
+    function updateAccessoryDisplay() {
+        const accLayer = document.getElementById('accessory-layer');
+        if (currentAccessory) {
+            const item = shopItems.find(i => i.id === currentAccessory);
+            accLayer.innerText = item.emoji;
+        } else {
+            accLayer.innerText = '';
+        }
+    }
+
+    // --- Работа со звездочками ---
+    function spendStarForErrors() {
+        if (errorsCount <= 0) {
+            alert("Счетчик ошибок и так пуст! Молодец!");
+            return;
+        }
+        if (confirm("Потратить 1 звёздочку, чтобы убрать 5 ошибок?")) {
+            spentStars++;
+            errorsCount = Math.max(0, errorsCount - 5);
+            updateErrorBar();
+            setEmotion(getIdleEmotion());
+            updateStatus();
+        }
+    }
+
+    function updateStatus() {
+        if (!isPlaying) return;
+        const starsDisplay = document.getElementById('stars-display');
+        const availableStars = completedScreens - spentStars;
+        
+        if (availableStars <= 0) {
+            starsDisplay.innerHTML = 'Пока нет звёзд';
+            starsDisplay.className = 'sidebar-stars empty';
+        } else {
+            starsDisplay.className = 'sidebar-stars';
+            starsDisplay.innerHTML = '';
+            
+            if (availableStars <= 10) {
+                for (let i = 0; i < availableStars; i++) {
+                    let star = document.createElement('span');
+                    star.innerText = '⭐';
+                    star.style.cursor = 'pointer';
+                    star.title = "Нажми, чтобы списать 5 ошибок!";
+                    star.onclick = spendStarForErrors;
+                    starsDisplay.appendChild(star);
+                }
+            } else {
+                let starBtn = document.createElement('span');
+                starBtn.innerText = `⭐ x ${availableStars}`;
+                starBtn.style.cursor = 'pointer';
+                starBtn.title = "Нажми, чтобы списать 5 ошибок!";
+                starBtn.onclick = spendStarForErrors;
+                starsDisplay.appendChild(starBtn);
+            }
+        }
+    }
+
     function showStarsReward(count, isGameOver) {
         const screen = document.getElementById('stars-screen');
         const area = document.getElementById('stars-area');
@@ -861,9 +930,9 @@
         }
 
         title.style.color = "#28a745";
-        if (count === 0) {
+        if (count <= 0) {
             title.innerText = "Игра завершена! ✨";
-            area.innerHTML = '<span style="font-size:15px; color:#666;">Попробуй пройти хотя бы один экран!</span>';
+            area.innerHTML = '<span style="font-size:15px; color:#666;">Попробуй пройти экран без прерывания, чтобы получить звёзды!</span>';
             return;
         }
 
@@ -904,87 +973,10 @@
         startGame();
     }
 
-    // Обновленная функция для вывода звезд вместо текста
-    function updateStatus() {
-        if (!isPlaying) return;
-        const starsDisplay = document.getElementById('stars-display');
-        
-        if (completedScreens === 0) {
-            starsDisplay.innerHTML = 'Пока нет звёзд';
-            starsDisplay.className = 'sidebar-stars empty';
-        } else {
-            starsDisplay.className = 'sidebar-stars';
-            // Если звезд меньше или равно 10 — рисуем их визуально
-            if (completedScreens <= 10) {
-                starsDisplay.innerHTML = '⭐'.repeat(completedScreens);
-            } else {
-                // Если звезд много, выводим компактный счетчик
-                starsDisplay.innerHTML = `⭐ x ${completedScreens}`;
-            }
-        }
-    }
-
     window.addEventListener('resize', () => {
         if (isPlaying) renderNotes();
     });
 
-    /* ============ PWA: УСТАНОВКА ============ */
-    let deferredPrompt;
-    const installBtn = document.getElementById('btn-install');
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        if (!isStandalone) {
-            installBtn.style.display = 'block';
-        }
-    });
-
-    installBtn.addEventListener('click', async () => {
-        if (!deferredPrompt) {
-            if (isIOS) {
-                document.getElementById('iosHintModal').classList.add('show');
-            } else {
-                alert('Откройте меню браузера и выберите "Установить приложение" или "Добавить на главный экран"');
-            }
-            return;
-        }
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            installBtn.style.display = 'none';
-        }
-        deferredPrompt = null;
-    });
-
-    window.addEventListener('appinstalled', () => {
-        installBtn.style.display = 'none';
-        deferredPrompt = null;
-    });
-
-    function showInstallHint() {
-        if (isStandalone) {
-            alert('Приложение уже установлено');
-            return;
-        }
-        if (isIOS) {
-            document.getElementById('iosHintModal').classList.add('show');
-        } else if (deferredPrompt) {
-            installBtn.style.display = 'block';
-        } else {
-            alert('Откройте меню браузера и выберите "Установить приложение"');
-        }
-    }
-
-    function closeIosHint() {
-        document.getElementById('iosHintModal').classList.remove('show');
-    }
-
-    if (isStandalone) {
-        installBtn.style.display = 'none';
-    }
 </script>
 </body>
 </html>
