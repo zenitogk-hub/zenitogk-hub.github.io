@@ -3,15 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
-    <title>Тренажер нот</title>
+    <title>Детский тренажер нот</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Пианино">
     
     <link rel="manifest" href='data:application/manifest+json,{"name":"Детский тренажер нот","short_name":"Тренажер Нот","start_url":"./","display":"standalone","background_color":"#f0f4f8","theme_color":"#007bff","orientation":"landscape","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3068/3068421.png","sizes":"192x192","type":"image/png"}]}'>
+    
     <style>
-        * { box-sizing: border-box; }
+        * { 
+            box-sizing: border-box; 
+            /* Полностью убирает синее прозрачное выделение при тапах на Android/iOS */
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
         
         body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -20,80 +28,71 @@
             padding: 10px;
             display: flex;
             height: 100dvh;
-            overflow: hidden;
-            touch-action: manipulation;
-            -webkit-user-select: none;
-            user-select: none;
+            overflow: hidden; /* Запрещает любую прокрутку экрана */
+            touch-action: none; /* Отключает системные жесты зума и скролла */
             gap: 10px;
         }
 
-        /* Левая часть: Игра */
+        /* Игровая зона (слева) */
         .main-area {
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 10px;
             min-width: 0;
+            height: 100%;
         }
 
-        /* Правая часть: Меню и Статистика */
+        /* Панель управления и статистика (справа) */
         .sidebar {
-            width: 260px;
+            width: 240px;
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 15px;
+            padding: 12px;
             flex-shrink: 0;
+            height: 100%;
+            justify-content: space-between;
         }
 
         .character-box {
-            font-size: 80px;
-            height: 100px;
+            font-size: 75px;
+            height: 90px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 15px;
             transition: transform 0.2s;
         }
         
-        .character-box.bounce {
-            transform: scale(1.2) translateY(-10px);
-        }
-        
-        .character-box.shake {
-            animation: shake 0.3s;
-        }
+        .character-box.bounce { transform: scale(1.2) translateY(-10px); }
+        .character-box.shake { animation: shake 0.3s; }
 
         .stats-box {
             width: 100%;
             background: #f8f9fa;
-            padding: 10px;
+            padding: 8px;
             border-radius: 8px;
-            margin-bottom: 15px;
             text-align: center;
         }
 
-        .stats-text { margin: 5px 0; font-size: 15px; font-weight: bold; color: #444; }
+        .stats-text { margin: 4px 0; font-size: 14px; font-weight: bold; color: #444; }
 
         /* Шкала ошибок */
-        .error-container {
-            width: 100%;
-            margin-bottom: 20px;
-        }
+        .error-container { width: 100%; }
         .error-label {
             display: flex;
             justify-content: space-between;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             color: #555;
         }
         .error-track {
             width: 100%;
-            height: 15px;
+            height: 14px;
             background: #e9ecef;
             border-radius: 8px;
             overflow: hidden;
@@ -110,21 +109,33 @@
 
         .btn {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
-            margin-bottom: 10px;
-            transition: transform 0.1s, opacity 0.2s;
+            transition: transform 0.1s;
         }
         .btn:active { transform: scale(0.95); }
         .btn-start { background: #007bff; color: white; }
         .btn-stop { background: #dc3545; color: white; display: none; }
-        .btn-install { background: #28a745; color: white; display: none; }
+        
+        /* Кнопка установки PWA */
+        .btn-install { 
+            background: #28a745; 
+            color: white; 
+            display: none; /* Появится автоматически при поддержке браузером */
+            animation: pulse 2s infinite;
+        }
 
-        /* Нотный стан */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        /* Нотный стан без прокрутки */
         .stage {
             background: #fff;
             border-radius: 12px;
@@ -133,110 +144,111 @@
             position: relative;
             display: flex;
             align-items: center;
-            overflow-x: auto;
+            overflow: hidden;
         }
 
         .staff-container {
             position: relative;
             height: 160px;
-            min-width: 800px;
             width: 100%;
-            margin-top: -20px;
+            margin-top: -10px;
         }
 
-        .clef { position: absolute; left: 20px; top: 15px; font-size: 90px; font-family: serif; color: #000; }
+        .clef { position: absolute; left: 15px; top: 15px; font-size: 85px; font-family: serif; color: #000; }
         .staff-lines { position: absolute; left: 0; top: 40px; width: 100%; height: 80px; display: flex; flex-direction: column; justify-content: space-between; z-index: 1; }
         .line { width: 100%; height: 2px; background: #000; }
 
-        #notes-layer { position: absolute; top: 0; left: 100px; width: calc(100% - 100px); height: 100%; z-index: 2; }
-        .note { position: absolute; width: 24px; height: 16px; background: #000; border-radius: 50%; transform: rotate(-15deg); transition: background 0.15s, transform 0.15s; }
-        .ledger-line { position: absolute; width: 40px; height: 2px; background: #000; left: -8px; top: 8px; transform: rotate(15deg); }
-        .note.active { transform: rotate(-15deg) scale(1.3); background: #007bff; z-index: 3; }
-        .note.success { background: #28a745; transform: rotate(-15deg) scale(1); }
+        #notes-layer { position: absolute; top: 0; left: 90px; width: calc(100% - 100px); height: 100%; z-index: 2; }
+        .note { position: absolute; width: 24px; height: 16px; background: #000; border-radius: 50%; transform: rotate(-15deg); }
+        
+        /* Добавочные линейки для низких и высоких нот */
+        .ledger-line { position: absolute; width: 38px; height: 2px; background: #000; left: -7px; transform: rotate(15deg); }
+        
+        .note.active { transform: rotate(-15deg) scale(1.25); background: #007bff; z-index: 3; box-shadow: 0 0 10px rgba(0,123,255,0.5); }
+        .note.success { background: #28a745; }
         .note.error { background: #dc3545; animation: shake 0.3s; }
 
-        /* Клавиатура */
+        /* Стопроцентно адаптивная клавиатура под экран */
         .keyboard-wrapper {
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             flex: 1;
-            overflow-x: auto;
-            overflow-y: hidden;
+            overflow: hidden;
             display: flex;
             align-items: flex-end;
-            padding: 10px 10px 0 10px;
+            padding: 10px;
         }
 
         .keyboard {
             position: relative;
             height: 100%;
-            min-height: 150px;
+            width: 100%;
             display: flex;
-            gap: 2px;
-            padding-bottom: 10px;
+            gap: 1px;
         }
 
+        /* Белые клавиши высчитывают ширину автоматически, деля экран на 14 частей */
         .key-white {
-            width: 65px;
+            flex: 1;
             height: 100%;
             background: #fff;
             border: 1px solid #ccc;
-            border-bottom: 4px solid #bbb;
+            border-bottom: 5px solid #bbb;
             border-radius: 0 0 6px 6px;
             position: relative;
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
             cursor: pointer;
             z-index: 1;
         }
-        .key-white:active, .key-white.active-visual { background: #eaeaea; border-bottom-width: 1px; transform: translateY(3px); }
+        .key-white:active { background: #f2f2f2; border-bottom-width: 1px; transform: translateY(4px); }
 
+        /* Черные клавиши позиционируются в процентах от общей ширины */
         .key-black {
-            width: 40px;
-            height: 60%;
+            height: 58%;
             background: #222;
             position: absolute;
             top: 0;
             border-radius: 0 0 4px 4px;
-            border-bottom: 3px solid #000;
+            border-bottom: 4px solid #000;
             cursor: pointer;
             z-index: 2;
-            margin-left: -20px;
         }
-        .key-black:active, .key-black.active-visual { background: #444; border-bottom-width: 1px; transform: translateY(2px); }
+        .key-black:active { background: #444; border-bottom-width: 1px; transform: translateY(3px); }
 
-        /* Цветовые метки на клавишах */
+        /* Адаптивные подсказки внутри клавиш */
         .key-hint {
-            width: 40px;
-            height: 40px;
+            width: 85%;
+            max-width: 34px;
+            aspect-ratio: 1;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 11px;
             font-weight: bold;
-            color: #333;
-            box-shadow: inset 0 2px 4px rgba(255,255,255,0.5);
-            pointer-events: none; /* Чтобы не мешать клику */
+            color: #fff;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.15);
+            pointer-events: none;
         }
 
         @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
+            0%, 100% { transform: translateX(0) rotate(-15deg); }
+            25% { transform: translateX(-4px) rotate(-15deg); }
+            50% { transform: translateX(4px) rotate(-15deg); }
+            75% { transform: translateX(-4px) rotate(-15deg); }
         }
 
-        /* Экран завершения */
+        /* Экран результатов */
         #stars-screen {
             position: absolute;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.96);
+            background: rgba(255, 255, 255, 0.97);
             top: 0; left: 0;
             display: none;
             flex-direction: column;
@@ -245,11 +257,10 @@
             z-index: 20;
             border-radius: 12px;
         }
-        .stars-wrapper { display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap; justify-content: center; }
-        .star { font-size: 55px; color: #ffca28; opacity: 0; transform: scale(0.3); animation: popIn 0.35s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .stars-wrapper { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; justify-content: center; }
+        .star { font-size: 50px; color: #ffca28; opacity: 0; transform: scale(0.3); animation: popIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { to { opacity: 1; transform: scale(1); } }
-        
-        .game-over-text { font-size: 24px; color: #dc3545; font-weight: bold; margin-bottom: 10px; }
+        .game-over-text { font-size: 22px; font-weight: bold; margin-bottom: 10px; text-align: center;}
     </style>
 </head>
 <body>
@@ -270,14 +281,13 @@
                 <div id="stars-screen">
                     <div id="stars-title" class="game-over-text">Игра окончена!</div>
                     <div class="stars-wrapper" id="stars-area"></div>
-                    <button class="btn btn-start" style="width: auto; margin-top: 20px; padding: 10px 30px;" onclick="closeStarsScreen()">ОК</button>
+                    <button class="btn btn-start" style="width: auto; margin-top: 20px; padding: 10px 40px;" onclick="closeStarsScreen()">ОК</button>
                 </div>
             </div>
         </div>
 
         <div class="keyboard-wrapper">
-            <div class="keyboard" id="piano-keyboard">
-                </div>
+            <div class="keyboard" id="piano-keyboard"></div>
         </div>
     </div>
 
@@ -295,65 +305,62 @@
         </div>
 
         <div class="stats-box">
-            <p class="stats-text" id="status-screens">Пройдено: 0</p>
+            <p class="stats-text" id="status-screens">Пройдено экранов: 0</p>
             <p class="stats-text" id="status-note">Нота: 0 / 12</p>
         </div>
 
-        <button class="btn btn-install" id="btn-install">📥 Установить</button>
+        <button class="btn btn-install" id="btn-install">📥 Установить игру</button>
         <button class="btn btn-start" id="btn-start" onclick="startGame()">▶ Начать игру</button>
         <button class="btn btn-stop" id="btn-stop" onclick="stopGame()">⏹ Завершить</button>
     </div>
 
 <script>
-    // Настройки игры
     const MAX_ERRORS = 20;
     const MELODY_LENGTH = 12;
+    const TOTAL_WHITE_KEYS = 14; // Две полные октавы (белые клавиши)
     
-    // Эмоции персонажа
     const EMOTION_IDLE = '😋';
     const EMOTION_HAPPY = '😃';
     const EMOTION_SAD = '😣';
     const EMOTION_CRY = '😭';
 
-    // Ноты для нотного стана (только первая октава для задания)
+    // Пул нот расширен на ДВЕ октавы (14 нот) со всеми шагами для нотного стана
     const gameNotes = [
-        { id: 0, name: 'До', step: -2, midi: 60, color: '#ff4d4d' },
-        { id: 1, name: 'Ре', step: -1, midi: 62, color: '#ffa64d' },
-        { id: 2, name: 'Ми', step: 0, midi: 64, color: '#ffd24d' },
-        { id: 3, name: 'Фа', step: 1, midi: 65, color: '#4dff4d' },
-        { id: 4, name: 'Соль', step: 2, midi: 67, color: '#4dffff' },
-        { id: 5, name: 'Ля', step: 3, midi: 69, color: '#4d4dff' },
-        { id: 6, name: 'Си', step: 4, midi: 71, color: '#a64dff' }
+        // 1-я октава
+        { id: 0, name: 'До', step: -2, midi: 60, color: '#e63946' },
+        { id: 1, name: 'Ре', step: -1, midi: 62, color: '#f4a261' },
+        { id: 2, name: 'Ми', step: 0,  midi: 64, color: '#e9c46a' },
+        { id: 3, name: 'Фа', step: 1,  midi: 65, color: '#2a9d8f' },
+        { id: 4, name: 'Соль', step: 2, midi: 67, color: '#00b4d8' },
+        { id: 5, name: 'Ля', step: 3,  midi: 69, color: '#3d5a80' },
+        { id: 6, name: 'Си', step: 4,  midi: 71, color: '#9b5de5' },
+        // 2-я октава
+        { id: 7, name: 'До', step: 5,  midi: 72, color: '#e63946' },
+        { id: 8, name: 'Ре', step: 6,  midi: 74, color: '#f4a261' },
+        { id: 9, name: 'Ми', step: 7,  midi: 76, color: '#e9c46a' },
+        { id: 10, name: 'Фа', step: 8, midi: 77, color: '#2a9d8f' },
+        { id: 11, name: 'Соль', step: 9, midi: 79, color: '#00b4d8' },
+        { id: 12, name: 'Ля', step: 10, midi: 81, color: '#3d5a80' },
+        { id: 13, name: 'Си', step: 11, midi: 83, color: '#9b5de5' }
     ];
 
-    // Полная клавиатура (2 октавы)
+    // Конфигурация всей клавиатуры (14 белых + черные между ними)
     const keyboardLayout = [
-        { midi: 60, type: 'white', name: 'До', color: '#ff4d4d' },
-        { midi: 61, type: 'black' },
-        { midi: 62, type: 'white', name: 'Ре', color: '#ffa64d' },
-        { midi: 63, type: 'black' },
-        { midi: 64, type: 'white', name: 'Ми', color: '#ffd24d' },
-        { midi: 65, type: 'white', name: 'Фа', color: '#4dff4d' },
-        { midi: 66, type: 'black' },
-        { midi: 67, type: 'white', name: 'Соль', color: '#4dffff' },
-        { midi: 68, type: 'black' },
-        { midi: 69, type: 'white', name: 'Ля', color: '#4d4dff' },
-        { midi: 70, type: 'black' },
-        { midi: 71, type: 'white', name: 'Си', color: '#a64dff' },
+        { midi: 60, type: 'white', name: 'До', color: '#e63946' }, { midi: 61, type: 'black' },
+        { midi: 62, type: 'white', name: 'Ре', color: '#f4a261' }, { midi: 63, type: 'black' },
+        { midi: 64, type: 'white', name: 'Ми', color: '#e9c46a' },
+        { midi: 65, type: 'white', name: 'Фа', color: '#2a9d8f' }, { midi: 66, type: 'black' },
+        { midi: 67, type: 'white', name: 'Соль', color: '#00b4d8' }, { midi: 68, type: 'black' },
+        { midi: 69, type: 'white', name: 'Ля', color: '#3d5a80' }, { midi: 70, type: 'black' },
+        { midi: 71, type: 'white', name: 'Си', color: '#9b5de5' },
         
-        // Вторая октава (без подписей, чтобы усложнить/сделать реалистично)
-        { midi: 72, type: 'white', name: '', color: '#fff' },
-        { midi: 73, type: 'black' },
-        { midi: 74, type: 'white', name: '', color: '#fff' },
-        { midi: 75, type: 'black' },
-        { midi: 76, type: 'white', name: '', color: '#fff' },
-        { midi: 77, type: 'white', name: '', color: '#fff' },
-        { midi: 78, type: 'black' },
-        { midi: 79, type: 'white', name: '', color: '#fff' },
-        { midi: 80, type: 'black' },
-        { midi: 81, type: 'white', name: '', color: '#fff' },
-        { midi: 82, type: 'black' },
-        { midi: 83, type: 'white', name: '', color: '#fff' }
+        { midi: 72, type: 'white', name: 'До', color: '#e63946' }, { midi: 73, type: 'black' },
+        { midi: 74, type: 'white', name: 'Ре', color: '#f4a261' }, { midi: 75, type: 'black' },
+        { midi: 76, type: 'white', name: 'Ми', color: '#e9c46a' },
+        { midi: 77, type: 'white', name: 'Фа', color: '#2a9d8f' }, { midi: 78, type: 'black' },
+        { midi: 79, type: 'white', name: 'Соль', color: '#00b4d8' }, { midi: 80, type: 'black' },
+        { midi: 81, type: 'white', name: 'Ля', color: '#3d5a80' }, { midi: 82, type: 'black' },
+        { midi: 83, type: 'white', name: 'Си', color: '#9b5de5' }
     ];
 
     let currentMelody = [];
@@ -366,7 +373,7 @@
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let actx;
 
-    // Инициализация клавиатуры
+    // Сборка полностью резиновой клавиатуры без пикселей
     function buildKeyboard() {
         const kbContainer = document.getElementById('piano-keyboard');
         kbContainer.innerHTML = '';
@@ -376,27 +383,28 @@
         keyboardLayout.forEach(key => {
             const btn = document.createElement('div');
             
-            // Поддержка и мыши и тач-событий
-            btn.onpointerdown = (e) => {
-                e.preventDefault(); // Предотвращаем скролл при нажатии
+            // Используем pointerdown для мгновенного отклика без задержек тапа
+            btn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
                 checkNote(key.midi);
-            };
+            });
 
             if (key.type === 'white') {
                 btn.className = 'key-white';
-                if (key.name) {
-                    const hint = document.createElement('div');
-                    hint.className = 'key-hint';
-                    hint.style.backgroundColor = key.color;
-                    hint.innerText = key.name;
-                    btn.appendChild(hint);
-                }
+                const hint = document.createElement('div');
+                hint.className = 'key-hint';
+                hint.style.backgroundColor = key.color;
+                hint.innerText = key.name;
+                btn.appendChild(hint);
+                
                 kbContainer.appendChild(btn);
                 whiteKeyIndex++;
             } else {
                 btn.className = 'key-black';
-                // Расчет позиции черной клавиши: ширина белой(65) + gap(2) = 67px. Смещение влево -20px.
-                btn.style.left = (whiteKeyIndex * 67) + 'px';
+                // Математическое адаптивное позиционирование черной клавиши ровно на стыке белых
+                btn.style.width = `calc(100% / ${TOTAL_WHITE_KEYS} * 0.62)`;
+                btn.style.left = `${(whiteKeyIndex / TOTAL_WHITE_KEYS) * 100}%`;
+                btn.style.transform = 'translateX(-50%)';
                 kbContainer.appendChild(btn);
             }
         });
@@ -418,11 +426,11 @@
         osc.connect(gain);
         gain.connect(actx.destination);
         
-        gain.gain.setValueAtTime(0.4, actx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.3, actx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.35);
         
         osc.start(actx.currentTime);
-        osc.stop(actx.currentTime + 0.4);
+        osc.stop(actx.currentTime + 0.35);
     }
 
     function setEmotion(emoji, animClass = '') {
@@ -475,7 +483,6 @@
         }
         renderNotes();
         updateStatus();
-        document.querySelector('.stage').scrollTo({ left: 0, behavior: 'smooth' });
     }
 
     function stopGame(isGameOver = false) {
@@ -497,10 +504,14 @@
         document.getElementById('status-note').innerText = `Нота: 0 / ${MELODY_LENGTH}`;
     }
 
+    // Отрисовка нот без горизонтального скролла
     function renderNotes() {
         const layer = document.getElementById('notes-layer');
         layer.innerHTML = '';
-        const spacingX = 58; 
+        
+        // Высчитываем расстояние между 12 нотами динамически на основе доступной ширины экрана
+        const containerWidth = layer.clientWidth || (window.innerWidth - 350);
+        const spacingX = (containerWidth - 40) / MELODY_LENGTH; 
         
         currentMelody.forEach((noteObj, index) => {
             const noteEl = document.createElement('div');
@@ -509,18 +520,28 @@
             
             const basePathY = 112; 
             noteEl.style.top = (basePathY - noteObj.step * 10) + 'px';
-            noteEl.style.left = (index * spacingX + 20) + 'px';
+            noteEl.style.left = (index * spacingX + 10) + 'px';
 
-            if (noteObj.id === 0) { // Если До - добавляем добавочную линию
-                const ledger = document.createElement('div');
-                ledger.className = 'ledger-line';
-                noteEl.appendChild(ledger);
+            // Отрисовка добавочных линеек для экстремально низких или высоких нот
+            if (noteObj.step === -2) { // До первой октавы
+                createLedgerLine(noteEl, '8px');
+            } else if (noteObj.step === 10) { // Ля второй октавы
+                createLedgerLine(noteEl, '8px');
+            } else if (noteObj.step === 11) { // Си второй октавы (линейка под нотой)
+                createLedgerLine(noteEl, '18px');
             }
 
             layer.appendChild(noteEl);
         });
 
         highlightCurrentNote();
+    }
+
+    function createLedgerLine(parent, topPos) {
+        const ledger = document.createElement('div');
+        ledger.className = 'ledger-line';
+        ledger.style.top = topPos;
+        parent.appendChild(ledger);
     }
 
     function highlightCurrentNote() {
@@ -539,7 +560,6 @@
         const currentEl = document.getElementById(`note-${currentNoteIndex}`);
 
         if (pressedMidi === expectedNote.midi) {
-            // Правильно
             currentEl.classList.remove('active', 'error');
             currentEl.classList.add('success');
             setEmotion(EMOTION_HAPPY, 'bounce');
@@ -550,13 +570,12 @@
                 currentNoteIndex = 0;
                 setTimeout(() => {
                     if (isPlaying) generateScreenMelody();
-                }, 350);
+                }, 300);
             } else {
                 updateStatus();
                 highlightCurrentNote();
             }
         } else {
-            // Ошибка
             errorsCount++;
             updateErrorBar();
             
@@ -565,7 +584,7 @@
             currentEl.classList.add('error');
 
             if (errorsCount >= MAX_ERRORS) {
-                stopGame(true); // Game Over
+                stopGame(true);
             } else {
                 setEmotion(EMOTION_SAD, 'shake');
             }
@@ -580,19 +599,19 @@
         screen.style.display = 'flex';
 
         if (isGameOver) {
-            title.innerText = "Ой-ой! Слишком много ошибок 😭";
+            title.innerText = "Игра окончена из-за ошибок! 😭";
             title.style.color = "#dc3545";
             return;
         }
 
         title.style.color = "#28a745";
         if (count === 0) {
-            title.innerText = "Игра завершена!";
-            area.innerHTML = '<span style="font-size:16px; color:#666; text-align:center;">Ты не успел пройти ни одного экрана. Попробуй еще раз! ✨</span>';
+            title.innerText = "Игра завершена! ✨";
+            area.innerHTML = '<span style="font-size:15px; color:#666;">Попробуй пройти хотя бы один экран!</span>';
             return;
         }
 
-        title.innerText = "Отличный результат! Твои звезды:";
+        title.innerText = "Отличный результат! Твои звёзды:";
         for (let i = 0; i < count; i++) {
             setTimeout(() => {
                 const star = document.createElement('span');
@@ -609,32 +628,48 @@
 
     function updateStatus() {
         if (!isPlaying) return;
-        document.getElementById('status-screens').innerText = `Пройдено: ${completedScreens}`;
+        document.getElementById('status-screens').innerText = `Пройдено экранов: ${completedScreens}`;
         document.getElementById('status-note').innerText = `Нота: ${currentNoteIndex + 1} / ${MELODY_LENGTH}`;
     }
 
-    // PWA Установка
+    // Перерисовывать ноты при смене ориентации или изменении размеров экрана
+    window.addEventListener('resize', () => {
+        if (isPlaying) renderNotes();
+    });
+
+    // ==========================================
+    // ЛОГИКА АВТОМАТИЧЕСКОЙ УСТАНОВКИ (PWA)
+    // ==========================================
     let deferredPrompt;
     const installBtn = document.getElementById('btn-install');
 
+    // Перехватываем системное событие готовности к установке PWA на Android
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        installBtn.style.display = 'block';
+        // Показываем кнопку "Установить" прямо внутри интерфейса
+        installBtn.style.display = 'block'; 
     });
 
     installBtn.addEventListener('click', async () => {
         if (!deferredPrompt) return;
-        deferredPrompt.prompt();
+        deferredPrompt.prompt(); // Показываем нативное окно добавления на экран
         const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            installBtn.style.display = 'none';
+        }
         deferredPrompt = null;
-        installBtn.style.display = 'none';
     });
 
     window.addEventListener('appinstalled', () => {
         installBtn.style.display = 'none';
         deferredPrompt = null;
     });
+
+    // Прячем кнопку установки, если приложение уже запущено как отдельное PWA окно
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        installBtn.style.display = 'none';
+    }
 </script>
 </body>
 </html>
