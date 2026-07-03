@@ -24,7 +24,7 @@
             font-family: 'Segoe UI', Tahoma, sans-serif;
             background-color: #f0f4f8;
             margin: 0;
-            padding: 8px;
+            padding: 10px;
             display: flex;
             height: 100dvh;
             overflow: hidden; 
@@ -37,7 +37,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             min-width: 0;
             height: 100%;
         }
@@ -58,8 +58,8 @@
         }
 
         .character-box {
-            font-size: 65px;
-            height: 75px;
+            font-size: 70px;
+            height: 85px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -72,12 +72,12 @@
         .stats-box {
             width: 100%;
             background: #f8f9fa;
-            padding: 6px;
+            padding: 8px;
             border-radius: 8px;
             text-align: center;
         }
 
-        .stats-text { margin: 2px 0; font-size: 13px; font-weight: bold; color: #444; }
+        .stats-text { margin: 4px 0; font-size: 14px; font-weight: bold; color: #444; }
 
         .error-container { width: 100%; }
         .error-label {
@@ -90,7 +90,7 @@
         }
         .error-track {
             width: 100%;
-            height: 12px;
+            height: 14px;
             background: #e9ecef;
             border-radius: 8px;
             overflow: hidden;
@@ -107,14 +107,14 @@
 
         .btn {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             border: none;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             transition: transform 0.1s, opacity 0.2s;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
         .btn:active { transform: scale(0.95); }
         .btn-start { background: #007bff; color: white; }
@@ -124,12 +124,12 @@
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
 
-        /* Нотный стан — расширен по высоте для вмещения всех нот */
+        /* Нотный стан - высота увеличена до 52%, стан поднят */
         .stage {
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            height: 52%;
+            height: 52%; 
             position: relative;
             display: flex;
             align-items: center;
@@ -140,11 +140,12 @@
             position: relative;
             height: 160px;
             width: 100%;
+            margin-top: 0px;
         }
 
-        .clef { position: absolute; left: 15px; top: 25px; font-size: 85px; font-family: serif; color: #000; }
-        /* Центрированное положение линий */
-        .staff-lines { position: absolute; left: 0; top: 50px; width: 100%; height: 80px; display: flex; flex-direction: column; justify-content: space-between; z-index: 1; }
+        .clef { position: absolute; left: 15px; top: 15px; font-size: 85px; font-family: serif; color: #000; }
+        
+        .staff-lines { position: absolute; left: 0; top: 40px; width: 100%; height: 80px; display: flex; flex-direction: column; justify-content: space-between; z-index: 1; }
         .line { width: 100%; height: 2px; background: #000; }
 
         #notes-layer { position: absolute; top: 0; left: 90px; width: calc(100% - 100px); height: 100%; z-index: 2; }
@@ -153,11 +154,11 @@
         .accidental {
             position: absolute;
             left: -16px;
-            top: -6px;
+            top: -5px;
             font-size: 22px;
             font-family: 'Segoe UI', Arial, sans-serif;
             color: #000;
-            transform: rotate(15deg);
+            transform: rotate(15deg); 
         }
 
         .ledger-line { position: absolute; width: 38px; height: 2px; background: #000; left: -7px; transform: rotate(15deg); }
@@ -169,16 +170,16 @@
         .note.error { background: #dc3545; animation: shake 0.3s; }
         .note.error .accidental { color: #dc3545; }
 
-        /* Уменьшенная высота клавиатуры фортепиано */
+        /* Клавиатура */
         .keyboard-wrapper {
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            height: 45%;
+            flex: 1;
             overflow: hidden;
             display: flex;
             align-items: flex-end;
-            padding: 8px;
+            padding: 10px;
         }
 
         .keyboard {
@@ -194,37 +195,37 @@
             height: 100%;
             background: #fff;
             border: 1px solid #ccc;
-            border-bottom: 4px solid #bbb;
-            border-radius: 0 0 5px 5px;
+            border-bottom: 5px solid #bbb;
+            border-radius: 0 0 6px 6px;
             position: relative;
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            padding-bottom: 5px;
+            padding-bottom: 8px;
             cursor: pointer;
             z-index: 1;
         }
-        .key-white:active { background: #f2f2f2; border-bottom-width: 1px; transform: translateY(3px); }
+        .key-white:active { background: #f2f2f2; border-bottom-width: 1px; transform: translateY(4px); }
 
         .key-black {
-            height: 55%; /* Слегка уменьшена длина черных клавиш */
+            height: 58%;
             background: #222;
             position: absolute;
             top: 0;
-            border-radius: 0 0 3px 3px;
-            border-bottom: 3px solid #000;
+            border-radius: 0 0 4px 4px;
+            border-bottom: 4px solid #000;
             cursor: pointer;
             z-index: 2;
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            padding-bottom: 4px;
+            padding-bottom: 5px;
         }
-        .key-black:active { background: #444; border-bottom-width: 1px; transform: translateY(2px); }
+        .key-black:active { background: #444; border-bottom-width: 1px; transform: translateY(3px); }
 
         .key-hint {
-            width: 90%;
-            max-width: 28px;
+            width: 85%;
+            max-width: 32px;
             aspect-ratio: 1;
             border-radius: 50%;
             display: flex;
@@ -266,25 +267,41 @@
             z-index: 20;
             border-radius: 12px;
         }
-        .stars-wrapper { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
-        .star { font-size: 40px; color: #ffca28; opacity: 0; transform: scale(0.3); animation: popIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .stars-wrapper { 
+            display: flex; 
+            gap: 4px; 
+            margin-top: 10px; 
+            flex-wrap: wrap; 
+            justify-content: center;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+        .star { 
+            font-size: 25px; /* Звездочки сделаны компактнее */
+            color: #ffca28; 
+            opacity: 0; 
+            transform: scale(0.3); 
+            animation: popIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
         @keyframes popIn { to { opacity: 1; transform: scale(1); } }
-        .game-over-text { font-size: 20px; font-weight: bold; margin-bottom: 5px; text-align: center;}
+        .game-over-text { font-size: 22px; font-weight: bold; margin-bottom: 10px; text-align: center;}
 
-        /* Окно настроек */
+        /* Стили окна настроек */
         .settings-panel {
             background: #fff;
             padding: 15px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 300px;
+            width: 320px;
+            max-height: 95vh;
+            overflow-y: auto;
             text-align: center;
         }
-        .settings-panel h3 { margin-top: 0; margin-bottom: 10px; color: #333; font-size: 16px; }
+        .settings-panel h3 { margin-top: 0; margin-bottom: 15px; color: #333; }
         .settings-row { margin-bottom: 10px; text-align: left; }
         .settings-row label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
-        .settings-row select, .settings-row input[type="checkbox"] { padding: 6px; width: 100%; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;}
-        .settings-row.checkbox-row { display: flex; align-items: center; gap: 10px; }
+        .settings-row select, .settings-row input[type="checkbox"] { padding: 6px; width: 100%; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;}
+        .settings-row.checkbox-row { display: flex; align-items: center; gap: 8px; }
         .settings-row.checkbox-row input { width: 18px; height: 18px; }
         .settings-row.checkbox-row label { margin: 0; cursor: pointer; }
     </style>
@@ -307,7 +324,7 @@
                 <div id="stars-screen" class="overlay-screen">
                     <div id="stars-title" class="game-over-text">Игра окончена!</div>
                     <div class="stars-wrapper" id="stars-area"></div>
-                    <button class="btn btn-start" style="width: auto; margin-top: 15px; padding: 8px 30px;" onclick="closeStarsScreen()">ОК</button>
+                    <button class="btn btn-start" style="width: auto; margin-top: 20px; padding: 10px 40px;" onclick="closeStarsScreen()">ОК</button>
                 </div>
 
                 <div id="settings-screen" class="overlay-screen">
@@ -326,7 +343,15 @@
                             <input type="checkbox" id="setting-blackkeys">
                             <label for="setting-blackkeys">Использовать диезы (черные клавиши)</label>
                         </div>
-                        <button class="btn btn-start" onclick="saveSettings()">Сохранить и начать</button>
+                        <div class="settings-row checkbox-row">
+                            <input type="checkbox" id="setting-hint-white" checked>
+                            <label for="setting-hint-white">Подсказки белых клавиш</label>
+                        </div>
+                        <div class="settings-row checkbox-row">
+                            <input type="checkbox" id="setting-hint-black" checked>
+                            <label for="setting-hint-black">Подсказки черных клавиш</label>
+                        </div>
+                        <button class="btn btn-start" onclick="saveSettings()" style="margin-top: 10px;">Сохранить и начать</button>
                         <button class="btn" style="background: #e9ecef; color: #333;" onclick="closeSettings()">Отмена</button>
                     </div>
                 </div>
@@ -367,6 +392,9 @@
 <script>
     let maxErrors = 10;
     let useBlackKeys = false;
+    let showWhiteHints = true;
+    let showBlackHints = true;
+
     const MELODY_LENGTH = 12;
     const TOTAL_WHITE_KEYS = 14;
     
@@ -374,9 +402,10 @@
     const EMOTION_HAPPY = '😃';
     const EMOTION_SAD = '😣';
     const EMOTION_CRY = '😭';
+    const EMOTION_FEAR = '😰';
 
+    // База всех нот: белые и черные
     const gameNotes = [
-        // Белые (1 октава)
         { id: 0, name: 'До', step: -2, midi: 60, color: '#e63946', isBlack: false },
         { id: 1, name: 'Ре', step: -1, midi: 62, color: '#f4a261', isBlack: false },
         { id: 2, name: 'Ми', step: 0,  midi: 64, color: '#e9c46a', isBlack: false },
@@ -384,7 +413,6 @@
         { id: 4, name: 'Соль', step: 2, midi: 67, color: '#00b4d8', isBlack: false },
         { id: 5, name: 'Ля', step: 3,  midi: 69, color: '#3d5a80', isBlack: false },
         { id: 6, name: 'Си', step: 4,  midi: 71, color: '#9b5de5', isBlack: false },
-        // Белые (2 октава)
         { id: 7, name: 'До', step: 5,  midi: 72, color: '#e63946', isBlack: false },
         { id: 8, name: 'Ре', step: 6,  midi: 74, color: '#f4a261', isBlack: false },
         { id: 9, name: 'Ми', step: 7,  midi: 76, color: '#e9c46a', isBlack: false },
@@ -393,13 +421,11 @@
         { id: 12, name: 'Ля', step: 10, midi: 81, color: '#3d5a80', isBlack: false },
         { id: 13, name: 'Си', step: 11, midi: 83, color: '#9b5de5', isBlack: false },
         
-        // Черные (Диезы 1 октава)
         { id: 14, name: 'До#', step: -2, midi: 61, color: '#222', isBlack: true },
         { id: 15, name: 'Ре#', step: -1, midi: 63, color: '#222', isBlack: true },
         { id: 16, name: 'Фа#', step: 1,  midi: 66, color: '#222', isBlack: true },
         { id: 17, name: 'Соль#', step: 2, midi: 68, color: '#222', isBlack: true },
         { id: 18, name: 'Ля#', step: 3,  midi: 70, color: '#222', isBlack: true },
-        // Черные (Диезы 2 октава)
         { id: 19, name: 'До#', step: 5,  midi: 73, color: '#222', isBlack: true },
         { id: 20, name: 'Ре#', step: 6,  midi: 75, color: '#222', isBlack: true },
         { id: 21, name: 'Фа#', step: 8,  midi: 78, color: '#222', isBlack: true },
@@ -453,20 +479,20 @@
                 const hint = document.createElement('div');
                 hint.className = 'key-hint';
                 hint.style.backgroundColor = key.color;
-                hint.innerText = key.name;
+                if (showWhiteHints) hint.innerText = key.name;
                 btn.appendChild(hint);
                 
                 kbContainer.appendChild(btn);
                 whiteKeyIndex++;
             } else {
                 btn.className = 'key-black';
-                btn.style.width = `calc(100% / ${TOTAL_WHITE_KEYS} * 0.60)`;
+                btn.style.width = `calc(100% / ${TOTAL_WHITE_KEYS} * 0.62)`;
                 btn.style.left = `${(whiteKeyIndex / TOTAL_WHITE_KEYS) * 100}%`;
                 btn.style.transform = 'translateX(-50%)';
                 
                 const hint = document.createElement('div');
                 hint.className = 'key-black-hint';
-                hint.innerText = key.name;
+                if (showBlackHints) hint.innerText = key.name;
                 btn.appendChild(hint);
 
                 kbContainer.appendChild(btn);
@@ -496,6 +522,13 @@
         osc.stop(actx.currentTime + 0.35);
     }
 
+    function getIdleEmotion() {
+        if (maxErrors > 0 && (errorsCount / maxErrors) >= 0.7) {
+            return EMOTION_FEAR;
+        }
+        return EMOTION_IDLE;
+    }
+
     function setEmotion(emoji, animClass = '') {
         const charEl = document.getElementById('character');
         charEl.innerText = emoji;
@@ -504,7 +537,7 @@
         clearTimeout(emotionTimeout);
         if (isPlaying && emoji !== EMOTION_CRY) {
             emotionTimeout = setTimeout(() => {
-                charEl.innerText = EMOTION_IDLE;
+                charEl.innerText = getIdleEmotion();
                 charEl.className = 'character-box';
             }, 1000);
         }
@@ -526,6 +559,10 @@
             fill.style.width = errorsCount > 0 ? '100%' : '0%';
             fill.className = 'error-fill danger';
         }
+        
+        if(isPlaying) {
+            document.getElementById('character').innerText = getIdleEmotion();
+        }
     }
 
     function startGame() {
@@ -540,7 +577,7 @@
         errorsCount = 0;
         
         updateErrorBar();
-        setEmotion(EMOTION_IDLE);
+        setEmotion(getIdleEmotion());
         generateScreenMelody();
     }
 
@@ -587,10 +624,9 @@
             noteEl.className = 'note';
             noteEl.id = `note-${index}`;
             
-            // Скорректированная базовая линия по высоте для идеальной точности
-            const basePathY = 122; 
+            // Базовая высота поднята, чтобы нижние ноты не обрезались
+            const basePathY = 110; 
             noteEl.style.top = (basePathY - noteObj.step * 10) + 'px';
-            noteEl.style.left = (index * spacingX + i5) + 'px';
             noteEl.style.left = (index * spacingX + 15) + 'px';
 
             if (noteObj.isBlack) {
@@ -684,7 +720,7 @@
         title.style.color = "#28a745";
         if (count === 0) {
             title.innerText = "Игра завершена! ✨";
-            area.innerHTML = '<span style="font-size:13px; color:#666;">Попробуй пройти хотя бы один экран!</span>';
+            area.innerHTML = '<span style="font-size:15px; color:#666;">Попробуй пройти хотя бы один экран!</span>';
             return;
         }
 
@@ -695,7 +731,7 @@
                 star.className = 'star';
                 star.innerHTML = '⭐';
                 area.appendChild(star);
-            }, i * 200); 
+            }, i * 150); 
         }
     }
 
@@ -703,6 +739,7 @@
         document.getElementById('stars-screen').style.display = 'none';
     }
 
+    // --- Настройки ---
     function openSettings() {
         if(isPlaying) stopGame();
         document.getElementById('settings-screen').style.display = 'flex';
@@ -715,7 +752,10 @@
     function saveSettings() {
         maxErrors = parseInt(document.getElementById('setting-difficulty').value);
         useBlackKeys = document.getElementById('setting-blackkeys').checked;
+        showWhiteHints = document.getElementById('setting-hint-white').checked;
+        showBlackHints = document.getElementById('setting-hint-black').checked;
         
+        buildKeyboard(); 
         document.getElementById('error-text').innerText = `0 / ${maxErrors}`;
         closeSettings();
         startGame();
@@ -731,6 +771,7 @@
         if (isPlaying) renderNotes();
     });
 
+    // PWA логика
     let deferredPrompt;
     const installBtn = document.getElementById('btn-install');
 
