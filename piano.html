@@ -262,9 +262,9 @@
             75% { transform: translateX(-4px) rotate(-15deg); }
         }
 
-        /* Модальные окна - ТЕПЕРЬ НА ВЕСЬ ЭКРАН */
+        /* Модальные окна */
         .overlay-screen {
-            position: fixed; /* Исправлено: fixed вместо absolute */
+            position: fixed; 
             top: 0; 
             left: 0;
             right: 0;
@@ -276,7 +276,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 100; /* Исправлено: высокий z-index, чтобы перекрыть все */
+            z-index: 100;
         }
         .stars-wrapper { 
             display: flex; 
@@ -363,7 +363,7 @@
         </div>
     </div>
 
-    <!-- Модальные окна вынесены на уровень body для надежности -->
+    <!-- Модальные окна -->
     <div id="stars-screen" class="overlay-screen">
         <div id="stars-title" class="game-over-text">Игра окончена!</div>
         <div class="stars-wrapper" id="stars-area"></div>
@@ -731,7 +731,8 @@
         
         if (isGameOver) {
             setEmotion(EMOTION_CRY, 'shake');
-            showStarsReward(0, true);
+            // Передаем реальное количество пройденных экранов (звездочек), а не 0
+            showStarsReward(completedScreens, true);
         } else {
             setEmotion(EMOTION_IDLE);
             showStarsReward(completedScreens, false);
@@ -839,26 +840,31 @@
         screen.style.display = 'flex';
 
         if (isGameOver) {
-            title.innerText = "Игра окончена из-за ошибок! 😭";
+            // Устанавливаем запрошенный текст при проигрыше
+            title.innerText = "Не пройдено и нот 😭";
             title.style.color = "#dc3545";
-            return;
+        } else {
+            title.style.color = "#28a745";
+            if (count === 0) {
+                title.innerText = "Игра завершена! ✨";
+                area.innerHTML = '<span style="font-size:15px; color:#666;">Попробуй пройти хотя бы один экран!</span>';
+                return;
+            }
+            title.innerText = "Отличный результат! Твои звёзды:";
         }
 
-        title.style.color = "#28a745";
-        if (count === 0) {
-            title.innerText = "Игра завершена! ✨";
-            area.innerHTML = '<span style="font-size:15px; color:#666;">Попробуй пройти хотя бы один экран!</span>';
-            return;
-        }
-
-        title.innerText = "Отличный результат! Твои звёзды:";
-        for (let i = 0; i < count; i++) {
-            setTimeout(() => {
-                const star = document.createElement('span');
-                star.className = 'star';
-                star.innerHTML = '⭐';
-                area.appendChild(star);
-            }, i * 150); 
+        // Отрисовка заработанных звездочек независимо от того, проиграл ли игрок
+        if (count > 0) {
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const star = document.createElement('span');
+                    star.className = 'star';
+                    star.innerHTML = '⭐';
+                    area.appendChild(star);
+                }, i * 150); 
+            }
+        } else if (isGameOver) {
+            area.innerHTML = '<span style="font-size:15px; color:#666;">К сожалению, заработанных звезд пока нет.</span>';
         }
     }
 
