@@ -295,18 +295,24 @@
         @keyframes popIn { to { opacity: 1; transform: scale(1); } }
         .game-over-text { font-size: 22px; font-weight: bold; margin-bottom: 10px; text-align: center;}
 
-        /* Стили окна настроек */
+        /* Стили окна настроек (Обновлено для полного экрана) */
         .settings-panel {
             background: #fff;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 320px;
-            max-height: 95vh;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .settings-content {
+            width: 100%;
+            max-width: 400px;
             text-align: center;
         }
-        .settings-panel h3 { margin-top: 0; margin-bottom: 15px; color: #333; }
+        .settings-content h3 { margin-top: 0; margin-bottom: 15px; color: #333; }
         .settings-row { margin-bottom: 10px; text-align: left; }
         .settings-row label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
         .settings-row select, .settings-row input[type="checkbox"] { padding: 6px; width: 100%; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;}
@@ -376,30 +382,32 @@
 
                 <div id="settings-screen" class="overlay-screen">
                     <div class="settings-panel">
-                        <h3>Настройки игры</h3>
-                        <div class="settings-row">
-                            <label>Сложность (допустимо ошибок):</label>
-                            <select id="setting-difficulty">
-                                <option value="20">Легко (20 ошибок)</option>
-                                <option value="10" selected>Нормально (10 ошибок)</option>
-                                <option value="5">Сложно (5 ошибок)</option>
-                                <option value="0">Супер сложно (Без ошибок)</option>
-                            </select>
+                        <div class="settings-content">
+                            <h3>Настройки игры</h3>
+                            <div class="settings-row">
+                                <label>Сложность (допустимо ошибок):</label>
+                                <select id="setting-difficulty">
+                                    <option value="20" selected>Легко (20 ошибок)</option>
+                                    <option value="10">Нормально (10 ошибок)</option>
+                                    <option value="5">Сложно (5 ошибок)</option>
+                                    <option value="0">Супер сложно (Без ошибок)</option>
+                                </select>
+                            </div>
+                            <div class="settings-row checkbox-row">
+                                <input type="checkbox" id="setting-blackkeys">
+                                <label for="setting-blackkeys">Использовать диезы (черные клавиши)</label>
+                            </div>
+                            <div class="settings-row checkbox-row">
+                                <input type="checkbox" id="setting-hint-white" checked>
+                                <label for="setting-hint-white">Подсказки белых клавиш</label>
+                            </div>
+                            <div class="settings-row checkbox-row">
+                                <input type="checkbox" id="setting-hint-black" checked>
+                                <label for="setting-hint-black">Подсказки черных клавиш</label>
+                            </div>
+                            <button class="btn btn-start" onclick="saveSettings()" style="margin-top: 10px;">Сохранить и начать</button>
+                            <button class="btn" style="background: #e9ecef; color: #333;" onclick="closeSettings()">Отмена</button>
                         </div>
-                        <div class="settings-row checkbox-row">
-                            <input type="checkbox" id="setting-blackkeys">
-                            <label for="setting-blackkeys">Использовать диезы (черные клавиши)</label>
-                        </div>
-                        <div class="settings-row checkbox-row">
-                            <input type="checkbox" id="setting-hint-white" checked>
-                            <label for="setting-hint-white">Подсказки белых клавиш</label>
-                        </div>
-                        <div class="settings-row checkbox-row">
-                            <input type="checkbox" id="setting-hint-black" checked>
-                            <label for="setting-hint-black">Подсказки черных клавиш</label>
-                        </div>
-                        <button class="btn btn-start" onclick="saveSettings()" style="margin-top: 10px;">Сохранить и начать</button>
-                        <button class="btn" style="background: #e9ecef; color: #333;" onclick="closeSettings()">Отмена</button>
                     </div>
                 </div>
             </div>
@@ -416,7 +424,7 @@
         <div class="error-container">
             <div class="error-label">
                 <span>Ошибки</span>
-                <span id="error-text">0 / 10</span>
+                <span id="error-text">0 / 20</span>
             </div>
             <div class="error-track">
                 <div class="error-fill" id="error-fill"></div>
@@ -439,7 +447,6 @@
 <script>
     /* ============ PWA: MANIFEST + SERVICE WORKER ============ */
     (function setupPWA() {
-        // 1. Создаём manifest динамически через Blob
         const manifest = {
             name: "Детский тренажер нот",
             short_name: "Тренажер Нот",
@@ -471,7 +478,6 @@
         const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
         document.getElementById('manifest-link').href = URL.createObjectURL(blob);
 
-        // 2. Регистрируем Service Worker
         if ('serviceWorker' in navigator) {
             const swCode = `
                 const CACHE = 'piano-trainer-v1';
@@ -505,7 +511,7 @@
     })();
 
     /* ============ ИГРОВАЯ ЛОГИКА ============ */
-    let maxErrors = 10;
+    let maxErrors = 20; // Теперь по умолчанию 20 ошибок
     let useBlackKeys = false;
     let showWhiteHints = true;
     let showBlackHints = true;
@@ -519,7 +525,6 @@
     const EMOTION_CRY = '😭';
     const EMOTION_FEAR = '😰';
 
-    // База всех нот: белые и черные
     const gameNotes = [
         { id: 0, name: 'До', step: -2, midi: 60, color: '#e63946', isBlack: false },
         { id: 1, name: 'Ре', step: -1, midi: 62, color: '#f4a261', isBlack: false },
@@ -591,11 +596,15 @@
 
             if (key.type === 'white') {
                 btn.className = 'key-white';
-                const hint = document.createElement('div');
-                hint.className = 'key-hint';
-                hint.style.backgroundColor = key.color;
-                if (showWhiteHints) hint.innerText = key.name;
-                btn.appendChild(hint);
+                
+                // Если подсказки включены, создаем цветной кружок с текстом
+                if (showWhiteHints) {
+                    const hint = document.createElement('div');
+                    hint.className = 'key-hint';
+                    hint.style.backgroundColor = key.color;
+                    hint.innerText = key.name;
+                    btn.appendChild(hint);
+                }
                 
                 kbContainer.appendChild(btn);
                 whiteKeyIndex++;
@@ -605,10 +614,12 @@
                 btn.style.left = `${(whiteKeyIndex / TOTAL_WHITE_KEYS) * 100}%`;
                 btn.style.transform = 'translateX(-50%)';
                 
-                const hint = document.createElement('div');
-                hint.className = 'key-black-hint';
-                if (showBlackHints) hint.innerText = key.name;
-                btn.appendChild(hint);
+                if (showBlackHints) {
+                    const hint = document.createElement('div');
+                    hint.className = 'key-black-hint';
+                    hint.innerText = key.name;
+                    btn.appendChild(hint);
+                }
 
                 kbContainer.appendChild(btn);
             }
@@ -901,7 +912,6 @@
 
     installBtn.addEventListener('click', async () => {
         if (!deferredPrompt) {
-            // Fallback для iOS или если событие не сработало
             if (isIOS) {
                 document.getElementById('iosHintModal').classList.add('show');
             } else {
