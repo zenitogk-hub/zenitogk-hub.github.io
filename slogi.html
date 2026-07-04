@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=portrait">
+    <title>Тренажер Слогов</title>
+    
+    <meta name="theme-color" content="#4caf50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Слоги">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Слоги">
+    <meta name="format-detection" content="telephone=no">
+    
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='38' fill='%234caf50'/><text x='90' y='125' font-family='Arial' font-size='100' fill='white' text-anchor='middle'>АБ</text></svg>">
+    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%234caf50'/><text x='32' y='46' font-family='Arial' font-size='38' fill='white' text-anchor='middle'>АБ</text></svg>">
+    
+    <link rel="manifest" id="manifest-link">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/nunito@5.0.18/cyrillic.css">
+
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --primary-color: #4caf50;
+            --secondary-color: #2196f3;
+            --accent-color: #ff9800;
+            --danger-color: #e53e3e;
+            --soft-color: #4a5568;
+            --gray-color: #cbd5e0;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+            margin: 0; padding: 0;
+        }
+        
+        body {
+            font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+            overflow: hidden; 
+        }
+
+        /* --- ВЕРХНЯЯ ЧАСТЬ (Сектор 1 и Сектор 2) --- */
+        .top-panel {
+            display: flex;
+            height: 25vh;
+            min-height: 160px;
+            padding: 8px;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        /* Сектор 1: Слово */
+        .sector1 {
+            flex: 1;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 10px;
+        }
+
+        .word-display {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            font-size: clamp(24px, 7vw, 42px);
+            font-weight: 800;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .word-syllable {
+            color: var(--gray-color);
+            transition: color 0.3s, transform 0.2s;
+        }
+        
+        .word-syllable.active {
+            transform: scale(1.1);
+            text-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* Цвета для отгаданных букв */
+        .word-syllable .consonant { color: var(--secondary-color); }
+        .word-syllable .vowel { color: var(--danger-color); }
+        .word-syllable .soft { color: var(--soft-color); }
+        .word-syllable.hidden-color * { color: var(--gray-color) !important; }
+
+        .tts-btn {
+            position: absolute;
+            top: 8px; left: 8px;
+            width: 36px; height: 36px;
+            border: none; border-radius: 50%;
+            background: #e3f2fd; color: var(--secondary-color);
+            font-size: 18px; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+        .tts-btn:active { transform: scale(0.9); }
+
+        .level-progress {
+            position: absolute;
+            bottom: 8px; left: 8px; right: 8px;
+            font-size: 12px; font-weight: bold; color: #777;
+            text-align: center;
+        }
+
+        /* Сектор 2: Меню и персонаж */
+        .sector2 {
+            width: 110px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px;
+            flex-shrink: 0;
+            justify-content: space-between;
+        }
+
+        .character-box {
+            font-size: 45px;
+            width: 55px; height: 55px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; z-index: 2; margin-top: 5px;
+        }
+        .character-box.bounce { transform: scale(1.2) translateY(-5px); }
+        .character-box.shake { animation: shake 0.3s; }
+
+        .accessory-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .accessory-item { position: absolute; display: block; }
+        .acc-hat { top: -25px; left: 50%; transform: translateX(-50%); font-size: 35px; }
+        .acc-glasses { top: 2px; left: 50%; transform: translateX(-50%); font-size: 45px; }
+        .acc-bow { bottom: -15px; left: 50%; transform: translateX(-50%); font-size: 25px; }
+        .acc-flower { top: -5px; right: -10px; font-size: 22px; transform: rotate(20deg); }
+
+        .stats-mini {
+            width: 100%; text-align: center; font-size: 11px; font-weight: bold; line-height: 1.2;
+            background: #f8f9fa; border-radius: 6px; padding: 4px 2px;
+        }
+        .stats-mini span.coins { color: #ff8c00; font-size: 12px; }
+        .stats-mini span.stars { color: #ffca28; font-size: 12px; display: block; min-height: 14px;}
+        
+        .error-track-mini { width: 100%; height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden; margin: 2px 0; }
+        .error-fill-mini { height: 100%; width: 0%; background: #28a745; transition: width 0.3s, background-color 0.3s; }
+        .error-fill-mini.warning { background: #ffc107; }
+        .error-fill-mini.danger { background: #dc3545; }
+
+        .icon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; }
+        .icon-btn {
+            background: #f1f3f5; border: none; border-radius: 6px;
+            height: 30px; font-size: 14px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .icon-btn:active { transform: scale(0.92); }
+        .btn-play { background: #28a745; color: white; }
+        .btn-stop { background: #dc3545; color: white; display: none; }
+        .btn-continue { background: #17a2b8; color: white; display: none; grid-column: span 2; }
+
+        /* --- НИЖНЯЯ ЧАСТЬ (Сектор 3: Таблица) --- */
+        .sector3 {
+            flex: 1;
+            padding: 4px 8px 8px 8px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .syllable-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2px;
+            background: #dcdcdc;
+            border: 2px solid #dcdcdc;
+            border-radius: 8px;
+            flex: 1; 
+        }
+
+        .grid-cell {
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(12px, 3.5vw, 22px);
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.1s, transform 0.1s;
+        }
+        .grid-cell.header { background: #f8f9fa; font-size: clamp(10px, 3vw, 18px); }
+        .grid-cell:active { background: #e2e8f0; transform: scale(0.9); }
+        .grid-cell.empty { background: #f4f4f4; cursor: default; }
+        .grid-cell.empty:active { transform: none; }
+
+        .grid-cell .consonant { color: var(--secondary-color); }
+        .grid-cell .vowel { color: var(--danger-color); }
+        .grid-cell .soft { color: var(--soft-color); }
+
+        /* --- МОДАЛЬНЫЕ ОКНА --- */
+        .overlay-screen {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw; height: 100dvh; background: rgba(255, 255, 255, 0.97);
+            display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100; 
+        }
+        .modal-panel { background: #fff; padding: 20px; width: 100%; height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .modal-content { width: 100%; max-width: 500px; text-align: center; }
+        
+        .btn-large { padding: 12px 25px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin: 5px; color: white;}
+        .btn-blue { background: #007bff; }
+        .btn-gray { background: #6c757d; }
+
+        .settings-row { margin-bottom: 12px; text-align: left; }
+        .settings-row label { display: block; font-size: 14px; font-weight: bold; color: #555; margin-bottom: 4px; }
+        .settings-row select { padding: 8px; width: 100%; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;}
+
+        .shop-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0; }
+        .shop-item { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; padding: 10px; width: 100px; cursor: pointer; transition: 0.2s; }
+        .shop-item.owned { background: #d4edda; border-color: #28a745; }
+        .shop-item.equipped { background: #cce5ff; border-color: #007bff; }
+        .shop-item.consumable { background: #fff3cd; border-color: #ffeeba; }
+        .shop-item-emoji { font-size: 30px; margin-bottom: 5px; }
+        .shop-item-name { font-size: 12px; font-weight: bold; margin-bottom: 2px; }
+        .shop-item-price { font-size: 11px; color: #666; font-weight: bold; }
+
+        .stars-wrapper { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; justify-content: center;}
+        .star { font-size: 35px; color: #ffca28; opacity: 0; transform: scale(0.3); animation: popIn 0.3s forwards; }
+        @keyframes popIn { to { opacity: 1; transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 50% { transform: translateX(4px); } 75% { transform: translateX(-4px); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="top-panel">
+        <div class="sector1">
+            <button class="tts-btn" onclick="speakCurrentWord()">🔊</button>
+            <div class="word-display" id="word-display">
+                </div>
+            <div class="level-progress" id="level-progress">Слова: 0 / 5 (Ур. 1)</div>
+        </div>
+
+        <div class="sector2">
+            <div class="character-box" id="character" onclick="attemptSpendStar(false)">
+                <span id="char-face">😋</span>
+                <div class="accessory-layer" id="accessory-layer"></div>
+            </div>
+            
+            <div class="stats-mini">
+                <span class="coins">🪙 <span id="sidebar-coins">0</span></span>
+                <div class="error-track-mini"><div class="error-fill-mini" id="error-fill"></div></div>
+                <span class="stars" id="stars-display"></span>
+            </div>
+
+            <div class="icon-grid">
+                <button class="icon-btn btn-continue" id="btn-continue" onclick="continueGame()">⏯️</button>
+                <button class="icon-btn btn-play" id="btn-start" onclick="startGame()">▶️</button>
+                <button class="icon-btn btn-stop" id="btn-stop" onclick="stopGame()">⏹️</button>
+                <button class="icon-btn" onclick="openShop()">🛒</button>
+                <button class="icon-btn" onclick="openSettings()">⚙️</button>
+                <button class="icon-btn" id="btn-install" style="display:none; grid-column: span 2;">📥</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sector3">
+        <div class="syllable-grid" id="syllable-grid"></div>
+    </div>
+
+    <div id="dialog-screen" class="overlay-screen" style="z-index: 200; background: rgba(0,0,0,0.6);">
+        <div class="modal-panel" style="background: transparent;">
+            <div class="modal-content" style="background: #fff; border-radius: 12px; padding: 25px;">
+                <h3 id="dialog-title" style="margin-top: 0;"></h3>
+                <p id="dialog-message" style="margin-bottom: 20px; color: #555;"></p>
+                <button class="btn-large btn-blue" id="dialog-btn-yes">ОК</button>
+                <button class="btn-large btn-gray" id="dialog-btn-no" style="display: none;">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="stars-screen" class="overlay-screen">
+        <h2 id="stars-title" style="text-align: center;">Уровень пройден!</h2>
+        <div class="stars-wrapper" id="stars-area"></div>
+        <button class="btn-large btn-blue" style="margin-top: 30px;" onclick="closeStarsScreen()">Дальше</button>
+    </div>
+
+    <div id="settings-screen" class="overlay-screen">
+        <div class="modal-panel">
+            <div class="modal-content">
+                <h3>Настройки</h3>
+                <div class="settings-row">
+                    <label>Сложность (допустимо ошибок):</label>
+                    <select id="setting-difficulty">
+                        <option value="20" selected>Легко (20 ошибок)</option>
+                        <option value="10">Нормально (10 ошибок)</option>
+                        <option value="5">Сложно (5 ошибок)</option>
+                        <option value="0">Супер сложно (Без ошибок)</option>
+                    </select>
+                </div>
+                <button class="btn-large btn-blue" onclick="saveSettings()">Применить</button>
+                <button class="btn-large btn-gray" onclick="closeSettings()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="shop-screen" class="overlay-screen">
+        <div class="modal-panel">
+            <div class="modal-content">
+                <h3>Магазин 🛒</h3>
+                <p style="font-weight:bold; color:#ff8c00;">Твои монетки: 🪙 <span id="shop-coins">0</span></p>
+                <div class="shop-grid" id="shop-grid"></div>
+                <button class="btn-large btn-blue" onclick="closeShop()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    /* ============ ДАННЫЕ ТАБЛИЦЫ СЛОГОВ ============ */
+    const consonantsList = ["Н","М","Т","К","Х","Б","В","Г","Д","Ж","З","Л","П","Р","С","Ф","Ц","Ч","Ш","Щ","Й"];
+    const vowelsList = ["А","У","О","Ы","Э","И","Е","Я","Ё","Ю","Ь"];
+    
+    // Карта слогов для валидации и заполнения
+    const columnsData = {
+        "А": ["НА","МА","ТА","КА","ХА","БА","ВА","ГА","ДА","ЖА","ЗА","ЛА","ПА","РА","СА","ФА","ЦА","ЧА","ША","ЩА","ЙА"],
+        "У": ["НУ","МУ","ТУ","КУ","ХУ","БУ","ВУ","ГУ","ДУ","ЖУ","ЗУ","ЛУ","ПУ","РУ","СУ","ФУ","ЦУ","ЧУ","ШУ","ЩУ","ЙУ"],
+        "О": ["НО","МО","ТО","КО","ХО","БО","ВО","ГО","ДО","ЖО","ЗО","ЛО","ПО","РО","СО","ФО","ЦО","ЧО","ШО","ЩО","ЙО"],
+        "Ы": ["НЫ","МЫ","ТЫ","КЫ","ХЫ","БЫ","ВЫ","ГЫ","ДЫ","","ЗЫ","ЛЫ","ПЫ","РЫ","СЫ","ФЫ","ЦЫ","","","",""],
+        "Э": ["НЭ","МЭ","ТЭ","КЭ","ХЭ","БЭ","ВЭ","ГЭ","ДЭ","ЖЭ","ЗЭ","ЛЭ","ПЭ","РЭ","СЭ","ФЭ","ЦЭ","","ШЭ","","ЙЭ"],
+        "И": ["НИ","МИ","ТИ","КИ","ХИ","БИ","ВИ","ГИ","ДИ","ЖИ","ЗИ","ЛИ","ПИ","РИ","СИ","ФИ","ЦИ","ЧИ","ШИ","ЩИ","ЙИ"],
+        "Е": ["НЕ","МЕ","ТЕ","КЕ","ХЕ","БЕ","ВЕ","ГЕ","ДЕ","ЖЕ","ЗЕ","ЛЕ","ПЕ","РЕ","СЕ","ФЕ","ЦЕ","ЧЕ","ШЕ","ЩЕ",""],
+        "Я": ["НЯ","МЯ","ТЯ","КЯ","ХЯ","БЯ","ВЯ","ГЯ","ДЯ","","ЗЯ","ЛЯ","ПЯ","РЯ","СЯ","ФЯ","","","","",""],
+        "Ё": ["НЁ","МЁ","ТЁ","КЁ","ХЁ","БЁ","ВЁ","ГЁ","ДЁ","ЖЁ","ЗЁ","ЛЁ","ПЁ","РЁ","СЁ","ФЁ","","ЧЁ","ШЁ","ЩЁ",""],
+        "Ю": ["НЮ","МЮ","ТЮ","КЮ","ХЮ","БЮ","ВЮ","ГЮ","ДЮ","ЖЮ","ЗЮ","ЛЮ","ПЮ","РЮ","СЮ","ФЮ","","","", "", ""],
+        "Ь": ["НЬ","МЬ","ТЬ","КЬ","ХЬ","БЬ","ВЬ","ГЬ","ДЬ","","ЗЬ","ЛЬ","ПЬ","РЬ","СЬ","ФЬ","","ЧЬ","ШЬ","ЩЬ",""]
+    };
+
+    // Собираем все валидные слоги (для проверки слов из словаря)
+    const validSyllables = new Set([...consonantsList, ...vowelsList.filter(v => v !== 'Ь')]);
+    for (let v of vowelsList) {
+        columnsData[v].forEach(s => { if (s) validSyllables.add(s); });
+    }
+
+    /* ============ ИГРОВЫЕ ПЕРЕМЕННЫЕ ============ */
+    const WORDS_PER_LEVEL = 5;
+    let dictionary = ["МА-МА", "МО-ЛО-КО", "КО-Т", "СО-БА-КА", "МА-ШИ-НА", "Я-Б-ЛО-КО", "ДЕ-РЕ-ВО", "ЛУ-НА", "СЫ-Р"];
+    
+    let isPlaying = false;
+    let level = 1;
+    let wordsCompletedInLevel = 0;
+    
+    let currentWordRaw = ""; 
+    let currentWordParts = [];
+    let currentPartIndex = 0;
+
+    let maxErrors = 20;
+    let errorsCount = 0;
+    let coinsCount = 0;
+    let spentStars = 0;
+    let boughtStars = 0;
+    let completedLevelsTotal = 0;
+
+    let inventory = {}; 
+    let equippedAccessories = {}; 
+
+    const EMOTION_IDLE = '😋';
+    const EMOTION_HAPPY = '😃';
+    const EMOTION_SAD = '😣';
+    const EMOTION_CRY = '😭';
+    let emotionTimeout;
+
+    const shopItems = [
+        { id: 'star', name: 'Звезда', emoji: '⭐', price: 200, type: 'consumable' },
+        { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50, type: 'accessory' },
+        { id: 'glasses', name: 'Очки', emoji: '🕶️', price: 100, type: 'accessory' },
+        { id: 'bow', name: 'Бантик', emoji: '🎀', price: 150, type: 'accessory' },
+        { id: 'flower', name: 'Заколка', emoji: '🌸', price: 200, type: 'accessory' }
+    ];
+
+    /* ============ ИНИЦИАЛИЗАЦИЯ И РЕНДЕР ТАБЛИЦЫ ============ */
+    function formatHTML(text) {
+        let html = '';
+        for (let char of text) {
+            if (consonantsList.includes(char)) html += `<span class="consonant">${char}</span>`;
+            else if (vowelsList.includes(char)) {
+                if(char === 'Ь') html += `<span class="soft">${char}</span>`;
+                else html += `<span class="vowel">${char}</span>`;
+            } else {
+                html += char;
+            }
+        }
+        return html;
+    }
+
+    function buildGrid() {
+        const grid = document.getElementById('syllable-grid');
+        grid.innerHTML = '';
+        
+        // Строка 0: Заголовок и одиночные гласные
+        grid.appendChild(createCell('?', true, 'header')); // Пустая клетка в углу
+        vowelsList.forEach(v => {
+            grid.appendChild(createCell(v, true, 'header'));
+        });
+
+        // Остальные строки: Согласная + Слоги
+        consonantsList.forEach((c, rowIndex) => {
+            // Первая колонка - одиночная согласная
+            grid.appendChild(createCell(c, true));
+            // Колонки гласных
+            vowelsList.forEach(v => {
+                let syll = columnsData[v][rowIndex];
+                if (syll) {
+                    grid.appendChild(createCell(syll, false));
+                } else {
+                    let emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'grid-cell empty';
+                    grid.appendChild(emptyDiv);
+                }
+            });
+        });
+    }
+
+    function createCell(text, isSingleLetter, extraClass = '') {
+        const div = document.createElement('div');
+        div.className = `grid-cell ${extraClass}`;
+        if(text !== '?') {
+            div.innerHTML = formatHTML(text);
+            div.onclick = () => handleCellClick(text);
+        }
+        return div;
+    }
+
+    /* ============ СЛОВАРЬ ============ */
+    async function loadDictionary() {
+        try {
+            let res = await fetch('dic.txt');
+            if (res.ok) {
+                let text = await res.text();
+                let loadedWords = text.split('\n').map(w => w.trim().toUpperCase()).filter(w => w.length > 0);
+                
+                // Фильтруем только те слова, чьи куски есть в нашей таблице
+                let validWords = loadedWords.filter(word => {
+                    let parts = word.split('-');
+                    return parts.every(p => validSyllables.has(p));
+                });
+                
+                if(validWords.length > 0) {
+                    dictionary = validWords;
+                }
+            }
+        } catch (e) {
+            console.log("Словарь dic.txt не найден, используем встроенный.");
+        }
+    }
+
+    /* ============ ОЗВУЧКА (TTS) ============ */
+    let russianVoice = null;
+    function initVoice() {
+        const voices = window.speechSynthesis.getVoices();
+        let candidate = voices.find(v => v.lang.startsWith('ru'));
+        if (candidate) russianVoice = candidate;
+    }
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = initVoice;
+        setTimeout(initVoice, 500);
+    }
+
+    function speakText(text) {
+        if (!russianVoice) return;
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text.toLowerCase());
+        utter.lang = "ru-RU";
+        utter.voice = russianVoice;
+        utter.rate = 0.85;
+        window.speechSynthesis.speak(utter);
+    }
+
+    function speakCurrentWord() {
+        if (!currentWordRaw) return;
+        speakText(currentWordRaw.replace(/-/g, ''));
+    }
+
+    /* ============ ИГРОВАЯ МЕХАНИКА ============ */
+    function startGame() {
+        document.getElementById('btn-start').style.display = 'none';
+        document.getElementById('btn-continue').style.display = 'none';
+        document.getElementById('btn-stop').style.display = 'flex';
+        
+        isPlaying = true;
+        wordsCompletedInLevel = 0;
+        spentStars = 0;
+        boughtStars = 0;
+        errorsCount = 0;
+        
+        updateErrorBar();
+        setEmotion(EMOTION_IDLE);
+        nextWord();
+    }
+
+    function stopGame(isGameOver = false) {
+        if (!isPlaying) return;
+        isPlaying = false;
+        
+        document.getElementById('btn-start').style.display = 'flex';
+        document.getElementById('btn-stop').style.display = 'none';
+        document.getElementById('word-display').innerHTML = '';
+        
+        if (isGameOver) {
+            setEmotion(EMOTION_CRY, 'shake');
+            showStarsReward(0, true);
+        } else {
+            setEmotion(EMOTION_IDLE);
+            let earnedStars = Math.max(0, completedLevelsTotal - spentStars + boughtStars);
+            showStarsReward(earnedStars, false);
+        }
+        saveGameState();
+    }
+
+    function nextWord() {
+        if(wordsCompletedInLevel >= WORDS_PER_LEVEL) {
+            completedLevelsTotal++;
+            level++;
+            wordsCompletedInLevel = 0;
+            saveGameState();
+            showStarsReward(completedLevelsTotal - spentStars + boughtStars, false);
+            return;
+        }
+
+        currentWordRaw = dictionary[Math.floor(Math.random() * dictionary.length)];
+        currentWordParts = currentWordRaw.split('-');
+        currentPartIndex = 0;
+        
+        renderWordDisplay();
+        updateLevelProgress();
+        saveGameState();
+    }
+
+    function renderWordDisplay() {
+        const container = document.getElementById('word-display');
+        container.innerHTML = '';
+        
+        currentWordParts.forEach((part, index) => {
+            const span = document.createElement('span');
+            span.className = 'word-syllable hidden-color';
+            span.id = `syllable-${index}`;
+            span.innerHTML = formatHTML(part);
+            
+            // Восстановление стейта (если загрузились)
+            if (index < currentPartIndex) {
+                span.classList.remove('hidden-color');
+            } else if (index === currentPartIndex) {
+                span.classList.add('active');
+            }
+            
+            container.appendChild(span);
+        });
+    }
+
+    function updateLevelProgress() {
+        document.getElementById('level-progress').innerText = `Слова: ${wordsCompletedInLevel} / ${WORDS_PER_LEVEL} (Ур. ${level})`;
+    }
+
+    function handleCellClick(syllableText) {
+        if (!isPlaying) return;
+
+        let expected = currentWordParts[currentPartIndex];
+        if (syllableText === expected) {
+            // Правильно
+            speakText(syllableText);
+            let el = document.getElementById(`syllable-${currentPartIndex}`);
+            if (el) {
+                el.classList.remove('hidden-color', 'active');
+            }
+            
+            setEmotion(EMOTION_HAPPY, 'bounce');
+            coinsCount += 5;
+            updateCoinsDisplay();
+            
+            currentPartIndex++;
+            
+            if (currentPartIndex >= currentWordParts.length) {
+                // Слово собрано
+                wordsCompletedInLevel++;
+                updateLevelProgress();
+                setTimeout(() => { if(isPlaying) nextWord(); }, 1000);
+            } else {
+                let nextEl = document.getElementById(`syllable-${currentPartIndex}`);
+                if (nextEl) nextEl.classList.add('active');
+                saveGameState();
+            }
+        } else {
+            // Ошибка
+            errorsCount++;
+            updateErrorBar();
+            
+            if (maxErrors > 0 && errorsCount >= maxErrors) {
+                const availableStars = completedLevelsTotal - spentStars + boughtStars;
+                if (availableStars > 0) attemptSpendStar(true);
+                else stopGame(true);
+            } else if (maxErrors === 0) {
+                stopGame(true);
+            } else {
+                setEmotion(EMOTION_SAD, 'shake');
+                saveGameState();
+            }
+        }
+    }
+
+    /* ============ UI, ЭМОЦИИ И ОШИБКИ ============ */
+    function setEmotion(emoji, animClass = '') {
+        const charFace = document.getElementById('char-face');
+        const charBox = document.getElementById('character');
+        charFace.innerText = emoji;
+        charBox.className = 'character-box ' + animClass;
+        
+        clearTimeout(emotionTimeout);
+        if (isPlaying && emoji !== EMOTION_CRY) {
+            emotionTimeout = setTimeout(() => {
+                let idle = (maxErrors > 0 && (errorsCount / maxErrors) >= 0.7) ? EMOTION_SAD : EMOTION_IDLE;
+                charFace.innerText = idle;
+                charBox.className = 'character-box';
+            }, 1000);
+        }
+    }
+
+    function updateErrorBar() {
+        const fill = document.getElementById('error-fill');
+        if (maxErrors > 0) {
+            let percent = (errorsCount / maxErrors) * 100;
+            fill.style.width = percent + '%';
+            fill.className = 'error-fill-mini';
+            if (percent > 75) fill.classList.add('danger');
+            else if (percent > 40) fill.classList.add('warning');
+        } else {
+            fill.style.width = errorsCount > 0 ? '100%' : '0%';
+            fill.className = 'error-fill-mini danger';
+        }
+        updateStatus();
+    }
+
+    function updateCoinsDisplay() {
+        document.getElementById('sidebar-coins').innerText = coinsCount;
+        document.getElementById('shop-coins').innerText = coinsCount;
+    }
+
+    function updateStatus() {
+        const starsDisplay = document.getElementById('stars-display');
+        const availableStars = completedLevelsTotal - spentStars + boughtStars; 
+        
+        if (availableStars <= 0) {
+            starsDisplay.innerHTML = '';
+        } else if (availableStars <= 5) {
+            starsDisplay.innerHTML = '⭐'.repeat(availableStars);
+        } else {
+            starsDisplay.innerHTML = `⭐ x${availableStars}`;
+        }
+    }
+
+    function attemptSpendStar(isGameOverRescue = false) {
+        if (!isPlaying && !isGameOverRescue) return;
+        const availableStars = completedLevelsTotal - spentStars + boughtStars;
+        
+        if (availableStars <= 0) {
+            if (isGameOverRescue) stopGame(true);
+            else showDialog("Нет звёзд", "Пройди уровень или купи звезду!", false);
+            return;
+        }
+
+        if (errorsCount <= 0 && !isGameOverRescue) return;
+
+        showDialog(
+            isGameOverRescue ? "Ой-ой!" : "Списать ошибки?",
+            "Потратить 1 ⭐, чтобы убрать 5 ошибок?",
+            true, 
+            () => { 
+                spentStars++;
+                errorsCount = Math.max(0, errorsCount - 5);
+                updateErrorBar();
+                setEmotion(EMOTION_IDLE);
+                saveGameState();
+            },
+            () => { if (isGameOverRescue) stopGame(true); }
+        );
+    }
+
+    function showDialog(title, message, showCancel, onOk, onCancel) {
+        document.getElementById('dialog-title').innerText = title;
+        document.getElementById('dialog-message').innerText = message;
+        
+        const btnYes = document.getElementById('dialog-btn-yes');
+        const btnNo = document.getElementById('dialog-btn-no');
+        
+        btnYes.style.display = 'inline-block';
+        btnNo.style.display = showCancel ? 'inline-block' : 'none';
+        
+        btnYes.onclick = () => { document.getElementById('dialog-screen').style.display = 'none'; if(onOk) onOk(); };
+        btnNo.onclick = () => { document.getElementById('dialog-screen').style.display = 'none'; if(onCancel) onCancel(); };
+        
+        document.getElementById('dialog-screen').style.display = 'flex';
+    }
+
+    /* ============ НАГРАДЫ И ОКОНЧАНИЕ УРОВНЯ ============ */
+    function showStarsReward(count, isGameOver) {
+        const screen = document.getElementById('stars-screen');
+        const area = document.getElementById('stars-area');
+        const title = document.getElementById('stars-title');
+        area.innerHTML = '';
+        screen.style.display = 'flex';
+
+        if (isGameOver) {
+            title.innerText = "Ошибок слишком много! 😭";
+            title.style.color = "#dc3545";
+            return;
+        }
+
+        title.style.color = "#28a745";
+        title.innerText = "Отличный результат!";
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const star = document.createElement('span');
+                star.className = 'star';
+                star.innerHTML = '⭐';
+                area.appendChild(star);
+            }, i * 150); 
+        }
+    }
+
+    function closeStarsScreen() {
+        document.getElementById('stars-screen').style.display = 'none';
+        if(isPlaying) nextWord(); 
+    }
+
+    /* ============ МАГАЗИН ============ */
+    function openShop() { renderShop(); document.getElementById('shop-screen').style.display = 'flex'; }
+    function closeShop() { document.getElementById('shop-screen').style.display = 'none'; saveGameState(); }
+
+    function renderShop() {
+        updateCoinsDisplay();
+        const grid = document.getElementById('shop-grid');
+        grid.innerHTML = '';
+        
+        shopItems.forEach(item => {
+            const el = document.createElement('div');
+            const isConsumable = item.type === 'consumable';
+            const isOwned = inventory[item.id];
+            const isEquipped = equippedAccessories[item.id];
+            
+            let extraClass = '', priceText = '';
+            if (isConsumable) { extraClass = 'consumable'; priceText = '🪙 ' + item.price; }
+            else if (isEquipped) { extraClass = 'equipped'; priceText = 'Надето'; }
+            else if (isOwned) { extraClass = 'owned'; priceText = 'Куплено'; }
+            else { priceText = '🪙 ' + item.price; }
+
+            el.className = `shop-item ${extraClass}`;
+            el.innerHTML = `<div class="shop-item-emoji">${item.emoji}</div><div class="shop-item-name">${item.name}</div><div class="shop-item-price">${priceText}</div>`;
+            
+            el.onclick = () => {
+                if (isConsumable) {
+                    if (coinsCount >= item.price) {
+                        coinsCount -= item.price; boughtStars++;
+                        renderShop(); updateStatus(); saveGameState();
+                    } else showDialog("Упс!", "Не хватает монеток!", false);
+                    return;
+                }
+                if (isEquipped) {
+                    delete equippedAccessories[item.id];
+                    updateAccessoryDisplay(); renderShop(); saveGameState();
+                } else if (isOwned) {
+                    equippedAccessories[item.id] = true;
+                    updateAccessoryDisplay(); renderShop(); saveGameState();
+                } else {
+                    if (coinsCount >= item.price) {
+                        coinsCount -= item.price; inventory[item.id] = true;
+                        renderShop(); saveGameState();
+                    } else showDialog("Упс!", "Не хватает монеток!", false);
+                }
+            };
+            grid.appendChild(el);
+        });
+    }
+
+    function updateAccessoryDisplay() {
+        const accLayer = document.getElementById('accessory-layer');
+        accLayer.innerHTML = ''; 
+        for (const [accId, isEquipped] of Object.entries(equippedAccessories)) {
+            if (isEquipped) {
+                const item = shopItems.find(i => i.id === accId);
+                if (item) {
+                    const el = document.createElement('span');
+                    el.className = `accessory-item acc-${item.id}`; 
+                    el.innerText = item.emoji;
+                    accLayer.appendChild(el);
+                }
+            }
+        }
+    }
+
+    /* ============ НАСТРОЙКИ ============ */
+    function openSettings() {
+        document.getElementById('setting-difficulty').value = maxErrors;
+        document.getElementById('setting-difficulty').disabled = isPlaying;
+        document.getElementById('settings-screen').style.display = 'flex';
+    }
+    
+    function closeSettings() { document.getElementById('settings-screen').style.display = 'none'; }
+    
+    function saveSettings() {
+        if (!isPlaying) maxErrors = parseInt(document.getElementById('setting-difficulty').value);
+        saveGameState(); closeSettings();
+    }
+
+    /* ============ СОХРАНЕНИЯ ============ */
+    function saveGameState() {
+        const state = {
+            coinsCount, level, wordsCompletedInLevel, completedLevelsTotal,
+            spentStars, boughtStars, errorsCount, inventory, equippedAccessories,
+            maxErrors, isPlaying, currentWordRaw, currentPartIndex
+        };
+        localStorage.setItem('syllable_game_state', JSON.stringify(state));
+    }
+
+    function loadGameState() {
+        const saved = localStorage.getItem('syllable_game_state');
+        if (!saved) return;
+        try {
+            const state = JSON.parse(saved);
+            coinsCount = state.coinsCount || 0;
+            level = state.level || 1;
+            wordsCompletedInLevel = state.wordsCompletedInLevel || 0;
+            completedLevelsTotal = state.completedLevelsTotal || 0;
+            spentStars = state.spentStars || 0;
+            boughtStars = state.boughtStars || 0;
+            errorsCount = state.errorsCount || 0;
+            inventory = state.inventory || {};
+            equippedAccessories = state.equippedAccessories || {};
+            maxErrors = state.maxErrors !== undefined ? state.maxErrors : 20;
+            
+            updateCoinsDisplay(); updateAccessoryDisplay(); updateStatus();
+            
+            if (state.isPlaying && state.currentWordRaw) {
+                document.getElementById('btn-continue').style.display = 'flex';
+                document.getElementById('btn-start').style.display = 'none';
+                window.savedSessionData = state;
+            }
+        } catch (e) {}
+    }
+
+    function continueGame() {
+        const state = window.savedSessionData;
+        if (!state) return;
+        document.getElementById('btn-start').style.display = 'none';
+        document.getElementById('btn-continue').style.display = 'none';
+        document.getElementById('btn-stop').style.display = 'flex';
+        
+        isPlaying = true;
+        currentWordRaw = state.currentWordRaw;
+        currentWordParts = currentWordRaw.split('-');
+        currentPartIndex = state.currentPartIndex || 0;
+        
+        renderWordDisplay();
+        updateLevelProgress();
+        updateErrorBar();
+        window.savedSessionData = null;
+        saveGameState();
+    }
+
+    /* ============ PWA И ЗАПУСК ============ */
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault(); deferredPrompt = e;
+        document.getElementById('btn-install').style.display = 'flex';
+    });
+    
+    document.getElementById('btn-install').addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') document.getElementById('btn-install').style.display = 'none';
+        deferredPrompt = null;
+    });
+
+    window.onload = async () => {
+        buildGrid();
+        await loadDictionary();
+        loadGameState();
+    };
+
+</script>
+</body>
+</html>
