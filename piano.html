@@ -65,15 +65,11 @@
             justify-content: space-between;
         }
 
-        /* Контейнер для смайлика и коллекционок */
+        /* Обертка для позиционирования коллекционных предметов вокруг смайлика */
         .character-wrapper {
             position: relative;
-            width: 150px;
-            height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 5px;
+            margin-top: 15px;
+            margin-bottom: 15px;
         }
 
         .character-box {
@@ -86,18 +82,17 @@
             transition: transform 0.2s;
             position: relative;
             cursor: pointer;
-            z-index: 5;
+            z-index: 2;
         }
         
         .character-box.bounce { transform: scale(1.2) translateY(-10px); }
         .character-box.shake { animation: shake 0.3s; }
 
-        /* Контейнер для украшений (шапки, очки) */
+        /* Контейнер для украшений (надеваются на смайлик) */
         .accessory-layer {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 10;
+            pointer-events: none; z-index: 10;
         }
 
         .accessory-item { position: absolute; display: block; }
@@ -106,19 +101,23 @@
         .acc-bow { bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 40px; }
         .acc-flower { top: -5px; right: -15px; font-size: 35px; transform: rotate(20deg); }
 
-        /* Контейнер для коллекционок вокруг смайлика */
-        .collectibles-layer {
+        /* Контейнер для коллекционных предметов (располагаются вокруг) */
+        #collectibles-layer {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
+            pointer-events: none; z-index: 1;
         }
-        
-        .collectible-item { position: absolute; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
-        .col-medal { bottom: 5px; left: 5px; font-size: 35px; z-index: 6; }
-        .col-trophy { bottom: 5px; right: 5px; font-size: 35px; z-index: 6; }
-        .col-crown { top: 5px; right: -5px; font-size: 35px; transform: rotate(15deg); z-index: 1; }
-        .col-unicorn { top: 5px; left: -5px; font-size: 35px; transform: scaleX(-1) rotate(-15deg); z-index: 1; }
-        .col-diamond { bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 6; }
+        .collectible-item { 
+            position: absolute; 
+            font-size: 30px; 
+            display: block; 
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); 
+        }
+        .col-medal { bottom: -15px; left: -30px; }
+        .col-trophy { bottom: -15px; right: -30px; }
+        .col-crown { top: -20px; left: -40px; transform: rotate(-20deg); }
+        .col-unicorn { top: -20px; right: -40px; transform: rotate(15deg); }
+        .col-diamond { top: 25px; left: -45px; font-size: 25px; }
 
         .stats-box {
             width: 100%;
@@ -148,7 +147,7 @@
             text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
             line-height: 1.2;
         }
-        .sidebar-stars span { transition: transform 0.2s; cursor: pointer;}
+        .sidebar-stars span { transition: transform 0.2s; }
         .sidebar-stars span:hover { transform: scale(1.2); }
         .sidebar-stars.empty { color: #aaa; font-size: 14px; text-shadow: none; font-weight: bold; }
 
@@ -210,67 +209,46 @@
             overflow: hidden;
         }
 
-        /* Кнопка подсказки для басового ключа */
         #bass-hint-btn {
+            position: absolute; top: 15px; right: 15px; width: 38px; height: 38px;
+            border-radius: 50%; background: #ffc107; color: #333; font-size: 22px;
+            font-weight: bold; display: none; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); z-index: 10;
+            transition: transform 0.1s;
+        }
+        #bass-hint-btn:active { transform: scale(0.9); }
+
+        /* Кнопка проигрывания мелодии */
+        #play-melody-btn {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            width: 38px;
-            height: 38px;
+            left: 40px;
+            bottom: 10px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            background: #ffc107;
-            color: #333;
-            font-size: 22px;
-            font-weight: bold;
-            display: none; 
+            background: #28a745;
+            color: #fff;
+            font-size: 16px;
+            display: none; /* скрыта до старта */
             align-items: center;
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 3px 6px rgba(0,0,0,0.2);
             z-index: 10;
             transition: transform 0.1s;
-        }
-        #bass-hint-btn:active { transform: scale(0.9); }
-
-        /* Кнопка проигрывания мелодии под ключом */
-        #play-melody-btn {
-            position: absolute;
-            left: 30px;
-            top: 110px;
-            font-size: 35px;
-            cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
-            z-index: 10;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            padding-left: 4px; /* визуальное центрирование треугольника */
         }
         #play-melody-btn:active { transform: scale(0.9); }
-        #play-melody-btn.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
 
-        .staff-container {
-            position: relative;
-            height: 160px;
-            width: 100%;
-            margin-top: 0px;
-        }
-
+        .staff-container { position: relative; height: 160px; width: 100%; margin-top: 0px; }
         .clef { position: absolute; left: 15px; top: 15px; font-size: 85px; font-family: serif; color: #000; transition: top 0.3s, font-size 0.3s; }
-        
         .staff-lines { position: absolute; left: 0; top: 40px; width: 100%; height: 80px; display: flex; flex-direction: column; justify-content: space-between; z-index: 1; }
         .line { width: 100%; height: 2px; background: #000; }
 
         #notes-layer { position: absolute; top: 0; left: 90px; width: calc(100% - 100px); height: 100%; z-index: 2; }
-        .note { position: absolute; width: 24px; height: 16px; background: #000; border-radius: 50%; transform: rotate(-15deg); transition: background-color 0.2s, box-shadow 0.2s, transform 0.2s; }
+        .note { position: absolute; width: 24px; height: 16px; background: #000; border-radius: 50%; transform: rotate(-15deg); transition: background 0.1s, transform 0.1s, box-shadow 0.1s; }
         
-        .accidental {
-            position: absolute;
-            left: -16px;
-            top: -5px;
-            font-size: 22px;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            color: #000;
-            transform: rotate(15deg); 
-        }
-
+        .accidental { position: absolute; left: -16px; top: -5px; font-size: 22px; font-family: 'Segoe UI', Arial, sans-serif; color: #000; transform: rotate(15deg); }
         .ledger-line { position: absolute; width: 38px; height: 2px; background: #000; left: -7px; transform: rotate(15deg); }
         
         .note.active { transform: rotate(-15deg) scale(1.25); background: #007bff; z-index: 3; box-shadow: 0 0 10px rgba(0,123,255,0.5); }
@@ -280,86 +258,50 @@
         .note.error { background: #dc3545; animation: shake 0.3s; }
         .note.error .accidental { color: #dc3545; }
 
-        /* Эффект подсветки при автоматическом проигрывании */
-        .note.playing-highlight {
-            box-shadow: 0 0 0 4px #ffc107, 0 0 15px #ffc107 !important;
-            transform: rotate(-15deg) scale(1.3) !important;
-            z-index: 20 !important;
+        /* Стиль для проигрываемой ноты (желтая обводка) */
+        .note.playing {
+            background: #ffc107 !important;
+            transform: rotate(-15deg) scale(1.3);
+            z-index: 10;
+            box-shadow: 0 0 12px 4px #ffc107;
         }
+        .note.playing .accidental { color: #ffc107 !important; }
 
         .note-hint-label {
-            position: absolute;
-            font-size: 14px;
-            font-weight: bold;
-            color: #007bff;
-            text-align: center;
-            width: 30px;
-            margin-left: -3px; 
-            z-index: 5;
+            position: absolute; font-size: 14px; font-weight: bold; color: #007bff;
+            text-align: center; width: 30px; margin-left: -3px; z-index: 5;
             text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 0px 0px 4px #fff;
         }
 
         /* Клавиатура */
         .keyboard-wrapper {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            flex: 1;
-            overflow: hidden;
-            display: flex;
-            align-items: flex-end;
-            padding: 10px;
+            background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            flex: 1; overflow: hidden; display: flex; align-items: flex-end; padding: 10px;
         }
 
         .keyboard { position: relative; height: 100%; width: 100%; display: flex; gap: 1px; }
 
         .key-white {
-            flex: 1;
-            height: 100%;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-bottom: 5px solid #bbb;
-            border-radius: 0 0 6px 6px;
-            position: relative;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            padding-bottom: 8px;
-            cursor: pointer;
-            z-index: 1;
+            flex: 1; height: 100%; background: #fff; border: 1px solid #ccc;
+            border-bottom: 5px solid #bbb; border-radius: 0 0 6px 6px;
+            position: relative; display: flex; align-items: flex-end; justify-content: center;
+            padding-bottom: 8px; cursor: pointer; z-index: 1;
         }
         .key-white:active { background: #f2f2f2; border-bottom-width: 1px; transform: translateY(4px); }
 
         .key-black {
-            height: 58%;
-            background: #222;
-            position: absolute;
-            top: 0;
-            border-radius: 0 0 4px 4px;
-            border-bottom: 4px solid #000;
-            cursor: pointer;
-            z-index: 2;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            padding-bottom: 5px;
+            height: 58%; background: #222; position: absolute; top: 0;
+            border-radius: 0 0 4px 4px; border-bottom: 4px solid #000;
+            cursor: pointer; z-index: 2; display: flex; align-items: flex-end;
+            justify-content: center; padding-bottom: 5px;
         }
         .key-black:active { background: #444; border-bottom-width: 1px; transform: translateY(3px); }
 
         .key-hint, .key-black-hint { pointer-events: none; }
         .key-hint {
-            width: 85%;
-            max-width: 32px;
-            aspect-ratio: 1;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
-            box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.15);
+            width: 85%; max-width: 32px; aspect-ratio: 1; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #fff;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.3); box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.15);
         }
         .key-black-hint { font-size: 9px; font-weight: bold; color: #aaa; }
 
@@ -372,31 +314,16 @@
 
         /* Модальные окна */
         .overlay-screen {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            width: 100vw; height: 100dvh;
-            background: rgba(255, 255, 255, 0.97);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100; 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw; height: 100dvh; background: rgba(255, 255, 255, 0.97);
+            display: none; flex-direction: column; justify-content: center;
+            align-items: center; z-index: 100; 
         }
-        
         .modal-panel {
-            background: #fff;
-            padding: 20px;
-            width: 100%;
-            height: 100%;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            background: #fff; padding: 20px; width: 100%; height: 100%;
+            overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        
         .modal-content { width: 100%; max-width: 500px; text-align: center; }
-
         .settings-row { margin-bottom: 10px; text-align: left; }
         .settings-row label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
         .settings-row select { padding: 6px; width: 100%; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;}
@@ -507,7 +434,7 @@
             <div id="bass-hint-btn" onclick="toggleBassHints()">?</div>
             <div class="staff-container">
                 <div class="clef" id="clef-symbol">𝄞</div>
-                <div id="play-melody-btn" onclick="playFullMelody()" title="Прослушать мелодию">▶️</div>
+                <div id="play-melody-btn" onclick="playMelodyAnimation()">▶</div>
                 <div class="staff-lines">
                     <div class="line"></div>
                     <div class="line"></div>
@@ -525,12 +452,14 @@
     </div>
 
     <div class="sidebar">
+        <!-- Обновленная обертка для позиционирования -->
         <div class="character-wrapper">
             <div class="character-box" id="character" onclick="attemptSpendStar(false)">
                 <span id="char-face">😋</span>
                 <div class="accessory-layer" id="accessory-layer"></div>
             </div>
-            <div class="collectibles-layer" id="collectibles-layer"></div>
+            <!-- Слой для предметов, которые раскладываются вокруг -->
+            <div id="collectibles-layer"></div>
         </div>
         
         <div class="error-container">
@@ -727,7 +656,7 @@
             
             btn.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
-                if(!isAutoPlaying) checkNote(key.midi);
+                checkNote(key.midi);
             });
 
             if (key.type === 'white') {
@@ -758,91 +687,67 @@
         });
     }
 
-    // Улучшенный звук фортепиано
-    function playTone(midi, duration = 0.4) {
+    // Звук пианино с помощью синтеза Web Audio API
+    function playTone(midi) {
         if (!actx) actx = new AudioCtx();
         if (actx.state === 'suspended') actx.resume();
         
         let freq = 440 * Math.pow(2, (midi - 69) / 12);
-        let time = actx.currentTime;
         
-        // Главная огибающая громкости
-        let gainNode = actx.createGain();
-        gainNode.gain.setValueAtTime(0, time);
-        gainNode.gain.linearRampToValueAtTime(0.7, time + 0.015); // Быстрая атака
-        gainNode.gain.exponentialRampToValueAtTime(0.2, time + 0.3); // Спад
-        gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration + 0.8); // Долгий релиз
-        gainNode.connect(actx.destination);
-
-        // 1. Основной тон (тело звука)
+        // Два осциллятора для придания тембра
         let osc1 = actx.createOscillator();
-        osc1.type = 'triangle';
-        osc1.frequency.value = freq;
-        osc1.connect(gainNode);
-
-        // 2. Резонирующий обертон (звонкость)
         let osc2 = actx.createOscillator();
-        osc2.type = 'sine';
-        osc2.frequency.value = freq * 2; 
-        let gain2 = actx.createGain();
-        gain2.gain.value = 0.15;
-        osc2.connect(gain2);
-        gain2.connect(gainNode);
-
-        // 3. Имитация удара молоточка (атака)
-        let osc3 = actx.createOscillator();
-        osc3.type = 'sawtooth';
-        osc3.frequency.value = freq;
-        let filter = actx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(freq * 5, time);
-        filter.frequency.exponentialRampToValueAtTime(freq, time + 0.1);
+        let gainNode = actx.createGain();
         
-        let gain3 = actx.createGain();
-        gain3.gain.setValueAtTime(0.3, time);
-        gain3.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+        osc1.type = 'sine';     // Основной тон
+        osc2.type = 'triangle'; // Обертона (более звонкий оттенок)
         
-        osc3.connect(filter);
-        filter.connect(gain3);
-        gain3.connect(gainNode);
-
-        // Старт и стоп всех нод
-        osc1.start(time);
-        osc2.start(time);
-        osc3.start(time);
-
-        osc1.stop(time + duration + 1);
-        osc2.stop(time + duration + 1);
-        osc3.stop(time + duration + 1);
+        osc1.frequency.value = freq;
+        osc2.frequency.value = freq;
+        
+        osc1.connect(gainNode);
+        osc2.connect(gainNode);
+        gainNode.connect(actx.destination);
+        
+        // Огибающая (Envelope) - атака и затухание как у фортепиано
+        gainNode.gain.setValueAtTime(0, actx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.5, actx.currentTime + 0.02); // Быстрая атака
+        gainNode.gain.exponentialRampToValueAtTime(0.05, actx.currentTime + 0.4); // Быстрый спад
+        gainNode.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 1.2); // Долгое затухание
+        
+        osc1.start(actx.currentTime);
+        osc2.start(actx.currentTime);
+        osc1.stop(actx.currentTime + 1.2);
+        osc2.stop(actx.currentTime + 1.2);
     }
 
-    async function playFullMelody() {
-        if (!isPlaying || isAutoPlaying || currentMelody.length === 0) return;
-        
+    // Проигрывание сгенерированной мелодии
+    async function playMelodyAnimation() {
+        if (isAutoPlaying || !isPlaying) return;
         isAutoPlaying = true;
-        const btn = document.getElementById('play-melody-btn');
-        btn.classList.add('disabled');
-
+        
         for (let i = 0; i < currentMelody.length; i++) {
-            if (!isPlaying) break; // Прервать, если нажали Стоп
+            if (!isPlaying) break; // Прерывание, если завершили игру
             
-            let noteObj = currentMelody[i];
-            let noteEl = document.getElementById(`note-${i}`);
+            const noteObj = currentMelody[i];
+            const noteEl = document.getElementById(`note-${i}`);
             
-            if (noteEl) noteEl.classList.add('playing-highlight');
-            playTone(noteObj.midi, 0.4);
+            if (noteEl) noteEl.classList.add('playing');
+            playTone(noteObj.midi);
             
+            // Ждем 450мс перед следующей нотой
             await new Promise(r => setTimeout(r, 450));
             
-            if (noteEl) noteEl.classList.remove('playing-highlight');
+            if (noteEl) noteEl.classList.remove('playing');
         }
-
-        if(isPlaying) btn.classList.remove('disabled');
+        
         isAutoPlaying = false;
     }
 
     function getIdleEmotion() {
-        if (maxErrors > 0 && (errorsCount / maxErrors) >= 0.7) return EMOTION_FEAR;
+        if (maxErrors > 0 && (errorsCount / maxErrors) >= 0.7) {
+            return EMOTION_FEAR;
+        }
         return EMOTION_IDLE;
     }
 
@@ -875,26 +780,27 @@
             else if (percent > 40) fill.classList.add('warning');
         } else {
             text.innerText = `0 / 0`;
-            fill.style.width = errorsCount > 0 ? '100%';
+            fill.style.width = errorsCount > 0 ? '100%' : '0%';
             fill.className = 'error-fill danger';
         }
         
-        if(isPlaying) document.getElementById('char-face').innerText = getIdleEmotion();
+        if(isPlaying) {
+            document.getElementById('char-face').innerText = getIdleEmotion();
+        }
     }
 
     function startGame() {
         document.getElementById('btn-start').style.display = 'none';
         document.getElementById('btn-stop').style.display = 'block';
+        document.getElementById('play-melody-btn').style.display = 'flex';
         document.getElementById('stars-screen').style.display = 'none';
         document.getElementById('settings-screen').style.display = 'none';
-        document.getElementById('play-melody-btn').classList.remove('disabled');
         
         if (document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch((err) => console.log(err));
         }
         
         isPlaying = true;
-        isAutoPlaying = false;
         currentNoteIndex = 0;
         completedScreens = 0;
         spentStars = 0;
@@ -909,7 +815,6 @@
 
     function generateScreenMelody() {
         currentMelody = [];
-        document.getElementById('play-melody-btn').classList.remove('disabled');
         
         if (mixBassClef) {
             currentClef = Math.random() > 0.5 ? 'bass' : 'treble';
@@ -919,7 +824,7 @@
 
         const clefEl = document.getElementById('clef-symbol');
         const hintBtn = document.getElementById('bass-hint-btn');
-        bassHintsActive = false; 
+        bassHintsActive = false;
 
         if (currentClef === 'treble') {
             clefEl.innerText = '𝄞';
@@ -961,9 +866,9 @@
         
         document.getElementById('btn-start').style.display = 'block';
         document.getElementById('btn-stop').style.display = 'none';
+        document.getElementById('play-melody-btn').style.display = 'none';
         document.getElementById('notes-layer').innerHTML = '';
         document.getElementById('bass-hint-btn').style.display = 'none';
-        document.getElementById('play-melody-btn').classList.add('disabled');
         
         if (isGameOver) {
             setEmotion(EMOTION_CRY, 'shake');
@@ -1036,7 +941,9 @@
     }
 
     function highlightCurrentNote() {
-        document.querySelectorAll('.note').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.note').forEach(n => {
+            if (!n.classList.contains('success')) n.classList.remove('active');
+        });
         if (currentNoteIndex < currentMelody.length) {
             const currentEl = document.getElementById(`note-${currentNoteIndex}`);
             if (currentEl) currentEl.classList.add('active');
@@ -1044,14 +951,14 @@
     }
 
     function checkNote(pressedMidi) {
-        if (!isPlaying || isAutoPlaying) return;
-        playTone(pressedMidi, 0.4);
+        if (!isPlaying || isAutoPlaying) return; // Игнорируем нажатия пока мелодия играется сама
+        playTone(pressedMidi);
 
         const expectedNote = currentMelody[currentNoteIndex];
         const currentEl = document.getElementById(`note-${currentNoteIndex}`);
 
         if (pressedMidi === expectedNote.midi) {
-            currentEl.classList.remove('active', 'error');
+            currentEl.classList.remove('active', 'error', 'playing');
             currentEl.classList.add('success');
             setEmotion(EMOTION_HAPPY, 'bounce');
             currentNoteIndex++;
@@ -1107,6 +1014,25 @@
         document.getElementById('shop-screen').style.display = 'none';
     }
 
+    // Обновление слоя с коллекционными предметами (предметы вокруг)
+    function updateCollectiblesDisplay() {
+        const colLayer = document.getElementById('collectibles-layer');
+        if (!colLayer) return;
+        colLayer.innerHTML = '';
+        
+        for (const [itemId, isOwned] of Object.entries(inventory)) {
+            if (isOwned) {
+                const item = shopItems.find(i => i.id === itemId);
+                if (item && item.type === 'collectible') {
+                    const el = document.createElement('span');
+                    el.className = `collectible-item col-${item.id}`;
+                    el.innerText = item.emoji;
+                    colLayer.appendChild(el);
+                }
+            }
+        }
+    }
+
     function renderShop() {
         updateCoinsDisplay();
         const grid = document.getElementById('shop-grid');
@@ -1130,7 +1056,7 @@
             } else if (isCollectible) {
                 if (isOwned) {
                     extraClass = 'owned';
-                    priceText = 'В коллекции';
+                    priceText = 'Куплено';
                 } else {
                     priceText = '🪙 ' + item.price;
                 }
@@ -1173,7 +1099,7 @@
                         coinsCount -= item.price;
                         inventory[item.id] = true;
                         updateCoinsDisplay();
-                        updateAccessoryDisplay();
+                        updateCollectiblesDisplay();
                         renderShop();
                     } else {
                         showDialog("Упс!", "Недостаточно монеток! Зарабатывай их правильными нажатиями.", false);
@@ -1209,6 +1135,7 @@
     function updateAccessoryDisplay() {
         const accLayer = document.getElementById('accessory-layer');
         accLayer.innerHTML = ''; 
+
         for (const [accId, isEquipped] of Object.entries(equippedAccessories)) {
             if (isEquipped) {
                 const item = shopItems.find(i => i.id === accId);
@@ -1217,20 +1144,6 @@
                     el.className = `accessory-item acc-${item.id}`; 
                     el.innerText = item.emoji;
                     accLayer.appendChild(el);
-                }
-            }
-        }
-
-        const colLayer = document.getElementById('collectibles-layer');
-        colLayer.innerHTML = '';
-        for (const [colId, isOwned] of Object.entries(inventory)) {
-            if (isOwned) {
-                const item = shopItems.find(i => i.id === colId);
-                if (item && item.type === 'collectible') {
-                    const el = document.createElement('span');
-                    el.className = `collectible-item col-${item.id}`; 
-                    el.innerText = item.emoji;
-                    colLayer.appendChild(el);
                 }
             }
         }
@@ -1267,7 +1180,9 @@
                 updateStatus();
             },
             () => { 
-                if (isGameOverRescue) stopGame(true); 
+                if (isGameOverRescue) {
+                    stopGame(true); 
+                }
             }
         );
     }
@@ -1288,12 +1203,16 @@
                 for (let i = 0; i < availableStars; i++) {
                     let star = document.createElement('span');
                     star.innerText = '⭐';
+                    star.style.cursor = 'pointer';
+                    star.title = "Нажми, чтобы списать 5 ошибок!";
                     star.onclick = () => attemptSpendStar(false);
                     starsDisplay.appendChild(star);
                 }
             } else {
                 let starBtn = document.createElement('span');
                 starBtn.innerText = `⭐ x ${availableStars}`;
+                starBtn.style.cursor = 'pointer';
+                starBtn.title = "Нажми, чтобы списать 5 ошибок!";
                 starBtn.onclick = () => attemptSpendStar(false);
                 starsDisplay.appendChild(starBtn);
             }
@@ -1331,14 +1250,18 @@
         }
     }
 
-    function closeStarsScreen() { document.getElementById('stars-screen').style.display = 'none'; }
+    function closeStarsScreen() {
+        document.getElementById('stars-screen').style.display = 'none';
+    }
 
     function openSettings() {
         if(isPlaying) stopGame(); 
         document.getElementById('settings-screen').style.display = 'flex';
     }
 
-    function closeSettings() { document.getElementById('settings-screen').style.display = 'none'; }
+    function closeSettings() {
+        document.getElementById('settings-screen').style.display = 'none';
+    }
 
     function saveSettings() {
         maxErrors = parseInt(document.getElementById('setting-difficulty').value);
@@ -1351,24 +1274,33 @@
         startGame();
     }
 
-    window.addEventListener('resize', () => { if (isPlaying) renderNotes(); });
+    window.addEventListener('resize', () => {
+        if (isPlaying) renderNotes();
+    });
 
     /* ============ ЛОГИКА PWA УСТАНОВКИ ============ */
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        if (!isStandalone) installBtn.style.display = 'block';
+        if (!isStandalone) {
+            installBtn.style.display = 'block';
+        }
     });
 
     installBtn.addEventListener('click', async () => {
         if (!deferredPrompt) {
-            if (isIOS) document.getElementById('iosHintModal').style.display = 'flex';
-            else showDialog("Установка", 'Откройте меню браузера и выберите "Установить приложение"', false);
+            if (isIOS) {
+                document.getElementById('iosHintModal').style.display = 'flex';
+            } else {
+                showDialog("Установка", 'Откройте меню браузера и выберите "Установить приложение" или "Добавить на главный экран"', false);
+            }
             return;
         }
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') installBtn.style.display = 'none';
+        if (outcome === 'accepted') {
+            installBtn.style.display = 'none';
+        }
         deferredPrompt = null;
     });
 
@@ -1377,12 +1309,20 @@
         deferredPrompt = null;
     });
 
-    function closeIosHint() { document.getElementById('iosHintModal').style.display = 'none'; }
-    if (isStandalone) installBtn.style.display = 'none';
-    else if (isIOS) installBtn.style.display = 'block';
+    function closeIosHint() {
+        document.getElementById('iosHintModal').style.display = 'none';
+    }
+
+    if (isStandalone) {
+        installBtn.style.display = 'none';
+    } else if (isIOS) {
+        installBtn.style.display = 'block';
+    }
 
     document.addEventListener('touchstart', function(event) {
-        if (event.touches.length > 1) event.preventDefault();
+        if (event.touches.length > 1) {
+            event.preventDefault();
+        }
     }, { passive: false });
 
     let lastTouchEnd = 0;
@@ -1396,6 +1336,7 @@
     }, { passive: false });
 
     buildKeyboard(getKeyboardLayout(currentClef));
+    updateCollectiblesDisplay();
 </script>
 </body>
 </html>
