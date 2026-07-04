@@ -416,7 +416,13 @@
         <div class="modal-panel">
             <div class="modal-content" style="max-width: 600px;">
                 <h3>Магазин 🛒</h3>
-                <p style="font-weight:bold; color:#ff8c00; margin:0;">Твои монетки: 🪙 <span id="shop-coins">0</span></p>
+                <div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin-bottom: 15px; background: #f8f9fa; border-radius: 8px; padding: 10px;">
+                    <p style="font-weight:bold; color:#ff8c00; margin:0;">Твои монетки: 🪙 <span id="shop-coins">0</span></p>
+                    <p style="font-weight:bold; color:#28a745; margin:0;">Доступно звёзд: ⭐ <span id="shop-stars">0</span></p>
+                </div>
+                
+                <button class="btn" style="background:#17a2b8; color:white; margin-bottom: 20px; width: auto; padding: 10px 20px;" onclick="exchangeStarForCoins()">🔄 Обменять 1 ⭐ на 100 🪙</button>
+
                 <div class="shop-grid" id="shop-grid"></div>
                 <button class="btn btn-start" style="width: auto; padding: 10px 40px;" onclick="closeShop()">Закрыть магазин</button>
             </div>
@@ -705,7 +711,6 @@
         let now = actx.currentTime;
         
         if (currentInstrument === 'piano') {
-            // ФОРТЕПИАНО
             let osc1 = actx.createOscillator();
             let osc2 = actx.createOscillator();
             let gainNode = actx.createGain();
@@ -730,7 +735,6 @@
             osc2.stop(now + 1.2);
             
         } else if (currentInstrument === 'wind') {
-            // ДУХОВОЙ
             let osc = actx.createOscillator();
             let gainNode = actx.createGain();
             
@@ -759,7 +763,6 @@
             osc.stop(now + 0.75);
             
         } else if (currentInstrument === 'string') {
-            // СТРУННЫЙ
             let osc = actx.createOscillator();
             let filter = actx.createBiquadFilter();
             let gainNode = actx.createGain();
@@ -999,7 +1002,7 @@
     }
 
     function startGame() {
-        resetProgress(); // Сбрасываем весь прогресс при старте новой игры
+        resetProgress();
         
         document.getElementById('btn-start').style.display = 'none';
         document.getElementById('btn-continue').style.display = 'none';
@@ -1048,10 +1051,39 @@
         const allNotes = getGameNotes(currentClef);
         const availableNotes = allNotes.filter(n => useBlackKeys || !n.isBlack);
 
-        for (let i = 0; i < MELODY_LENGTH; i++) {
-            const randomNoteIndex = Math.floor(Math.random() * availableNotes.length);
-            currentMelody.push(availableNotes[randomNoteIndex]);
+        // Генерация первой ноты случайным образом
+        let currentIndex = Math.floor(Math.random() * availableNotes.length);
+        currentMelody.push(availableNotes[currentIndex]);
+
+        // Генерация остальных нот методом "Случайного блуждания" (Random Walk)
+        for (let i = 1; i < MELODY_LENGTH; i++) {
+            // 75% шанс на плавный ход, 25% шанс на любой случайный скачок
+            if (Math.random() < 0.75) {
+                // Плавный ход: шаг от -3 до +3 ноты по доступному массиву
+                let step = Math.floor(Math.random() * 7) - 3;
+                
+                // Чтобы не топтаться на одной ноте, заменяем 0 на шаг в сторону
+                if (step === 0) step = Math.random() > 0.5 ? 1 : -1;
+                
+                currentIndex += step;
+                
+                // Обработка выхода за границы массива
+                if (currentIndex < 0) {
+                    currentIndex = Math.abs(currentIndex); 
+                } else if (currentIndex >= availableNotes.length) {
+                    currentIndex = availableNotes.length - (currentIndex - availableNotes.length) - 1;
+                }
+                
+                // Финальная защита от ошибок индексации
+                currentIndex = Math.max(0, Math.min(currentIndex, availableNotes.length - 1));
+            } else {
+                // Случайный скачок в любую точку
+                currentIndex = Math.floor(Math.random() * availableNotes.length);
+            }
+            
+            currentMelody.push(availableNotes[currentIndex]);
         }
+        
         renderNotes();
         updateStatus();
         saveGameState();
@@ -1086,8 +1118,8 @@
             showStarsReward(Math.max(0, completedScreens - spentStars + boughtStars), false);
         }
         
-        resetProgress(); // Сбрасываем весь прогресс при нормальном завершении (или проигрыше)
-        saveGameState(); // Сохраняем пустую сессию, чтобы не появилась кнопка "Продолжить"
+        resetProgress();
+        saveGameState();
     }
 
     function renderNotes() {
@@ -1220,7 +1252,8 @@
 
     function updateCoinsDisplay() {
         document.getElementById('sidebar-coins').innerText = coinsCount;
-        document.getElementById('shop-coins').innerText = coinsCount;
+        const shopCoinsEl = document.getElementById('shop-coins');
+        if (shopCoinsEl) shopCoinsEl.innerText = coinsCount;
     }
 
     function openShop() {
@@ -1231,6 +1264,20 @@
     function closeShop() {
         document.getElementById('shop-screen').style.display = 'none';
         saveGameState();
+    }
+
+    function exchangeStarForCoins() {
+        const availableStars = completedScreens - spentStars + boughtStars;
+        if (availableStars > 0) {
+            spentStars++; 
+            coinsCount += 100;
+            updateCoinsDisplay();
+            updateStatus(); 
+            renderShop(); 
+            saveGameState();
+        } else {
+            showDialog("Упс!", "У тебя нет свободных звёзд для обмена. Пройди уровень без ошибок!", false);
+        }
     }
 
     function updateCollectiblesDisplay() {
@@ -1253,6 +1300,11 @@
 
     function renderShop() {
         updateCoinsDisplay();
+        
+        const availableStars = completedScreens - spentStars + boughtStars;
+        const shopStarsEl = document.getElementById('shop-stars');
+        if (shopStarsEl) shopStarsEl.innerText = Math.max(0, availableStars);
+
         const grid = document.getElementById('shop-grid');
         grid.innerHTML = '';
         
