@@ -610,7 +610,7 @@
         return div;
     }
 
-    /* ============ СЛОВАРЬ (Загрузка) ============ */
+    /* ============ АВТО-РАЗБИВКА И ЗАГРУЗКА СЛОВАРЯ ============ */
     async function loadDictionary() {
         const dictStatusEl = document.getElementById('dict-status');
         try {
@@ -618,10 +618,38 @@
             if (res.ok) {
                 let text = await res.text();
                 let loadedWords = text.split('\n').map(w => w.trim().toUpperCase()).filter(w => w.length > 0);
-                let validWords = loadedWords.filter(word => word.split('-').every(p => validSyllables.has(p)));
                 
-                if(validWords.length > 0) {
-                    dictionary = validWords;
+                let processedWords = [];
+                for (let word of loadedWords) {
+                    if (word.includes('-')) {
+                        if (word.split('-').every(p => validSyllables.has(p))) {
+                            processedWords.push(word);
+                        }
+                    } else {
+                        // Умный алгоритм автоматической разбивки сплошного слова
+                        let parts = [];
+                        let i = 0;
+                        let isValid = true;
+                        while (i < word.length) {
+                            if (i + 1 < word.length && validSyllables.has(word.substring(i, i + 2))) {
+                                parts.push(word.substring(i, i + 2));
+                                i += 2;
+                            } else if (validSyllables.has(word[i])) {
+                                parts.push(word[i]);
+                                i += 1;
+                            } else {
+                                isValid = false;
+                                break;
+                            }
+                        }
+                        if (isValid && parts.length > 0) {
+                            processedWords.push(parts.join('-'));
+                        }
+                    }
+                }
+                
+                if(processedWords.length > 0) {
+                    dictionary = processedWords;
                     dictStatusEl.innerText = `Подключен dic.txt (${dictionary.length} слов)`;
                     dictStatusEl.style.color = '#28a745'; 
                     return;
