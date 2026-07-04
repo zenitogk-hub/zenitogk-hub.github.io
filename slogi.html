@@ -31,8 +31,8 @@
             --danger-color: #e53e3e;
             --soft-color: #4a5568;
             --gray-color: #cbd5e0;
-            --grid-border: #94a3b8; /* Цвет толстой границы */
-            --cell-border: #e2e8f0; /* Цвет тонкой границы ячеек */
+            --grid-border: #94a3b8; 
+            --cell-border: #e2e8f0; 
         }
 
         * { 
@@ -77,6 +77,7 @@
             justify-content: center;
             position: relative;
             padding: 10px;
+            padding-bottom: 55px; 
         }
 
         .word-display {
@@ -106,6 +107,11 @@
         .word-syllable .soft { color: var(--soft-color); }
         .word-syllable.hidden-color * { color: var(--gray-color) !important; }
 
+        .word-hyphen {
+            color: var(--text-color);
+            font-weight: 800;
+        }
+
         .tts-btn {
             position: absolute;
             top: 8px; left: 8px;
@@ -118,12 +124,31 @@
         }
         .tts-btn:active { transform: scale(0.9); }
 
-        .level-progress {
+        .top-stats-box {
             position: absolute;
-            bottom: 8px; left: 8px; right: 8px;
-            font-size: 12px; font-weight: bold; color: #777;
-            text-align: center;
+            bottom: 6px; left: 8px; right: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
         }
+
+        .level-display { font-size: 13px; font-weight: bold; color: #555; }
+        .level-display span { color: var(--secondary-color); font-size: 15px; }
+
+        .sidebar-stars {
+            font-size: 18px;
+            color: #ffca28;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+            line-height: 1.2;
+        }
+        .sidebar-stars span { transition: transform 0.2s; cursor: pointer; }
+        .sidebar-stars span:hover { transform: scale(1.2); }
+        .sidebar-stars.empty { color: #aaa; font-size: 12px; text-shadow: none; font-weight: bold; }
 
         /* Сектор 2: Меню и персонаж */
         .sector2 {
@@ -139,11 +164,20 @@
             justify-content: space-between;
         }
 
+        .character-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-top: 5px;
+        }
+
         .character-box {
             font-size: 45px;
             width: 55px; height: 55px;
             display: flex; align-items: center; justify-content: center;
-            position: relative; z-index: 2; margin-top: 5px;
+            position: relative; z-index: 2;
         }
         .character-box.bounce { transform: scale(1.2) translateY(-5px); }
         .character-box.shake { animation: shake 0.3s; }
@@ -155,14 +189,30 @@
         .acc-bow { bottom: -15px; left: 50%; transform: translateX(-50%); font-size: 25px; }
         .acc-flower { top: -5px; right: -10px; font-size: 22px; transform: rotate(20deg); }
 
+        #collectibles-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1;
+        }
+        .collectible-item { 
+            position: absolute; 
+            font-size: 20px; 
+            display: block; 
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); 
+        }
+        .col-medal { bottom: -10px; left: -15px; }
+        .col-trophy { bottom: -10px; right: -15px; }
+        .col-crown { top: -15px; left: -20px; transform: rotate(-20deg); }
+        .col-unicorn { top: -15px; right: -20px; transform: rotate(15deg); }
+        .col-diamond { top: 15px; left: -22px; font-size: 18px; }
+
         .stats-mini {
             width: 100%; text-align: center; font-size: 11px; font-weight: bold; line-height: 1.2;
-            background: #f8f9fa; border-radius: 6px; padding: 4px 2px;
+            background: #f8f9fa; border-radius: 6px; padding: 6px 4px; margin: 4px 0;
         }
-        .stats-mini span.coins { color: #ff8c00; font-size: 12px; }
-        .stats-mini span.stars { color: #ffca28; font-size: 12px; display: block; min-height: 14px;}
+        .stats-mini span.coins { color: #ff8c00; font-size: 13px; display: block; margin-bottom: 4px;}
         
-        .error-track-mini { width: 100%; height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden; margin: 2px 0; }
+        .error-track-mini { width: 100%; height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; margin: 4px 0; }
         .error-fill-mini { height: 100%; width: 0%; background: #28a745; transition: width 0.3s, background-color 0.3s; }
         .error-fill-mini.warning { background: #ffc107; }
         .error-fill-mini.danger { background: #dc3545; }
@@ -177,7 +227,7 @@
         .btn-play { background: #28a745; color: white; }
         .btn-stop { background: #dc3545; color: white; display: none; }
         .btn-continue { background: #17a2b8; color: white; display: none; grid-column: span 2; }
-        #btn-install { display: none; grid-column: span 2; background: #6f42c1; color: white; } /* Кнопка установки */
+        #btn-install { display: none; grid-column: span 2; background: #6f42c1; color: white; }
 
         /* --- НИЖНЯЯ ЧАСТЬ (ТАБЛИЦА) --- */
         .sector3 {
@@ -195,7 +245,7 @@
             border-radius: 8px;
             flex: 1; 
             background: var(--cell-border);
-            gap: 1px; /* Тонкие внутренние линии */
+            gap: 1px; 
             overflow: hidden;
         }
 
@@ -210,7 +260,6 @@
             transition: background 0.1s, transform 0.1s;
         }
         
-        /* Выделение первой строки (гласные) и первого столбца (согласные) толстыми границами */
         .grid-cell:nth-child(-n+12) {
             border-bottom: 3px solid var(--grid-border);
             background: #f8f9fa;
@@ -221,7 +270,6 @@
             background: #f8f9fa;
         }
 
-        /* Левая верхняя ячейка (пересечение границ) */
         .grid-cell:nth-child(1) {
             background: #e2e8f0;
         }
@@ -274,19 +322,25 @@
         <div class="sector1">
             <button class="tts-btn" onclick="speakCurrentWord()">🔊</button>
             <div class="word-display" id="word-display"></div>
-            <div class="level-progress" id="level-progress">Слова: 0 / 5 (Ур. 1)</div>
+            
+            <div class="top-stats-box">
+                <div class="level-display">Уровень: <span id="sidebar-level">1</span> (Слова: <span id="words-progress">0</span> / 5)</div>
+                <div id="stars-display" class="sidebar-stars empty">Пока нет звёзд</div>
+            </div>
         </div>
 
         <div class="sector2">
-            <div class="character-box" id="character" onclick="attemptSpendStar(false)">
-                <span id="char-face">😋</span>
-                <div class="accessory-layer" id="accessory-layer"></div>
+            <div class="character-wrapper">
+                <div class="character-box" id="character" onclick="attemptSpendStar(false)">
+                    <span id="char-face">😋</span>
+                    <div class="accessory-layer" id="accessory-layer"></div>
+                </div>
+                <div id="collectibles-layer"></div>
             </div>
             
             <div class="stats-mini">
                 <span class="coins">🪙 <span id="sidebar-coins">0</span></span>
                 <div class="error-track-mini"><div class="error-fill-mini" id="error-fill"></div></div>
-                <span class="stars" id="stars-display"></span>
             </div>
 
             <div class="icon-grid">
@@ -366,8 +420,7 @@
     </div>
 
 <script>
-    /* ============ PWA И УСТАНОВКА (ДЛЯ GITHUB PAGES) ============ */
-    // Динамическая генерация манифеста, чтобы не создавать отдельный файл
+    /* ============ PWA И УСТАНОВКА ============ */
     const manifestData = {
         "name": "Тренажер Слогов",
         "short_name": "Слоги",
@@ -394,7 +447,7 @@
     if (isStandalone) {
         installBtn.style.display = 'none';
     } else if (isIOS) {
-        installBtn.style.display = 'flex'; // Показываем кнопку на iOS
+        installBtn.style.display = 'flex';
     }
 
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -429,7 +482,6 @@
         document.getElementById('iosHintModal').style.display = 'none';
     }
 
-    // Защита от зума на iOS
     document.addEventListener('touchstart', function(event) {
         if (event.touches.length > 1) event.preventDefault();
     }, { passive: false });
@@ -494,13 +546,19 @@
     const EMOTION_CRY = '😭';
     let emotionTimeout;
 
-    // Магазин (всё как в фортепиано, но без инструментов)
+    // Расширенный ассортимент магазина из piano.html
     const shopItems = [
         { id: 'star', name: 'Звезда', emoji: '⭐', price: 200, type: 'consumable' },
         { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50, type: 'accessory' },
         { id: 'glasses', name: 'Очки', emoji: '🕶️', price: 100, type: 'accessory' },
         { id: 'bow', name: 'Бантик', emoji: '🎀', price: 150, type: 'accessory' },
-        { id: 'flower', name: 'Заколка', emoji: '🌸', price: 200, type: 'accessory' }
+        { id: 'flower', name: 'Заколка', emoji: '🌸', price: 200, type: 'accessory' },
+        
+        { id: 'medal', name: 'Медаль', emoji: '🥇', price: 350, type: 'collectible' },
+        { id: 'trophy', name: 'Кубок', emoji: '🏆', price: 500, type: 'collectible' },
+        { id: 'crown', name: 'Корона', emoji: '👑', price: 750, type: 'collectible' },
+        { id: 'unicorn', name: 'Единорог', emoji: '🦄', price: 1000, type: 'collectible' },
+        { id: 'diamond', name: 'Алмаз', emoji: '💎', price: 1500, type: 'collectible' }
     ];
 
     /* ============ ИНИЦИАЛИЗАЦИЯ ТАБЛИЦЫ ============ */
@@ -520,11 +578,9 @@
         const grid = document.getElementById('syllable-grid');
         grid.innerHTML = '';
         
-        // Строка 0 (Гласные)
         grid.appendChild(createCell('?', true, 'header')); 
         vowelsList.forEach(v => grid.appendChild(createCell(v, true, 'header')));
 
-        // Остальные строки (Согласные)
         consonantsList.forEach((c, rowIndex) => {
             grid.appendChild(createCell(c, true, 'header'));
             vowelsList.forEach(v => {
@@ -618,10 +674,18 @@
         renderWordDisplay(); updateLevelProgress(); saveGameState();
     }
 
+    // Изменено: теперь разделяющие дефисы выводятся на экран
     function renderWordDisplay() {
         const container = document.getElementById('word-display');
         container.innerHTML = '';
         currentWordParts.forEach((part, index) => {
+            if (index > 0) {
+                const hyphen = document.createElement('span');
+                hyphen.className = 'word-hyphen';
+                hyphen.innerText = '-';
+                container.appendChild(hyphen);
+            }
+            
             const span = document.createElement('span');
             span.className = 'word-syllable hidden-color';
             span.id = `syllable-${index}`;
@@ -632,7 +696,10 @@
         });
     }
 
-    function updateLevelProgress() { document.getElementById('level-progress').innerText = `Слова: ${wordsCompletedInLevel} / ${WORDS_PER_LEVEL} (Ур. ${level})`; }
+    function updateLevelProgress() { 
+        document.getElementById('sidebar-level').innerText = level;
+        document.getElementById('words-progress').innerText = wordsCompletedInLevel;
+    }
 
     function handleCellClick(syllableText) {
         if (!isPlaying) return;
@@ -691,7 +758,30 @@
     function updateStatus() {
         const starsDisplay = document.getElementById('stars-display');
         const avStars = completedLevelsTotal - spentStars + boughtStars; 
-        starsDisplay.innerHTML = avStars <= 0 ? '' : (avStars <= 5 ? '⭐'.repeat(avStars) : `⭐ x${avStars}`);
+        
+        if (avStars <= 0) {
+            starsDisplay.innerHTML = 'Пока нет звёзд';
+            starsDisplay.className = 'sidebar-stars empty';
+        } else {
+            starsDisplay.className = 'sidebar-stars';
+            starsDisplay.innerHTML = '';
+            
+            if (avStars <= 10) {
+                for (let i = 0; i < avStars; i++) {
+                    let star = document.createElement('span');
+                    star.innerText = '⭐';
+                    star.title = "Нажми, чтобы списать 5 ошибок!";
+                    star.onclick = () => attemptSpendStar(false);
+                    starsDisplay.appendChild(star);
+                }
+            } else {
+                let starBtn = document.createElement('span');
+                starBtn.innerText = `⭐ x ${avStars}`;
+                starBtn.title = "Нажми, чтобы списать 5 ошибок!";
+                starBtn.onclick = () => attemptSpendStar(false);
+                starsDisplay.appendChild(starBtn);
+            }
+        }
     }
 
     function attemptSpendStar(isGameOverRescue = false) {
@@ -735,26 +825,47 @@
         updateCoinsDisplay();
         const grid = document.getElementById('shop-grid'); grid.innerHTML = '';
         shopItems.forEach(item => {
-            const el = document.createElement('div'), isCons = item.type === 'consumable', isOwn = inventory[item.id], isEq = equippedAccessories[item.id];
+            const isCons = item.type === 'consumable';
+            const isCollectible = item.type === 'collectible';
+            const isOwn = inventory[item.id];
+            const isEq = equippedAccessories[item.id];
+            
             let exClass = '', prText = '';
             if (isCons) { exClass = 'consumable'; prText = '🪙 ' + item.price; }
-            else if (isEq) { exClass = 'equipped'; prText = 'Надето'; }
-            else if (isOwn) { exClass = 'owned'; prText = 'Куплено'; }
-            else { prText = '🪙 ' + item.price; }
+            else if (isCollectible) {
+                if (isOwn) { exClass = 'owned'; prText = 'Куплено'; }
+                else { prText = '🪙 ' + item.price; }
+            } else {
+                if (isEq) { exClass = 'equipped'; prText = 'Надето'; }
+                else if (isOwn) { exClass = 'owned'; prText = 'Куплено'; }
+                else { prText = '🪙 ' + item.price; }
+            }
             
+            const el = document.createElement('div');
             el.className = `shop-item ${exClass}`;
             el.innerHTML = `<div class="shop-item-emoji">${item.emoji}</div><div class="shop-item-name">${item.name}</div><div class="shop-item-price">${prText}</div>`;
             el.onclick = () => {
                 if (isCons) {
                     if (coinsCount >= item.price) { coinsCount -= item.price; boughtStars++; renderShop(); updateStatus(); saveGameState(); } 
                     else showDialog("Упс!", "Не хватает монеток!", false);
-                } else if (isEq) {
-                    delete equippedAccessories[item.id]; updateAccessoryDisplay(); renderShop(); saveGameState();
-                } else if (isOwn) {
-                    equippedAccessories[item.id] = true; updateAccessoryDisplay(); renderShop(); saveGameState();
+                } else if (isCollectible) {
+                    if (isOwn) return;
+                    if (coinsCount >= item.price) {
+                        coinsCount -= item.price;
+                        inventory[item.id] = true;
+                        updateCollectiblesDisplay();
+                        renderShop();
+                        saveGameState();
+                    } else showDialog("Упс!", "Не хватает монеток!", false);
                 } else {
-                    if (coinsCount >= item.price) { coinsCount -= item.price; inventory[item.id] = true; renderShop(); saveGameState(); } 
-                    else showDialog("Упс!", "Не хватает монеток!", false);
+                    if (isEq) {
+                        delete equippedAccessories[item.id]; updateAccessoryDisplay(); renderShop(); saveGameState();
+                    } else if (isOwn) {
+                        equippedAccessories[item.id] = true; updateAccessoryDisplay(); renderShop(); saveGameState();
+                    } else {
+                        if (coinsCount >= item.price) { coinsCount -= item.price; inventory[item.id] = true; renderShop(); saveGameState(); } 
+                        else showDialog("Упс!", "Не хватает монеток!", false);
+                    }
                 }
             };
             grid.appendChild(el);
@@ -767,6 +878,23 @@
             if (isEq) {
                 const item = shopItems.find(i => i.id === accId);
                 if (item) { let el = document.createElement('span'); el.className = `accessory-item acc-${item.id}`; el.innerText = item.emoji; accLayer.appendChild(el); }
+            }
+        }
+    }
+
+    function updateCollectiblesDisplay() {
+        const colLayer = document.getElementById('collectibles-layer');
+        if (!colLayer) return;
+        colLayer.innerHTML = '';
+        for (const [itemId, isOwned] of Object.entries(inventory)) {
+            if (isOwned) {
+                const item = shopItems.find(i => i.id === itemId);
+                if (item && item.type === 'collectible') {
+                    const el = document.createElement('span');
+                    el.className = `collectible-item col-${item.id}`;
+                    el.innerText = item.emoji;
+                    colLayer.appendChild(el);
+                }
             }
         }
     }
@@ -791,13 +919,13 @@
     function loadGameState() {
         try {
             const state = JSON.parse(localStorage.getItem('syllable_game_state'));
-            if (!state) return;
+            if (!state) { updateLevelProgress(); updateStatus(); return; }
             coinsCount = state.coinsCount || 0; level = state.level || 1; wordsCompletedInLevel = state.wordsCompletedInLevel || 0;
             completedLevelsTotal = state.completedLevelsTotal || 0; spentStars = state.spentStars || 0; boughtStars = state.boughtStars || 0;
             errorsCount = state.errorsCount || 0; inventory = state.inventory || {}; equippedAccessories = state.equippedAccessories || {};
             maxErrors = state.maxErrors !== undefined ? state.maxErrors : 20;
             
-            updateCoinsDisplay(); updateAccessoryDisplay(); updateStatus();
+            updateCoinsDisplay(); updateAccessoryDisplay(); updateCollectiblesDisplay(); updateStatus(); updateLevelProgress();
             
             if (state.isPlaying && state.currentWordRaw) {
                 document.getElementById('btn-continue').style.display = 'flex';
