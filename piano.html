@@ -65,6 +65,17 @@
             justify-content: space-between;
         }
 
+        /* Контейнер для смайлика и коллекционок */
+        .character-wrapper {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+
         .character-box {
             font-size: 70px;
             width: 85px; 
@@ -74,20 +85,17 @@
             justify-content: center;
             transition: transform 0.2s;
             position: relative;
-            margin-bottom: 15px;
             cursor: pointer;
+            z-index: 5;
         }
         
         .character-box.bounce { transform: scale(1.2) translateY(-10px); }
         .character-box.shake { animation: shake 0.3s; }
 
-        /* Контейнер для украшений */
+        /* Контейнер для украшений (шапки, очки) */
         .accessory-layer {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
             z-index: 10;
         }
@@ -97,6 +105,20 @@
         .acc-glasses { top: 5px; left: 50%; transform: translateX(-50%); font-size: 65px; }
         .acc-bow { bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 40px; }
         .acc-flower { top: -5px; right: -15px; font-size: 35px; transform: rotate(20deg); }
+
+        /* Контейнер для коллекционок вокруг смайлика */
+        .collectibles-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        
+        .collectible-item { position: absolute; display: block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        .col-medal { bottom: 5px; left: 5px; font-size: 35px; z-index: 6; }
+        .col-trophy { bottom: 5px; right: 5px; font-size: 35px; z-index: 6; }
+        .col-crown { top: 5px; right: -5px; font-size: 35px; transform: rotate(15deg); z-index: 1; }
+        .col-unicorn { top: 5px; left: -5px; font-size: 35px; transform: scaleX(-1) rotate(-15deg); z-index: 1; }
+        .col-diamond { bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 30px; z-index: 6; }
 
         .stats-box {
             width: 100%;
@@ -126,7 +148,7 @@
             text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
             line-height: 1.2;
         }
-        .sidebar-stars span { transition: transform 0.2s; }
+        .sidebar-stars span { transition: transform 0.2s; cursor: pointer;}
         .sidebar-stars span:hover { transform: scale(1.2); }
         .sidebar-stars.empty { color: #aaa; font-size: 14px; text-shadow: none; font-weight: bold; }
 
@@ -210,6 +232,20 @@
         }
         #bass-hint-btn:active { transform: scale(0.9); }
 
+        /* Кнопка проигрывания мелодии под ключом */
+        #play-melody-btn {
+            position: absolute;
+            left: 30px;
+            top: 110px;
+            font-size: 35px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            z-index: 10;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        #play-melody-btn:active { transform: scale(0.9); }
+        #play-melody-btn.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
+
         .staff-container {
             position: relative;
             height: 160px;
@@ -223,7 +259,7 @@
         .line { width: 100%; height: 2px; background: #000; }
 
         #notes-layer { position: absolute; top: 0; left: 90px; width: calc(100% - 100px); height: 100%; z-index: 2; }
-        .note { position: absolute; width: 24px; height: 16px; background: #000; border-radius: 50%; transform: rotate(-15deg); }
+        .note { position: absolute; width: 24px; height: 16px; background: #000; border-radius: 50%; transform: rotate(-15deg); transition: background-color 0.2s, box-shadow 0.2s, transform 0.2s; }
         
         .accidental {
             position: absolute;
@@ -244,7 +280,13 @@
         .note.error { background: #dc3545; animation: shake 0.3s; }
         .note.error .accidental { color: #dc3545; }
 
-        /* Стили текста подсказки под нотой */
+        /* Эффект подсветки при автоматическом проигрывании */
+        .note.playing-highlight {
+            box-shadow: 0 0 0 4px #ffc107, 0 0 15px #ffc107 !important;
+            transform: rotate(-15deg) scale(1.3) !important;
+            z-index: 20 !important;
+        }
+
         .note-hint-label {
             position: absolute;
             font-size: 14px;
@@ -252,9 +294,8 @@
             color: #007bff;
             text-align: center;
             width: 30px;
-            margin-left: -3px; /* Центрирование относительно ноты */
+            margin-left: -3px; 
             z-index: 5;
-            /* Белая обводка текста на случай, если текст попадет на линию */
             text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 0px 0px 4px #fff;
         }
 
@@ -466,6 +507,7 @@
             <div id="bass-hint-btn" onclick="toggleBassHints()">?</div>
             <div class="staff-container">
                 <div class="clef" id="clef-symbol">𝄞</div>
+                <div id="play-melody-btn" onclick="playFullMelody()" title="Прослушать мелодию">▶️</div>
                 <div class="staff-lines">
                     <div class="line"></div>
                     <div class="line"></div>
@@ -483,9 +525,12 @@
     </div>
 
     <div class="sidebar">
-        <div class="character-box" id="character" onclick="attemptSpendStar(false)">
-            <span id="char-face">😋</span>
-            <div class="accessory-layer" id="accessory-layer"></div>
+        <div class="character-wrapper">
+            <div class="character-box" id="character" onclick="attemptSpendStar(false)">
+                <span id="char-face">😋</span>
+                <div class="accessory-layer" id="accessory-layer"></div>
+            </div>
+            <div class="collectibles-layer" id="collectibles-layer"></div>
         </div>
         
         <div class="error-container">
@@ -570,7 +615,7 @@
     let showBlackHints = true;
     let mixBassClef = false; 
     let currentClef = 'treble';
-    let bassHintsActive = false; // Состояние подсказок для басового ключа
+    let bassHintsActive = false; 
 
     const MELODY_LENGTH = 12;
     
@@ -588,12 +633,12 @@
     let completedScreens = 0; 
     let errorsCount = 0;
     let isPlaying = false;
+    let isAutoPlaying = false;
     let emotionTimeout;
 
     let inventory = {}; 
     let equippedAccessories = {}; 
     
-    // Обновленный магазин с коллекционными предметами
     const shopItems = [
         { id: 'star', name: 'Звезда', emoji: '⭐', price: 200, type: 'consumable' },
         { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50, type: 'accessory' },
@@ -682,7 +727,7 @@
             
             btn.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
-                checkNote(key.midi);
+                if(!isAutoPlaying) checkNote(key.midi);
             });
 
             if (key.type === 'white') {
@@ -713,30 +758,91 @@
         });
     }
 
-    function playTone(midi) {
+    // Улучшенный звук фортепиано
+    function playTone(midi, duration = 0.4) {
         if (!actx) actx = new AudioCtx();
         if (actx.state === 'suspended') actx.resume();
+        
         let freq = 440 * Math.pow(2, (midi - 69) / 12);
-        let osc = actx.createOscillator();
-        let gain = actx.createGain();
+        let time = actx.currentTime;
         
-        osc.type = 'triangle';
-        osc.frequency.value = freq;
+        // Главная огибающая громкости
+        let gainNode = actx.createGain();
+        gainNode.gain.setValueAtTime(0, time);
+        gainNode.gain.linearRampToValueAtTime(0.7, time + 0.015); // Быстрая атака
+        gainNode.gain.exponentialRampToValueAtTime(0.2, time + 0.3); // Спад
+        gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration + 0.8); // Долгий релиз
+        gainNode.connect(actx.destination);
+
+        // 1. Основной тон (тело звука)
+        let osc1 = actx.createOscillator();
+        osc1.type = 'triangle';
+        osc1.frequency.value = freq;
+        osc1.connect(gainNode);
+
+        // 2. Резонирующий обертон (звонкость)
+        let osc2 = actx.createOscillator();
+        osc2.type = 'sine';
+        osc2.frequency.value = freq * 2; 
+        let gain2 = actx.createGain();
+        gain2.gain.value = 0.15;
+        osc2.connect(gain2);
+        gain2.connect(gainNode);
+
+        // 3. Имитация удара молоточка (атака)
+        let osc3 = actx.createOscillator();
+        osc3.type = 'sawtooth';
+        osc3.frequency.value = freq;
+        let filter = actx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(freq * 5, time);
+        filter.frequency.exponentialRampToValueAtTime(freq, time + 0.1);
         
-        osc.connect(gain);
-        gain.connect(actx.destination);
+        let gain3 = actx.createGain();
+        gain3.gain.setValueAtTime(0.3, time);
+        gain3.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
         
-        gain.gain.setValueAtTime(0.3, actx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 0.35);
+        osc3.connect(filter);
+        filter.connect(gain3);
+        gain3.connect(gainNode);
+
+        // Старт и стоп всех нод
+        osc1.start(time);
+        osc2.start(time);
+        osc3.start(time);
+
+        osc1.stop(time + duration + 1);
+        osc2.stop(time + duration + 1);
+        osc3.stop(time + duration + 1);
+    }
+
+    async function playFullMelody() {
+        if (!isPlaying || isAutoPlaying || currentMelody.length === 0) return;
         
-        osc.start(actx.currentTime);
-        osc.stop(actx.currentTime + 0.35);
+        isAutoPlaying = true;
+        const btn = document.getElementById('play-melody-btn');
+        btn.classList.add('disabled');
+
+        for (let i = 0; i < currentMelody.length; i++) {
+            if (!isPlaying) break; // Прервать, если нажали Стоп
+            
+            let noteObj = currentMelody[i];
+            let noteEl = document.getElementById(`note-${i}`);
+            
+            if (noteEl) noteEl.classList.add('playing-highlight');
+            playTone(noteObj.midi, 0.4);
+            
+            await new Promise(r => setTimeout(r, 450));
+            
+            if (noteEl) noteEl.classList.remove('playing-highlight');
+        }
+
+        if(isPlaying) btn.classList.remove('disabled');
+        isAutoPlaying = false;
     }
 
     function getIdleEmotion() {
-        if (maxErrors > 0 && (errorsCount / maxErrors) >= 0.7) {
-            return EMOTION_FEAR;
-        }
+        if (maxErrors > 0 && (errorsCount / maxErrors) >= 0.7) return EMOTION_FEAR;
         return EMOTION_IDLE;
     }
 
@@ -769,13 +875,11 @@
             else if (percent > 40) fill.classList.add('warning');
         } else {
             text.innerText = `0 / 0`;
-            fill.style.width = errorsCount > 0 ? '100%' : '0%';
+            fill.style.width = errorsCount > 0 ? '100%';
             fill.className = 'error-fill danger';
         }
         
-        if(isPlaying) {
-            document.getElementById('char-face').innerText = getIdleEmotion();
-        }
+        if(isPlaying) document.getElementById('char-face').innerText = getIdleEmotion();
     }
 
     function startGame() {
@@ -783,12 +887,14 @@
         document.getElementById('btn-stop').style.display = 'block';
         document.getElementById('stars-screen').style.display = 'none';
         document.getElementById('settings-screen').style.display = 'none';
+        document.getElementById('play-melody-btn').classList.remove('disabled');
         
         if (document.documentElement.requestFullscreen) {
             document.documentElement.requestFullscreen().catch((err) => console.log(err));
         }
         
         isPlaying = true;
+        isAutoPlaying = false;
         currentNoteIndex = 0;
         completedScreens = 0;
         spentStars = 0;
@@ -803,6 +909,7 @@
 
     function generateScreenMelody() {
         currentMelody = [];
+        document.getElementById('play-melody-btn').classList.remove('disabled');
         
         if (mixBassClef) {
             currentClef = Math.random() > 0.5 ? 'bass' : 'treble';
@@ -812,7 +919,7 @@
 
         const clefEl = document.getElementById('clef-symbol');
         const hintBtn = document.getElementById('bass-hint-btn');
-        bassHintsActive = false; // Сбрасываем подсказки при новом экране
+        bassHintsActive = false; 
 
         if (currentClef === 'treble') {
             clefEl.innerText = '𝄞';
@@ -839,7 +946,6 @@
         updateStatus();
     }
 
-    // Переключение подсказок для басового ключа
     function toggleBassHints() {
         bassHintsActive = !bassHintsActive;
         const labels = document.querySelectorAll('.note-hint-label');
@@ -851,11 +957,13 @@
     function stopGame(isGameOver = false) {
         if (!isPlaying) return;
         isPlaying = false;
+        isAutoPlaying = false;
         
         document.getElementById('btn-start').style.display = 'block';
         document.getElementById('btn-stop').style.display = 'none';
         document.getElementById('notes-layer').innerHTML = '';
         document.getElementById('bass-hint-btn').style.display = 'none';
+        document.getElementById('play-melody-btn').classList.add('disabled');
         
         if (isGameOver) {
             setEmotion(EMOTION_CRY, 'shake');
@@ -908,12 +1016,11 @@
 
             layer.appendChild(noteEl);
 
-            // Создаем текстовую подсказку названия ноты (по умолчанию скрыта)
             let hintLabel = document.createElement('div');
             hintLabel.className = 'note-hint-label';
             hintLabel.innerText = noteObj.name;
             hintLabel.style.left = (leftPos - 3) + 'px'; 
-            hintLabel.style.top = '145px'; // Все подсказки выстроены в линию внизу стана
+            hintLabel.style.top = '145px'; 
             hintLabel.style.display = bassHintsActive ? 'block' : 'none';
             layer.appendChild(hintLabel);
         });
@@ -937,8 +1044,8 @@
     }
 
     function checkNote(pressedMidi) {
-        if (!isPlaying) return;
-        playTone(pressedMidi);
+        if (!isPlaying || isAutoPlaying) return;
+        playTone(pressedMidi, 0.4);
 
         const expectedNote = currentMelody[currentNoteIndex];
         const currentEl = document.getElementById(`note-${currentNoteIndex}`);
@@ -1023,11 +1130,11 @@
             } else if (isCollectible) {
                 if (isOwned) {
                     extraClass = 'owned';
-                    priceText = 'Куплено';
+                    priceText = 'В коллекции';
                 } else {
                     priceText = '🪙 ' + item.price;
                 }
-            } else { // accessory
+            } else { 
                 if (isEquipped) {
                     extraClass = 'equipped';
                     priceText = 'Надето';
@@ -1066,6 +1173,7 @@
                         coinsCount -= item.price;
                         inventory[item.id] = true;
                         updateCoinsDisplay();
+                        updateAccessoryDisplay();
                         renderShop();
                     } else {
                         showDialog("Упс!", "Недостаточно монеток! Зарабатывай их правильными нажатиями.", false);
@@ -1101,7 +1209,6 @@
     function updateAccessoryDisplay() {
         const accLayer = document.getElementById('accessory-layer');
         accLayer.innerHTML = ''; 
-
         for (const [accId, isEquipped] of Object.entries(equippedAccessories)) {
             if (isEquipped) {
                 const item = shopItems.find(i => i.id === accId);
@@ -1110,6 +1217,20 @@
                     el.className = `accessory-item acc-${item.id}`; 
                     el.innerText = item.emoji;
                     accLayer.appendChild(el);
+                }
+            }
+        }
+
+        const colLayer = document.getElementById('collectibles-layer');
+        colLayer.innerHTML = '';
+        for (const [colId, isOwned] of Object.entries(inventory)) {
+            if (isOwned) {
+                const item = shopItems.find(i => i.id === colId);
+                if (item && item.type === 'collectible') {
+                    const el = document.createElement('span');
+                    el.className = `collectible-item col-${item.id}`; 
+                    el.innerText = item.emoji;
+                    colLayer.appendChild(el);
                 }
             }
         }
@@ -1146,9 +1267,7 @@
                 updateStatus();
             },
             () => { 
-                if (isGameOverRescue) {
-                    stopGame(true); 
-                }
+                if (isGameOverRescue) stopGame(true); 
             }
         );
     }
@@ -1169,16 +1288,12 @@
                 for (let i = 0; i < availableStars; i++) {
                     let star = document.createElement('span');
                     star.innerText = '⭐';
-                    star.style.cursor = 'pointer';
-                    star.title = "Нажми, чтобы списать 5 ошибок!";
                     star.onclick = () => attemptSpendStar(false);
                     starsDisplay.appendChild(star);
                 }
             } else {
                 let starBtn = document.createElement('span');
                 starBtn.innerText = `⭐ x ${availableStars}`;
-                starBtn.style.cursor = 'pointer';
-                starBtn.title = "Нажми, чтобы списать 5 ошибок!";
                 starBtn.onclick = () => attemptSpendStar(false);
                 starsDisplay.appendChild(starBtn);
             }
@@ -1216,18 +1331,14 @@
         }
     }
 
-    function closeStarsScreen() {
-        document.getElementById('stars-screen').style.display = 'none';
-    }
+    function closeStarsScreen() { document.getElementById('stars-screen').style.display = 'none'; }
 
     function openSettings() {
         if(isPlaying) stopGame(); 
         document.getElementById('settings-screen').style.display = 'flex';
     }
 
-    function closeSettings() {
-        document.getElementById('settings-screen').style.display = 'none';
-    }
+    function closeSettings() { document.getElementById('settings-screen').style.display = 'none'; }
 
     function saveSettings() {
         maxErrors = parseInt(document.getElementById('setting-difficulty').value);
@@ -1240,33 +1351,24 @@
         startGame();
     }
 
-    window.addEventListener('resize', () => {
-        if (isPlaying) renderNotes();
-    });
+    window.addEventListener('resize', () => { if (isPlaying) renderNotes(); });
 
     /* ============ ЛОГИКА PWA УСТАНОВКИ ============ */
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        if (!isStandalone) {
-            installBtn.style.display = 'block';
-        }
+        if (!isStandalone) installBtn.style.display = 'block';
     });
 
     installBtn.addEventListener('click', async () => {
         if (!deferredPrompt) {
-            if (isIOS) {
-                document.getElementById('iosHintModal').style.display = 'flex';
-            } else {
-                showDialog("Установка", 'Откройте меню браузера и выберите "Установить приложение" или "Добавить на главный экран"', false);
-            }
+            if (isIOS) document.getElementById('iosHintModal').style.display = 'flex';
+            else showDialog("Установка", 'Откройте меню браузера и выберите "Установить приложение"', false);
             return;
         }
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            installBtn.style.display = 'none';
-        }
+        if (outcome === 'accepted') installBtn.style.display = 'none';
         deferredPrompt = null;
     });
 
@@ -1275,24 +1377,14 @@
         deferredPrompt = null;
     });
 
-    function closeIosHint() {
-        document.getElementById('iosHintModal').style.display = 'none';
-    }
+    function closeIosHint() { document.getElementById('iosHintModal').style.display = 'none'; }
+    if (isStandalone) installBtn.style.display = 'none';
+    else if (isIOS) installBtn.style.display = 'block';
 
-    if (isStandalone) {
-        installBtn.style.display = 'none';
-    } else if (isIOS) {
-        installBtn.style.display = 'block';
-    }
-
-    // Блокировка мультитач-зума (раздвигание пальцами)
     document.addEventListener('touchstart', function(event) {
-        if (event.touches.length > 1) {
-            event.preventDefault();
-        }
+        if (event.touches.length > 1) event.preventDefault();
     }, { passive: false });
 
-    // Жесткая блокировка зума по двойному быстрому тапу
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function(event) {
         const now = (new Date()).getTime();
@@ -1303,7 +1395,6 @@
         lastTouchEnd = now;
     }, { passive: false });
 
-    // Инициализация при первой загрузке
     buildKeyboard(getKeyboardLayout(currentClef));
 </script>
 </body>
