@@ -13,10 +13,11 @@
     <meta name="application-name" content="Слоги">
     <meta name="format-detection" content="telephone=no">
     
+    <link rel="manifest" id="manifest-link">
+    
     <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='38' fill='%234caf50'/><text x='90' y='125' font-family='Arial' font-size='100' fill='white' text-anchor='middle'>АБ</text></svg>">
     <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%234caf50'/><text x='32' y='46' font-family='Arial' font-size='38' fill='white' text-anchor='middle'>АБ</text></svg>">
     
-    <link rel="manifest" id="manifest-link">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/nunito@5.0.18/cyrillic.css">
 
     <style>
@@ -30,6 +31,8 @@
             --danger-color: #e53e3e;
             --soft-color: #4a5568;
             --gray-color: #cbd5e0;
+            --grid-border: #94a3b8; /* Цвет толстой границы */
+            --cell-border: #e2e8f0; /* Цвет тонкой границы ячеек */
         }
 
         * { 
@@ -52,7 +55,7 @@
             overflow: hidden; 
         }
 
-        /* --- ВЕРХНЯЯ ЧАСТЬ (Сектор 1 и Сектор 2) --- */
+        /* --- ВЕРХНЯЯ ЧАСТЬ --- */
         .top-panel {
             display: flex;
             height: 25vh;
@@ -98,7 +101,6 @@
             text-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
 
-        /* Цвета для отгаданных букв */
         .word-syllable .consonant { color: var(--secondary-color); }
         .word-syllable .vowel { color: var(--danger-color); }
         .word-syllable .soft { color: var(--soft-color); }
@@ -175,8 +177,9 @@
         .btn-play { background: #28a745; color: white; }
         .btn-stop { background: #dc3545; color: white; display: none; }
         .btn-continue { background: #17a2b8; color: white; display: none; grid-column: span 2; }
+        #btn-install { display: none; grid-column: span 2; background: #6f42c1; color: white; } /* Кнопка установки */
 
-        /* --- НИЖНЯЯ ЧАСТЬ (Сектор 3: Таблица) --- */
+        /* --- НИЖНЯЯ ЧАСТЬ (ТАБЛИЦА) --- */
         .sector3 {
             flex: 1;
             padding: 4px 8px 8px 8px;
@@ -188,11 +191,12 @@
         .syllable-grid {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
-            gap: 2px;
-            background: #dcdcdc;
-            border: 2px solid #dcdcdc;
+            border: 2px solid var(--grid-border);
             border-radius: 8px;
             flex: 1; 
+            background: var(--cell-border);
+            gap: 1px; /* Тонкие внутренние линии */
+            overflow: hidden;
         }
 
         .grid-cell {
@@ -205,7 +209,24 @@
             cursor: pointer;
             transition: background 0.1s, transform 0.1s;
         }
-        .grid-cell.header { background: #f8f9fa; font-size: clamp(10px, 3vw, 18px); }
+        
+        /* Выделение первой строки (гласные) и первого столбца (согласные) толстыми границами */
+        .grid-cell:nth-child(-n+12) {
+            border-bottom: 3px solid var(--grid-border);
+            background: #f8f9fa;
+        }
+        
+        .grid-cell:nth-child(12n+1) {
+            border-right: 3px solid var(--grid-border);
+            background: #f8f9fa;
+        }
+
+        /* Левая верхняя ячейка (пересечение границ) */
+        .grid-cell:nth-child(1) {
+            background: #e2e8f0;
+        }
+
+        .grid-cell.header { font-size: clamp(10px, 3vw, 18px); }
         .grid-cell:active { background: #e2e8f0; transform: scale(0.9); }
         .grid-cell.empty { background: #f4f4f4; cursor: default; }
         .grid-cell.empty:active { transform: none; }
@@ -220,8 +241,8 @@
             width: 100vw; height: 100dvh; background: rgba(255, 255, 255, 0.97);
             display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100; 
         }
-        .modal-panel { background: #fff; padding: 20px; width: 100%; height: 100%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .modal-content { width: 100%; max-width: 500px; text-align: center; }
+        .modal-panel { background: transparent; padding: 20px; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .modal-content { background: #fff; border-radius: 12px; padding: 25px; width: 100%; max-width: 500px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.15);}
         
         .btn-large { padding: 12px 25px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin: 5px; color: white;}
         .btn-blue { background: #007bff; }
@@ -252,8 +273,7 @@
     <div class="top-panel">
         <div class="sector1">
             <button class="tts-btn" onclick="speakCurrentWord()">🔊</button>
-            <div class="word-display" id="word-display">
-                </div>
+            <div class="word-display" id="word-display"></div>
             <div class="level-progress" id="level-progress">Слова: 0 / 5 (Ур. 1)</div>
         </div>
 
@@ -275,7 +295,7 @@
                 <button class="icon-btn btn-stop" id="btn-stop" onclick="stopGame()">⏹️</button>
                 <button class="icon-btn" onclick="openShop()">🛒</button>
                 <button class="icon-btn" onclick="openSettings()">⚙️</button>
-                <button class="icon-btn" id="btn-install" style="display:none; grid-column: span 2;">📥</button>
+                <button class="icon-btn" id="btn-install">📥</button>
             </div>
         </div>
     </div>
@@ -285,8 +305,8 @@
     </div>
 
     <div id="dialog-screen" class="overlay-screen" style="z-index: 200; background: rgba(0,0,0,0.6);">
-        <div class="modal-panel" style="background: transparent;">
-            <div class="modal-content" style="background: #fff; border-radius: 12px; padding: 25px;">
+        <div class="modal-panel">
+            <div class="modal-content">
                 <h3 id="dialog-title" style="margin-top: 0;"></h3>
                 <p id="dialog-message" style="margin-bottom: 20px; color: #555;"></p>
                 <button class="btn-large btn-blue" id="dialog-btn-yes">ОК</button>
@@ -296,16 +316,20 @@
     </div>
 
     <div id="stars-screen" class="overlay-screen">
-        <h2 id="stars-title" style="text-align: center;">Уровень пройден!</h2>
-        <div class="stars-wrapper" id="stars-area"></div>
-        <button class="btn-large btn-blue" style="margin-top: 30px;" onclick="closeStarsScreen()">Дальше</button>
+        <div class="modal-panel">
+            <div class="modal-content">
+                <h2 id="stars-title" style="text-align: center;">Уровень пройден!</h2>
+                <div class="stars-wrapper" id="stars-area"></div>
+                <button class="btn-large btn-blue" style="margin-top: 30px;" onclick="closeStarsScreen()">Дальше</button>
+            </div>
+        </div>
     </div>
 
     <div id="settings-screen" class="overlay-screen">
         <div class="modal-panel">
             <div class="modal-content">
                 <h3>Настройки</h3>
-                <div class="settings-row">
+                <div class="settings-row" style="margin-top: 15px;">
                     <label>Сложность (допустимо ошибок):</label>
                     <select id="setting-difficulty">
                         <option value="20" selected>Легко (20 ошибок)</option>
@@ -330,13 +354,101 @@
             </div>
         </div>
     </div>
+    
+    <div id="iosHintModal" class="overlay-screen">
+        <div class="modal-panel">
+            <div class="modal-content">
+                <h3>Установка на iOS</h3>
+                <p style="margin: 15px 0;">Нажмите иконку <strong>"Поделиться"</strong> внизу экрана браузера, а затем выберите <strong>"На экран «Домой»"</strong>.</p>
+                <button class="btn-large btn-blue" onclick="closeIosHint()">Понятно</button>
+            </div>
+        </div>
+    </div>
 
 <script>
+    /* ============ PWA И УСТАНОВКА (ДЛЯ GITHUB PAGES) ============ */
+    // Динамическая генерация манифеста, чтобы не создавать отдельный файл
+    const manifestData = {
+        "name": "Тренажер Слогов",
+        "short_name": "Слоги",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#f0f4f8",
+        "theme_color": "#4caf50",
+        "orientation": "portrait",
+        "icons": [{
+            "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='38' fill='%234caf50'/><text x='90' y='125' font-family='Arial' font-size='100' fill='white' text-anchor='middle'>АБ</text></svg>",
+            "sizes": "180x180",
+            "type": "image/svg+xml"
+        }]
+    };
+    const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+    document.getElementById('manifest-link').setAttribute('href', URL.createObjectURL(manifestBlob));
+
+    let deferredPrompt;
+    const installBtn = document.getElementById('btn-install');
+    
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+
+    if (isStandalone) {
+        installBtn.style.display = 'none';
+    } else if (isIOS) {
+        installBtn.style.display = 'flex'; // Показываем кнопку на iOS
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault(); 
+        deferredPrompt = e;
+        installBtn.style.display = 'flex';
+    });
+    
+    installBtn.addEventListener('click', async () => {
+        if (isIOS) {
+            document.getElementById('iosHintModal').style.display = 'flex';
+            return;
+        }
+        if (!deferredPrompt) {
+            showDialog("Установка", 'Откройте меню браузера и выберите "Установить приложение" или "Добавить на главный экран"', false);
+            return;
+        }
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            installBtn.style.display = 'none';
+        }
+        deferredPrompt = null;
+    });
+
+    window.addEventListener('appinstalled', () => {
+        installBtn.style.display = 'none';
+        deferredPrompt = null;
+    });
+
+    function closeIosHint() {
+        document.getElementById('iosHintModal').style.display = 'none';
+    }
+
+    // Защита от зума на iOS
+    document.addEventListener('touchstart', function(event) {
+        if (event.touches.length > 1) event.preventDefault();
+    }, { passive: false });
+
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault(); 
+            if(event.target) event.target.click(); 
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+
+
     /* ============ ДАННЫЕ ТАБЛИЦЫ СЛОГОВ ============ */
     const consonantsList = ["Н","М","Т","К","Х","Б","В","Г","Д","Ж","З","Л","П","Р","С","Ф","Ц","Ч","Ш","Щ","Й"];
     const vowelsList = ["А","У","О","Ы","Э","И","Е","Я","Ё","Ю","Ь"];
     
-    // Карта слогов для валидации и заполнения
     const columnsData = {
         "А": ["НА","МА","ТА","КА","ХА","БА","ВА","ГА","ДА","ЖА","ЗА","ЛА","ПА","РА","СА","ФА","ЦА","ЧА","ША","ЩА","ЙА"],
         "У": ["НУ","МУ","ТУ","КУ","ХУ","БУ","ВУ","ГУ","ДУ","ЖУ","ЗУ","ЛУ","ПУ","РУ","СУ","ФУ","ЦУ","ЧУ","ШУ","ЩУ","ЙУ"],
@@ -351,11 +463,8 @@
         "Ь": ["НЬ","МЬ","ТЬ","КЬ","ХЬ","БЬ","ВЬ","ГЬ","ДЬ","","ЗЬ","ЛЬ","ПЬ","РЬ","СЬ","ФЬ","","ЧЬ","ШЬ","ЩЬ",""]
     };
 
-    // Собираем все валидные слоги (для проверки слов из словаря)
     const validSyllables = new Set([...consonantsList, ...vowelsList.filter(v => v !== 'Ь')]);
-    for (let v of vowelsList) {
-        columnsData[v].forEach(s => { if (s) validSyllables.add(s); });
-    }
+    for (let v of vowelsList) columnsData[v].forEach(s => { if (s) validSyllables.add(s); });
 
     /* ============ ИГРОВЫЕ ПЕРЕМЕННЫЕ ============ */
     const WORDS_PER_LEVEL = 5;
@@ -385,6 +494,7 @@
     const EMOTION_CRY = '😭';
     let emotionTimeout;
 
+    // Магазин (всё как в фортепиано, но без инструментов)
     const shopItems = [
         { id: 'star', name: 'Звезда', emoji: '⭐', price: 200, type: 'consumable' },
         { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50, type: 'accessory' },
@@ -393,7 +503,7 @@
         { id: 'flower', name: 'Заколка', emoji: '🌸', price: 200, type: 'accessory' }
     ];
 
-    /* ============ ИНИЦИАЛИЗАЦИЯ И РЕНДЕР ТАБЛИЦЫ ============ */
+    /* ============ ИНИЦИАЛИЗАЦИЯ ТАБЛИЦЫ ============ */
     function formatHTML(text) {
         let html = '';
         for (let char of text) {
@@ -401,9 +511,7 @@
             else if (vowelsList.includes(char)) {
                 if(char === 'Ь') html += `<span class="soft">${char}</span>`;
                 else html += `<span class="vowel">${char}</span>`;
-            } else {
-                html += char;
-            }
+            } else { html += char; }
         }
         return html;
     }
@@ -412,22 +520,17 @@
         const grid = document.getElementById('syllable-grid');
         grid.innerHTML = '';
         
-        // Строка 0: Заголовок и одиночные гласные
-        grid.appendChild(createCell('?', true, 'header')); // Пустая клетка в углу
-        vowelsList.forEach(v => {
-            grid.appendChild(createCell(v, true, 'header'));
-        });
+        // Строка 0 (Гласные)
+        grid.appendChild(createCell('?', true, 'header')); 
+        vowelsList.forEach(v => grid.appendChild(createCell(v, true, 'header')));
 
-        // Остальные строки: Согласная + Слоги
+        // Остальные строки (Согласные)
         consonantsList.forEach((c, rowIndex) => {
-            // Первая колонка - одиночная согласная
-            grid.appendChild(createCell(c, true));
-            // Колонки гласных
+            grid.appendChild(createCell(c, true, 'header'));
             vowelsList.forEach(v => {
                 let syll = columnsData[v][rowIndex];
-                if (syll) {
-                    grid.appendChild(createCell(syll, false));
-                } else {
+                if (syll) grid.appendChild(createCell(syll, false));
+                else {
                     let emptyDiv = document.createElement('div');
                     emptyDiv.className = 'grid-cell empty';
                     grid.appendChild(emptyDiv);
@@ -453,47 +556,31 @@
             if (res.ok) {
                 let text = await res.text();
                 let loadedWords = text.split('\n').map(w => w.trim().toUpperCase()).filter(w => w.length > 0);
-                
-                // Фильтруем только те слова, чьи куски есть в нашей таблице
-                let validWords = loadedWords.filter(word => {
-                    let parts = word.split('-');
-                    return parts.every(p => validSyllables.has(p));
-                });
-                
-                if(validWords.length > 0) {
-                    dictionary = validWords;
-                }
+                let validWords = loadedWords.filter(word => word.split('-').every(p => validSyllables.has(p)));
+                if(validWords.length > 0) dictionary = validWords;
             }
-        } catch (e) {
-            console.log("Словарь dic.txt не найден, используем встроенный.");
-        }
+        } catch (e) { console.log("Используем встроенный словарь."); }
     }
 
-    /* ============ ОЗВУЧКА (TTS) ============ */
+    /* ============ ОЗВУЧКА ============ */
     let russianVoice = null;
     function initVoice() {
-        const voices = window.speechSynthesis.getVoices();
-        let candidate = voices.find(v => v.lang.startsWith('ru'));
+        let candidate = window.speechSynthesis.getVoices().find(v => v.lang.startsWith('ru'));
         if (candidate) russianVoice = candidate;
     }
     if ('speechSynthesis' in window) {
         window.speechSynthesis.onvoiceschanged = initVoice;
         setTimeout(initVoice, 500);
     }
-
     function speakText(text) {
         if (!russianVoice) return;
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text.toLowerCase());
-        utter.lang = "ru-RU";
-        utter.voice = russianVoice;
-        utter.rate = 0.85;
+        utter.lang = "ru-RU"; utter.voice = russianVoice; utter.rate = 0.85;
         window.speechSynthesis.speak(utter);
     }
-
     function speakCurrentWord() {
-        if (!currentWordRaw) return;
-        speakText(currentWordRaw.replace(/-/g, ''));
+        if (currentWordRaw) speakText(currentWordRaw.replace(/-/g, ''));
     }
 
     /* ============ ИГРОВАЯ МЕХАНИКА ============ */
@@ -502,102 +589,63 @@
         document.getElementById('btn-continue').style.display = 'none';
         document.getElementById('btn-stop').style.display = 'flex';
         
-        isPlaying = true;
-        wordsCompletedInLevel = 0;
-        spentStars = 0;
-        boughtStars = 0;
-        errorsCount = 0;
-        
-        updateErrorBar();
-        setEmotion(EMOTION_IDLE);
-        nextWord();
+        isPlaying = true; wordsCompletedInLevel = 0; spentStars = 0; boughtStars = 0; errorsCount = 0;
+        updateErrorBar(); setEmotion(EMOTION_IDLE); nextWord();
     }
 
     function stopGame(isGameOver = false) {
         if (!isPlaying) return;
         isPlaying = false;
-        
         document.getElementById('btn-start').style.display = 'flex';
         document.getElementById('btn-stop').style.display = 'none';
         document.getElementById('word-display').innerHTML = '';
         
-        if (isGameOver) {
-            setEmotion(EMOTION_CRY, 'shake');
-            showStarsReward(0, true);
-        } else {
-            setEmotion(EMOTION_IDLE);
-            let earnedStars = Math.max(0, completedLevelsTotal - spentStars + boughtStars);
-            showStarsReward(earnedStars, false);
-        }
+        if (isGameOver) { setEmotion(EMOTION_CRY, 'shake'); showStarsReward(0, true); } 
+        else { setEmotion(EMOTION_IDLE); showStarsReward(Math.max(0, completedLevelsTotal - spentStars + boughtStars), false); }
         saveGameState();
     }
 
     function nextWord() {
         if(wordsCompletedInLevel >= WORDS_PER_LEVEL) {
-            completedLevelsTotal++;
-            level++;
-            wordsCompletedInLevel = 0;
+            completedLevelsTotal++; level++; wordsCompletedInLevel = 0;
             saveGameState();
             showStarsReward(completedLevelsTotal - spentStars + boughtStars, false);
             return;
         }
-
         currentWordRaw = dictionary[Math.floor(Math.random() * dictionary.length)];
         currentWordParts = currentWordRaw.split('-');
         currentPartIndex = 0;
-        
-        renderWordDisplay();
-        updateLevelProgress();
-        saveGameState();
+        renderWordDisplay(); updateLevelProgress(); saveGameState();
     }
 
     function renderWordDisplay() {
         const container = document.getElementById('word-display');
         container.innerHTML = '';
-        
         currentWordParts.forEach((part, index) => {
             const span = document.createElement('span');
             span.className = 'word-syllable hidden-color';
             span.id = `syllable-${index}`;
             span.innerHTML = formatHTML(part);
-            
-            // Восстановление стейта (если загрузились)
-            if (index < currentPartIndex) {
-                span.classList.remove('hidden-color');
-            } else if (index === currentPartIndex) {
-                span.classList.add('active');
-            }
-            
+            if (index < currentPartIndex) span.classList.remove('hidden-color');
+            else if (index === currentPartIndex) span.classList.add('active');
             container.appendChild(span);
         });
     }
 
-    function updateLevelProgress() {
-        document.getElementById('level-progress').innerText = `Слова: ${wordsCompletedInLevel} / ${WORDS_PER_LEVEL} (Ур. ${level})`;
-    }
+    function updateLevelProgress() { document.getElementById('level-progress').innerText = `Слова: ${wordsCompletedInLevel} / ${WORDS_PER_LEVEL} (Ур. ${level})`; }
 
     function handleCellClick(syllableText) {
         if (!isPlaying) return;
-
-        let expected = currentWordParts[currentPartIndex];
-        if (syllableText === expected) {
-            // Правильно
+        if (syllableText === currentWordParts[currentPartIndex]) {
             speakText(syllableText);
             let el = document.getElementById(`syllable-${currentPartIndex}`);
-            if (el) {
-                el.classList.remove('hidden-color', 'active');
-            }
-            
+            if (el) el.classList.remove('hidden-color', 'active');
             setEmotion(EMOTION_HAPPY, 'bounce');
-            coinsCount += 5;
-            updateCoinsDisplay();
+            coinsCount += 5; updateCoinsDisplay();
             
             currentPartIndex++;
-            
             if (currentPartIndex >= currentWordParts.length) {
-                // Слово собрано
-                wordsCompletedInLevel++;
-                updateLevelProgress();
+                wordsCompletedInLevel++; updateLevelProgress();
                 setTimeout(() => { if(isPlaying) nextWord(); }, 1000);
             } else {
                 let nextEl = document.getElementById(`syllable-${currentPartIndex}`);
@@ -605,35 +653,24 @@
                 saveGameState();
             }
         } else {
-            // Ошибка
-            errorsCount++;
-            updateErrorBar();
-            
+            errorsCount++; updateErrorBar();
             if (maxErrors > 0 && errorsCount >= maxErrors) {
-                const availableStars = completedLevelsTotal - spentStars + boughtStars;
-                if (availableStars > 0) attemptSpendStar(true);
+                if ((completedLevelsTotal - spentStars + boughtStars) > 0) attemptSpendStar(true);
                 else stopGame(true);
-            } else if (maxErrors === 0) {
-                stopGame(true);
-            } else {
-                setEmotion(EMOTION_SAD, 'shake');
-                saveGameState();
-            }
+            } else if (maxErrors === 0) stopGame(true);
+            else { setEmotion(EMOTION_SAD, 'shake'); saveGameState(); }
         }
     }
 
-    /* ============ UI, ЭМОЦИИ И ОШИБКИ ============ */
+    /* ============ UI И ЭМОЦИИ ============ */
     function setEmotion(emoji, animClass = '') {
         const charFace = document.getElementById('char-face');
         const charBox = document.getElementById('character');
-        charFace.innerText = emoji;
-        charBox.className = 'character-box ' + animClass;
-        
+        charFace.innerText = emoji; charBox.className = 'character-box ' + animClass;
         clearTimeout(emotionTimeout);
         if (isPlaying && emoji !== EMOTION_CRY) {
             emotionTimeout = setTimeout(() => {
-                let idle = (maxErrors > 0 && (errorsCount / maxErrors) >= 0.7) ? EMOTION_SAD : EMOTION_IDLE;
-                charFace.innerText = idle;
+                charFace.innerText = (maxErrors > 0 && (errorsCount / maxErrors) >= 0.7) ? EMOTION_SAD : EMOTION_IDLE;
                 charBox.className = 'character-box';
             }, 1000);
         }
@@ -644,107 +681,51 @@
         if (maxErrors > 0) {
             let percent = (errorsCount / maxErrors) * 100;
             fill.style.width = percent + '%';
-            fill.className = 'error-fill-mini';
-            if (percent > 75) fill.classList.add('danger');
-            else if (percent > 40) fill.classList.add('warning');
-        } else {
-            fill.style.width = errorsCount > 0 ? '100%' : '0%';
-            fill.className = 'error-fill-mini danger';
-        }
+            fill.className = 'error-fill-mini ' + (percent > 75 ? 'danger' : (percent > 40 ? 'warning' : ''));
+        } else fill.className = 'error-fill-mini danger', fill.style.width = errorsCount > 0 ? '100%' : '0%';
         updateStatus();
     }
 
-    function updateCoinsDisplay() {
-        document.getElementById('sidebar-coins').innerText = coinsCount;
-        document.getElementById('shop-coins').innerText = coinsCount;
-    }
+    function updateCoinsDisplay() { document.getElementById('sidebar-coins').innerText = coinsCount; document.getElementById('shop-coins').innerText = coinsCount; }
 
     function updateStatus() {
         const starsDisplay = document.getElementById('stars-display');
-        const availableStars = completedLevelsTotal - spentStars + boughtStars; 
-        
-        if (availableStars <= 0) {
-            starsDisplay.innerHTML = '';
-        } else if (availableStars <= 5) {
-            starsDisplay.innerHTML = '⭐'.repeat(availableStars);
-        } else {
-            starsDisplay.innerHTML = `⭐ x${availableStars}`;
-        }
+        const avStars = completedLevelsTotal - spentStars + boughtStars; 
+        starsDisplay.innerHTML = avStars <= 0 ? '' : (avStars <= 5 ? '⭐'.repeat(avStars) : `⭐ x${avStars}`);
     }
 
     function attemptSpendStar(isGameOverRescue = false) {
         if (!isPlaying && !isGameOverRescue) return;
-        const availableStars = completedLevelsTotal - spentStars + boughtStars;
-        
-        if (availableStars <= 0) {
-            if (isGameOverRescue) stopGame(true);
-            else showDialog("Нет звёзд", "Пройди уровень или купи звезду!", false);
+        if ((completedLevelsTotal - spentStars + boughtStars) <= 0) {
+            if (isGameOverRescue) stopGame(true); else showDialog("Нет звёзд", "Пройди уровень или купи звезду!", false);
             return;
         }
-
         if (errorsCount <= 0 && !isGameOverRescue) return;
-
         showDialog(
-            isGameOverRescue ? "Ой-ой!" : "Списать ошибки?",
-            "Потратить 1 ⭐, чтобы убрать 5 ошибок?",
-            true, 
-            () => { 
-                spentStars++;
-                errorsCount = Math.max(0, errorsCount - 5);
-                updateErrorBar();
-                setEmotion(EMOTION_IDLE);
-                saveGameState();
-            },
+            isGameOverRescue ? "Ой-ой!" : "Списать ошибки?", "Потратить 1 ⭐, чтобы убрать 5 ошибок?", true, 
+            () => { spentStars++; errorsCount = Math.max(0, errorsCount - 5); updateErrorBar(); setEmotion(EMOTION_IDLE); saveGameState(); },
             () => { if (isGameOverRescue) stopGame(true); }
         );
     }
 
     function showDialog(title, message, showCancel, onOk, onCancel) {
-        document.getElementById('dialog-title').innerText = title;
-        document.getElementById('dialog-message').innerText = message;
-        
-        const btnYes = document.getElementById('dialog-btn-yes');
-        const btnNo = document.getElementById('dialog-btn-no');
-        
-        btnYes.style.display = 'inline-block';
-        btnNo.style.display = showCancel ? 'inline-block' : 'none';
-        
+        document.getElementById('dialog-title').innerText = title; document.getElementById('dialog-message').innerText = message;
+        const btnYes = document.getElementById('dialog-btn-yes'), btnNo = document.getElementById('dialog-btn-no');
+        btnYes.style.display = 'inline-block'; btnNo.style.display = showCancel ? 'inline-block' : 'none';
         btnYes.onclick = () => { document.getElementById('dialog-screen').style.display = 'none'; if(onOk) onOk(); };
         btnNo.onclick = () => { document.getElementById('dialog-screen').style.display = 'none'; if(onCancel) onCancel(); };
-        
         document.getElementById('dialog-screen').style.display = 'flex';
     }
 
-    /* ============ НАГРАДЫ И ОКОНЧАНИЕ УРОВНЯ ============ */
     function showStarsReward(count, isGameOver) {
-        const screen = document.getElementById('stars-screen');
-        const area = document.getElementById('stars-area');
-        const title = document.getElementById('stars-title');
-        area.innerHTML = '';
-        screen.style.display = 'flex';
-
-        if (isGameOver) {
-            title.innerText = "Ошибок слишком много! 😭";
-            title.style.color = "#dc3545";
-            return;
-        }
-
-        title.style.color = "#28a745";
-        title.innerText = "Отличный результат!";
-        for (let i = 0; i < count; i++) {
-            setTimeout(() => {
-                const star = document.createElement('span');
-                star.className = 'star';
-                star.innerHTML = '⭐';
-                area.appendChild(star);
-            }, i * 150); 
-        }
+        const screen = document.getElementById('stars-screen'), area = document.getElementById('stars-area'), title = document.getElementById('stars-title');
+        area.innerHTML = ''; screen.style.display = 'flex';
+        if (isGameOver) { title.innerText = "Ошибок слишком много! 😭"; title.style.color = "#dc3545"; return; }
+        title.style.color = "#28a745"; title.innerText = "Отличный результат!";
+        for (let i = 0; i < count; i++) setTimeout(() => { let s = document.createElement('span'); s.className = 'star'; s.innerHTML = '⭐'; area.appendChild(s); }, i * 150); 
     }
 
-    function closeStarsScreen() {
-        document.getElementById('stars-screen').style.display = 'none';
-        if(isPlaying) nextWord(); 
-    }
+    function closeStarsScreen() { document.getElementById('stars-screen').style.display = 'none'; if(isPlaying) nextWord(); }
 
     /* ============ МАГАЗИН ============ */
     function openShop() { renderShop(); document.getElementById('shop-screen').style.display = 'flex'; }
@@ -752,43 +733,28 @@
 
     function renderShop() {
         updateCoinsDisplay();
-        const grid = document.getElementById('shop-grid');
-        grid.innerHTML = '';
-        
+        const grid = document.getElementById('shop-grid'); grid.innerHTML = '';
         shopItems.forEach(item => {
-            const el = document.createElement('div');
-            const isConsumable = item.type === 'consumable';
-            const isOwned = inventory[item.id];
-            const isEquipped = equippedAccessories[item.id];
+            const el = document.createElement('div'), isCons = item.type === 'consumable', isOwn = inventory[item.id], isEq = equippedAccessories[item.id];
+            let exClass = '', prText = '';
+            if (isCons) { exClass = 'consumable'; prText = '🪙 ' + item.price; }
+            else if (isEq) { exClass = 'equipped'; prText = 'Надето'; }
+            else if (isOwn) { exClass = 'owned'; prText = 'Куплено'; }
+            else { prText = '🪙 ' + item.price; }
             
-            let extraClass = '', priceText = '';
-            if (isConsumable) { extraClass = 'consumable'; priceText = '🪙 ' + item.price; }
-            else if (isEquipped) { extraClass = 'equipped'; priceText = 'Надето'; }
-            else if (isOwned) { extraClass = 'owned'; priceText = 'Куплено'; }
-            else { priceText = '🪙 ' + item.price; }
-
-            el.className = `shop-item ${extraClass}`;
-            el.innerHTML = `<div class="shop-item-emoji">${item.emoji}</div><div class="shop-item-name">${item.name}</div><div class="shop-item-price">${priceText}</div>`;
-            
+            el.className = `shop-item ${exClass}`;
+            el.innerHTML = `<div class="shop-item-emoji">${item.emoji}</div><div class="shop-item-name">${item.name}</div><div class="shop-item-price">${prText}</div>`;
             el.onclick = () => {
-                if (isConsumable) {
-                    if (coinsCount >= item.price) {
-                        coinsCount -= item.price; boughtStars++;
-                        renderShop(); updateStatus(); saveGameState();
-                    } else showDialog("Упс!", "Не хватает монеток!", false);
-                    return;
-                }
-                if (isEquipped) {
-                    delete equippedAccessories[item.id];
-                    updateAccessoryDisplay(); renderShop(); saveGameState();
-                } else if (isOwned) {
-                    equippedAccessories[item.id] = true;
-                    updateAccessoryDisplay(); renderShop(); saveGameState();
+                if (isCons) {
+                    if (coinsCount >= item.price) { coinsCount -= item.price; boughtStars++; renderShop(); updateStatus(); saveGameState(); } 
+                    else showDialog("Упс!", "Не хватает монеток!", false);
+                } else if (isEq) {
+                    delete equippedAccessories[item.id]; updateAccessoryDisplay(); renderShop(); saveGameState();
+                } else if (isOwn) {
+                    equippedAccessories[item.id] = true; updateAccessoryDisplay(); renderShop(); saveGameState();
                 } else {
-                    if (coinsCount >= item.price) {
-                        coinsCount -= item.price; inventory[item.id] = true;
-                        renderShop(); saveGameState();
-                    } else showDialog("Упс!", "Не хватает монеток!", false);
+                    if (coinsCount >= item.price) { coinsCount -= item.price; inventory[item.id] = true; renderShop(); saveGameState(); } 
+                    else showDialog("Упс!", "Не хватает монеток!", false);
                 }
             };
             grid.appendChild(el);
@@ -796,17 +762,11 @@
     }
 
     function updateAccessoryDisplay() {
-        const accLayer = document.getElementById('accessory-layer');
-        accLayer.innerHTML = ''; 
-        for (const [accId, isEquipped] of Object.entries(equippedAccessories)) {
-            if (isEquipped) {
+        const accLayer = document.getElementById('accessory-layer'); accLayer.innerHTML = ''; 
+        for (const [accId, isEq] of Object.entries(equippedAccessories)) {
+            if (isEq) {
                 const item = shopItems.find(i => i.id === accId);
-                if (item) {
-                    const el = document.createElement('span');
-                    el.className = `accessory-item acc-${item.id}`; 
-                    el.innerText = item.emoji;
-                    accLayer.appendChild(el);
-                }
+                if (item) { let el = document.createElement('span'); el.className = `accessory-item acc-${item.id}`; el.innerText = item.emoji; accLayer.appendChild(el); }
             }
         }
     }
@@ -817,38 +777,24 @@
         document.getElementById('setting-difficulty').disabled = isPlaying;
         document.getElementById('settings-screen').style.display = 'flex';
     }
-    
     function closeSettings() { document.getElementById('settings-screen').style.display = 'none'; }
-    
-    function saveSettings() {
-        if (!isPlaying) maxErrors = parseInt(document.getElementById('setting-difficulty').value);
-        saveGameState(); closeSettings();
-    }
+    function saveSettings() { if (!isPlaying) maxErrors = parseInt(document.getElementById('setting-difficulty').value); saveGameState(); closeSettings(); }
 
     /* ============ СОХРАНЕНИЯ ============ */
     function saveGameState() {
-        const state = {
-            coinsCount, level, wordsCompletedInLevel, completedLevelsTotal,
-            spentStars, boughtStars, errorsCount, inventory, equippedAccessories,
-            maxErrors, isPlaying, currentWordRaw, currentPartIndex
-        };
-        localStorage.setItem('syllable_game_state', JSON.stringify(state));
+        localStorage.setItem('syllable_game_state', JSON.stringify({
+            coinsCount, level, wordsCompletedInLevel, completedLevelsTotal, spentStars, boughtStars, errorsCount, 
+            inventory, equippedAccessories, maxErrors, isPlaying, currentWordRaw, currentPartIndex
+        }));
     }
 
     function loadGameState() {
-        const saved = localStorage.getItem('syllable_game_state');
-        if (!saved) return;
         try {
-            const state = JSON.parse(saved);
-            coinsCount = state.coinsCount || 0;
-            level = state.level || 1;
-            wordsCompletedInLevel = state.wordsCompletedInLevel || 0;
-            completedLevelsTotal = state.completedLevelsTotal || 0;
-            spentStars = state.spentStars || 0;
-            boughtStars = state.boughtStars || 0;
-            errorsCount = state.errorsCount || 0;
-            inventory = state.inventory || {};
-            equippedAccessories = state.equippedAccessories || {};
+            const state = JSON.parse(localStorage.getItem('syllable_game_state'));
+            if (!state) return;
+            coinsCount = state.coinsCount || 0; level = state.level || 1; wordsCompletedInLevel = state.wordsCompletedInLevel || 0;
+            completedLevelsTotal = state.completedLevelsTotal || 0; spentStars = state.spentStars || 0; boughtStars = state.boughtStars || 0;
+            errorsCount = state.errorsCount || 0; inventory = state.inventory || {}; equippedAccessories = state.equippedAccessories || {};
             maxErrors = state.maxErrors !== undefined ? state.maxErrors : 20;
             
             updateCoinsDisplay(); updateAccessoryDisplay(); updateStatus();
@@ -862,45 +808,13 @@
     }
 
     function continueGame() {
-        const state = window.savedSessionData;
-        if (!state) return;
-        document.getElementById('btn-start').style.display = 'none';
-        document.getElementById('btn-continue').style.display = 'none';
-        document.getElementById('btn-stop').style.display = 'flex';
-        
-        isPlaying = true;
-        currentWordRaw = state.currentWordRaw;
-        currentWordParts = currentWordRaw.split('-');
-        currentPartIndex = state.currentPartIndex || 0;
-        
-        renderWordDisplay();
-        updateLevelProgress();
-        updateErrorBar();
-        window.savedSessionData = null;
-        saveGameState();
+        const state = window.savedSessionData; if (!state) return;
+        document.getElementById('btn-start').style.display = 'none'; document.getElementById('btn-continue').style.display = 'none'; document.getElementById('btn-stop').style.display = 'flex';
+        isPlaying = true; currentWordRaw = state.currentWordRaw; currentWordParts = currentWordRaw.split('-'); currentPartIndex = state.currentPartIndex || 0;
+        renderWordDisplay(); updateLevelProgress(); updateErrorBar(); window.savedSessionData = null; saveGameState();
     }
 
-    /* ============ PWA И ЗАПУСК ============ */
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault(); deferredPrompt = e;
-        document.getElementById('btn-install').style.display = 'flex';
-    });
-    
-    document.getElementById('btn-install').addEventListener('click', async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') document.getElementById('btn-install').style.display = 'none';
-        deferredPrompt = null;
-    });
-
-    window.onload = async () => {
-        buildGrid();
-        await loadDictionary();
-        loadGameState();
-    };
-
+    window.onload = async () => { buildGrid(); await loadDictionary(); loadGameState(); };
 </script>
 </body>
 </html>
