@@ -229,14 +229,14 @@
             background: #28a745;
             color: #fff;
             font-size: 16px;
-            display: none; /* скрыта до старта */
+            display: none; 
             align-items: center;
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 3px 6px rgba(0,0,0,0.2);
             z-index: 10;
             transition: transform 0.1s;
-            padding-left: 4px; /* визуальное центрирование треугольника */
+            padding-left: 4px; 
         }
         #play-melody-btn:active { transform: scale(0.9); }
 
@@ -327,6 +327,7 @@
         .settings-row { margin-bottom: 10px; text-align: left; }
         .settings-row label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
         .settings-row select { padding: 6px; width: 100%; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;}
+        .settings-row select:disabled { background: #e9ecef; color: #6c757d; cursor: not-allowed; }
         .settings-row.checkbox-row { display: flex; align-items: center; gap: 8px; }
         .settings-row.checkbox-row input { width: 18px; height: 18px; }
         .settings-row.checkbox-row label { margin: 0; cursor: pointer; }
@@ -381,6 +382,14 @@
                         <option value="0">Супер сложно (Без ошибок)</option>
                     </select>
                 </div>
+                <div class="settings-row">
+                    <label>Музыкальный инструмент:</label>
+                    <select id="setting-instrument">
+                        <option value="piano" selected>Фортепиано 🎹</option>
+                        <option value="wind">Флейта (Духовой) 🎷</option>
+                        <option value="string">Скрипка (Струнный) 🎻</option>
+                    </select>
+                </div>
                 <div class="settings-row checkbox-row">
                     <input type="checkbox" id="setting-mix-bass">
                     <label for="setting-mix-bass" style="color: #007bff;">Включить басовый ключ</label>
@@ -397,7 +406,7 @@
                     <input type="checkbox" id="setting-hint-black" checked>
                     <label for="setting-hint-black">Подсказки черных клавиш</label>
                 </div>
-                <button class="btn btn-start" onclick="saveSettings()" style="margin-top: 10px;">Сохранить и начать</button>
+                <button class="btn btn-start" onclick="saveSettings()" style="margin-top: 10px;">Применить</button>
                 <button class="btn" style="background: #e9ecef; color: #333;" onclick="closeSettings()">Отмена</button>
             </div>
         </div>
@@ -452,13 +461,11 @@
     </div>
 
     <div class="sidebar">
-        <!-- Обновленная обертка для позиционирования -->
         <div class="character-wrapper">
             <div class="character-box" id="character" onclick="attemptSpendStar(false)">
                 <span id="char-face">😋</span>
                 <div class="accessory-layer" id="accessory-layer"></div>
             </div>
-            <!-- Слой для предметов, которые раскладываются вокруг -->
             <div id="collectibles-layer"></div>
         </div>
         
@@ -482,6 +489,7 @@
             <button class="btn btn-install" id="btn-install">📥 Установить игру</button>
             <button class="btn btn-shop" onclick="openShop()">🛒 Магазин</button>
             <button class="btn btn-settings" onclick="openSettings()">⚙️ Настройки</button>
+            <button class="btn" id="btn-continue" onclick="continueGame()" style="display: none; background: #28a745; color: white;">⏯️ Продолжить</button>
             <button class="btn btn-start" id="btn-start" onclick="startGame()">▶ Начать игру</button>
             <button class="btn btn-stop" id="btn-stop" onclick="stopGame()">⏹ Завершить</button>
         </div>
@@ -545,6 +553,7 @@
     let mixBassClef = false; 
     let currentClef = 'treble';
     let bassHintsActive = false; 
+    let currentInstrument = 'piano';
 
     const MELODY_LENGTH = 12;
     
@@ -687,47 +696,222 @@
         });
     }
 
-    // Звук пианино с помощью синтеза Web Audio API
+    /* ============ СИНТЕЗАТОР ЗВУКОВ РАЗНЫХ ИНСТРУМЕНТОВ ============ */
     function playTone(midi) {
         if (!actx) actx = new AudioCtx();
         if (actx.state === 'suspended') actx.resume();
         
         let freq = 440 * Math.pow(2, (midi - 69) / 12);
+        let now = actx.currentTime;
         
-        // Два осциллятора для придания тембра
-        let osc1 = actx.createOscillator();
-        let osc2 = actx.createOscillator();
-        let gainNode = actx.createGain();
-        
-        osc1.type = 'sine';     // Основной тон
-        osc2.type = 'triangle'; // Обертона (более звонкий оттенок)
-        
-        osc1.frequency.value = freq;
-        osc2.frequency.value = freq;
-        
-        osc1.connect(gainNode);
-        osc2.connect(gainNode);
-        gainNode.connect(actx.destination);
-        
-        // Огибающая (Envelope) - атака и затухание как у фортепиано
-        gainNode.gain.setValueAtTime(0, actx.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.5, actx.currentTime + 0.02); // Быстрая атака
-        gainNode.gain.exponentialRampToValueAtTime(0.05, actx.currentTime + 0.4); // Быстрый спад
-        gainNode.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 1.2); // Долгое затухание
-        
-        osc1.start(actx.currentTime);
-        osc2.start(actx.currentTime);
-        osc1.stop(actx.currentTime + 1.2);
-        osc2.stop(actx.currentTime + 1.2);
+        if (currentInstrument === 'piano') {
+            // ФОРТЕПИАНО (Мягкая атака, богатое затухание)
+            let osc1 = actx.createOscillator();
+            let osc2 = actx.createOscillator();
+            let gainNode = actx.createGain();
+            
+            osc1.type = 'sine';
+            osc2.type = 'triangle';
+            osc1.frequency.value = freq;
+            osc2.frequency.value = freq;
+            
+            osc1.connect(gainNode);
+            osc2.connect(gainNode);
+            gainNode.connect(actx.destination);
+            
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.5, now + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.05, now + 0.4);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+            
+            osc1.start(now);
+            osc2.start(now);
+            osc1.stop(now + 1.2);
+            osc2.stop(now + 1.2);
+            
+        } else if (currentInstrument === 'wind') {
+            // ДУХОВОЙ (Флейта: плавная атака, выраженное удержание, лёгкое вибрато)
+            let osc = actx.createOscillator();
+            let gainNode = actx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            
+            // LFO для создания эффекта дыхания (вибрато)
+            let lfo = actx.createOscillator();
+            let lfoGain = actx.createGain();
+            lfo.frequency.value = 5.5; 
+            lfoGain.gain.value = freq * 0.006; 
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc.frequency);
+            
+            osc.connect(gainNode);
+            gainNode.connect(actx.destination);
+            
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.35, now + 0.08); // Мягкий вдох
+            gainNode.gain.setValueAtTime(0.35, now + 0.45);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.75); // Конец выдоха
+            
+            lfo.start(now);
+            osc.start(now);
+            lfo.stop(now + 0.75);
+            osc.stop(now + 0.75);
+            
+        } else if (currentInstrument === 'string') {
+            // СТРУННЫЙ (Скрипка: смычковая атака, богатые гармоники sawtooth с фильтром)
+            let osc = actx.createOscillator();
+            let filter = actx.createBiquadFilter();
+            let gainNode = actx.createGain();
+            
+            osc.type = 'sawtooth';
+            osc.frequency.value = freq;
+            
+            // Фильтр низких частот убирает излишний резкий писк пилы, делая её тёплой смычковой скрипкой
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(freq * 1.8, now);
+            filter.Q.value = 1.2;
+            
+            // Глубокое струнное вибрато
+            let lfo = actx.createOscillator();
+            let lfoGain = actx.createGain();
+            lfo.frequency.value = 6.0;
+            lfoGain.gain.value = freq * 0.008;
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc.frequency);
+            
+            osc.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(actx.destination);
+            
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.3, now + 0.14); // Тянущийся смычок
+            gainNode.gain.setValueAtTime(0.3, now + 0.5);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.85); // Снятие смычка
+            
+            lfo.start(now);
+            osc.start(now);
+            lfo.stop(now + 0.85);
+            osc.stop(now + 0.85);
+        }
     }
 
-    // Проигрывание сгенерированной мелодии
+    /* ============ СИСТЕМА ЛОКАЛЬНОГО СОХРАНЕНИЯ ПРОЦЕССА ============ */
+    function saveGameState() {
+        const state = {
+            coinsCount,
+            completedScreens,
+            spentStars,
+            boughtStars,
+            errorsCount,
+            inventory,
+            equippedAccessories,
+            maxErrors,
+            mixBassClef,
+            useBlackKeys,
+            showWhiteHints,
+            showBlackHints,
+            currentInstrument,
+            isPlaying, 
+            currentClef,
+            bassHintsActive,
+            currentNoteIndex,
+            currentMelody
+        };
+        localStorage.setItem('piano_game_state_v2', JSON.stringify(state));
+    }
+
+    function loadGameState() {
+        const saved = localStorage.getItem('piano_game_state_v2');
+        if (!saved) return;
+        try {
+            const state = JSON.parse(saved);
+            
+            coinsCount = state.coinsCount || 0;
+            completedScreens = state.completedScreens || 0;
+            spentStars = state.spentStars || 0;
+            boughtStars = state.boughtStars || 0;
+            errorsCount = state.errorsCount || 0;
+            inventory = state.inventory || {};
+            equippedAccessories = state.equippedAccessories || {};
+            
+            maxErrors = state.maxErrors !== undefined ? state.maxErrors : 20;
+            mixBassClef = !!state.mixBassClef;
+            useBlackKeys = !!state.useBlackKeys;
+            showWhiteHints = state.showWhiteHints !== undefined ? state.showWhiteHints : true;
+            showBlackHints = state.showBlackHints !== undefined ? state.showBlackHints : true;
+            currentInstrument = state.currentInstrument || 'piano';
+            
+            updateCoinsDisplay();
+            updateAccessoryDisplay();
+            updateCollectiblesDisplay();
+            
+            if (state.isPlaying && state.currentMelody && state.currentMelody.length > 0) {
+                document.getElementById('btn-continue').style.display = 'block';
+                document.getElementById('btn-start').innerText = '🔄 Начать заново';
+                window.savedSessionData = state;
+            } else {
+                document.getElementById('btn-continue').style.display = 'none';
+                document.getElementById('btn-start').innerText = '▶ Начать игру';
+            }
+        } catch (e) {
+            console.error("Ошибка чтения сохранения", e);
+        }
+    }
+
+    function continueGame() {
+        if (!window.savedSessionData) return;
+        const state = window.savedSessionData;
+        
+        document.getElementById('btn-start').style.display = 'none';
+        document.getElementById('btn-continue').style.display = 'none';
+        document.getElementById('btn-stop').style.display = 'block';
+        document.getElementById('play-melody-btn').style.display = 'flex';
+        document.getElementById('stars-screen').style.display = 'none';
+        document.getElementById('settings-screen').style.display = 'none';
+        
+        isPlaying = true;
+        currentClef = state.currentClef || 'treble';
+        bassHintsActive = !!state.bassHintsActive;
+        currentNoteIndex = state.currentNoteIndex || 0;
+        currentMelody = state.currentMelody;
+        completedScreens = state.completedScreens || 0;
+        errorsCount = state.errorsCount || 0;
+        
+        document.getElementById('sidebar-level').innerText = completedScreens + 1;
+        
+        const clefEl = document.getElementById('clef-symbol');
+        const hintBtn = document.getElementById('bass-hint-btn');
+        if (currentClef === 'treble') {
+            clefEl.innerText = '𝄞';
+            clefEl.style.top = '15px';
+            clefEl.style.fontSize = '85px';
+            hintBtn.style.display = 'none';
+        } else {
+            clefEl.innerText = '𝄢';
+            clefEl.style.top = '25px';
+            clefEl.style.fontSize = '75px';
+            hintBtn.style.display = 'flex';
+        }
+        
+        buildKeyboard(getKeyboardLayout(currentClef));
+        renderNotes();
+        updateErrorBar();
+        setEmotion(getIdleEmotion());
+        updateStatus();
+        
+        window.savedSessionData = null; 
+        saveGameState();
+    }
+
     async function playMelodyAnimation() {
         if (isAutoPlaying || !isPlaying) return;
         isAutoPlaying = true;
         
         for (let i = 0; i < currentMelody.length; i++) {
-            if (!isPlaying) break; // Прерывание, если завершили игру
+            if (!isPlaying) break; 
             
             const noteObj = currentMelody[i];
             const noteEl = document.getElementById(`note-${i}`);
@@ -735,7 +919,6 @@
             if (noteEl) noteEl.classList.add('playing');
             playTone(noteObj.midi);
             
-            // Ждем 450мс перед следующей нотой
             await new Promise(r => setTimeout(r, 450));
             
             if (noteEl) noteEl.classList.remove('playing');
@@ -791,6 +974,7 @@
 
     function startGame() {
         document.getElementById('btn-start').style.display = 'none';
+        document.getElementById('btn-continue').style.display = 'none';
         document.getElementById('btn-stop').style.display = 'block';
         document.getElementById('play-melody-btn').style.display = 'flex';
         document.getElementById('stars-screen').style.display = 'none';
@@ -849,6 +1033,7 @@
         }
         renderNotes();
         updateStatus();
+        saveGameState();
     }
 
     function toggleBassHints() {
@@ -857,6 +1042,7 @@
         labels.forEach(lbl => {
             lbl.style.display = bassHintsActive ? 'block' : 'none';
         });
+        saveGameState();
     }
 
     function stopGame(isGameOver = false) {
@@ -865,8 +1051,9 @@
         isAutoPlaying = false;
         
         document.getElementById('btn-start').style.display = 'block';
+        document.getElementById('btn-start').innerText = '▶ Начать игру';
+        document.getElementById('btn-continue').style.display = 'none';
         document.getElementById('btn-stop').style.display = 'none';
-        document.getElementById('play-melody-btn').style.display = 'none';
         document.getElementById('notes-layer').innerHTML = '';
         document.getElementById('bass-hint-btn').style.display = 'none';
         
@@ -877,6 +1064,7 @@
             setEmotion(EMOTION_IDLE);
             showStarsReward(Math.max(0, completedScreens - spentStars + boughtStars), false);
         }
+        saveGameState();
     }
 
     function renderNotes() {
@@ -919,6 +1107,11 @@
                 }
             }
 
+            // Восстановление закраски ноты, если игра возобновлена
+            if (index < currentNoteIndex) {
+                noteEl.classList.add('success');
+            }
+
             layer.appendChild(noteEl);
 
             let hintLabel = document.createElement('div');
@@ -951,7 +1144,7 @@
     }
 
     function checkNote(pressedMidi) {
-        if (!isPlaying || isAutoPlaying) return; // Игнорируем нажатия пока мелодия играется сама
+        if (!isPlaying || isAutoPlaying) return; 
         playTone(pressedMidi);
 
         const expectedNote = currentMelody[currentNoteIndex];
@@ -976,6 +1169,7 @@
             } else {
                 updateStatus();
                 highlightCurrentNote();
+                saveGameState();
             }
         } else {
             errorsCount++;
@@ -996,6 +1190,7 @@
                 stopGame(true);
             } else {
                 setEmotion(EMOTION_SAD, 'shake');
+                saveGameState();
             }
         }
     }
@@ -1012,9 +1207,9 @@
 
     function closeShop() {
         document.getElementById('shop-screen').style.display = 'none';
+        saveGameState();
     }
 
-    // Обновление слоя с коллекционными предметами (предметы вокруг)
     function updateCollectiblesDisplay() {
         const colLayer = document.getElementById('collectibles-layer');
         if (!colLayer) return;
@@ -1087,6 +1282,7 @@
                         updateCoinsDisplay();
                         updateStatus();
                         renderShop();
+                        saveGameState();
                     } else {
                         showDialog("Упс!", "Недостаточно монеток! Зарабатывай их правильными нажатиями.", false);
                     }
@@ -1101,6 +1297,7 @@
                         updateCoinsDisplay();
                         updateCollectiblesDisplay();
                         renderShop();
+                        saveGameState();
                     } else {
                         showDialog("Упс!", "Недостаточно монеток! Зарабатывай их правильными нажатиями.", false);
                     }
@@ -1112,16 +1309,19 @@
                         delete equippedAccessories[item.id];
                         updateAccessoryDisplay();
                         renderShop();
+                        saveGameState();
                     } else if (isOwned) {
                         equippedAccessories[item.id] = true;
                         updateAccessoryDisplay();
                         renderShop();
+                        saveGameState();
                     } else {
                         if (coinsCount >= item.price) {
                             coinsCount -= item.price;
                             inventory[item.id] = true;
                             updateCoinsDisplay();
                             renderShop();
+                            saveGameState();
                         } else {
                             showDialog("Упс!", "Недостаточно монеток! Зарабатывай их правильными нажатиями.", false);
                         }
@@ -1178,6 +1378,7 @@
                 updateErrorBar();
                 setEmotion(getIdleEmotion());
                 updateStatus();
+                saveGameState();
             },
             () => { 
                 if (isGameOverRescue) {
@@ -1254,8 +1455,19 @@
         document.getElementById('stars-screen').style.display = 'none';
     }
 
+    /* ============ НАСТРОЙКИ (ОБНОВЛЕННАЯ ЛОГИКА) ============ */
     function openSettings() {
-        if(isPlaying) stopGame(); 
+        // Синхронизируем интерфейс с текущими переменными
+        document.getElementById('setting-difficulty').value = maxErrors;
+        document.getElementById('setting-instrument').value = currentInstrument;
+        document.getElementById('setting-mix-bass').checked = mixBassClef;
+        document.getElementById('setting-blackkeys').checked = useBlackKeys;
+        document.getElementById('setting-hint-white').checked = showWhiteHints;
+        document.getElementById('setting-hint-black').checked = showBlackHints;
+
+        // Блокируем выбор сложности, если игра УЖЕ запущена
+        document.getElementById('setting-difficulty').disabled = isPlaying;
+        
         document.getElementById('settings-screen').style.display = 'flex';
     }
 
@@ -1264,14 +1476,26 @@
     }
 
     function saveSettings() {
-        maxErrors = parseInt(document.getElementById('setting-difficulty').value);
+        // Сложность сохраняется только если игра не активна
+        if (!isPlaying) {
+            maxErrors = parseInt(document.getElementById('setting-difficulty').value);
+        }
+        
+        currentInstrument = document.getElementById('setting-instrument').value;
         mixBassClef = document.getElementById('setting-mix-bass').checked;
         useBlackKeys = document.getElementById('setting-blackkeys').checked;
         showWhiteHints = document.getElementById('setting-hint-white').checked;
         showBlackHints = document.getElementById('setting-hint-black').checked;
         
+        // Если применили настройки во время запущенной игры — обновляем визуал без перезапуска
+        if (isPlaying) {
+            buildKeyboard(getKeyboardLayout(currentClef));
+            renderNotes();
+            updateStatus();
+        }
+        
+        saveGameState();
         closeSettings();
-        startGame();
     }
 
     window.addEventListener('resize', () => {
@@ -1335,8 +1559,11 @@
         lastTouchEnd = now;
     }, { passive: false });
 
-    buildKeyboard(getKeyboardLayout(currentClef));
-    updateCollectiblesDisplay();
+    // Инициализация загрузки при старте
+    loadGameState();
+    if (!isPlaying) {
+        buildKeyboard(getKeyboardLayout(currentClef));
+    }
 </script>
 </body>
 </html>
