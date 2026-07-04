@@ -92,39 +92,15 @@
             z-index: 10;
         }
 
-        /* Индивидуальные настройки для каждого украшения */
         .accessory-item {
             position: absolute;
             display: block;
         }
 
-        .acc-hat {
-            top: -40px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 55px;
-        }
-
-        .acc-glasses {
-            top: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 65px;
-        }
-
-        .acc-bow {
-            bottom: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 40px;
-        }
-
-        .acc-flower {
-            top: -5px;
-            right: -15px;
-            font-size: 35px;
-            transform: rotate(20deg);
-        }
+        .acc-hat { top: -40px; left: 50%; transform: translateX(-50%); font-size: 55px; }
+        .acc-glasses { top: 5px; left: 50%; transform: translateX(-50%); font-size: 65px; }
+        .acc-bow { bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 40px; }
+        .acc-flower { top: -5px; right: -15px; font-size: 35px; transform: rotate(20deg); }
 
         .stats-box {
             width: 100%;
@@ -140,21 +116,9 @@
             gap: 8px;
         }
 
-        .level-display {
-            font-size: 14px;
-            font-weight: bold;
-            color: #555;
-        }
-        .level-display span {
-            color: #007bff;
-            font-size: 16px;
-        }
-
-        .coins-display {
-            font-size: 16px;
-            font-weight: bold;
-            color: #ff8c00;
-        }
+        .level-display { font-size: 14px; font-weight: bold; color: #555; }
+        .level-display span { color: #007bff; font-size: 16px; }
+        .coins-display { font-size: 16px; font-weight: bold; color: #ff8c00; }
 
         .sidebar-stars {
             font-size: 20px;
@@ -166,18 +130,9 @@
             text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
             line-height: 1.2;
         }
-        .sidebar-stars span {
-            transition: transform 0.2s;
-        }
-        .sidebar-stars span:hover {
-            transform: scale(1.2);
-        }
-        .sidebar-stars.empty {
-            color: #aaa;
-            font-size: 14px;
-            text-shadow: none;
-            font-weight: bold;
-        }
+        .sidebar-stars span { transition: transform 0.2s; }
+        .sidebar-stars span:hover { transform: scale(1.2); }
+        .sidebar-stars.empty { color: #aaa; font-size: 14px; text-shadow: none; font-weight: bold; }
 
         .error-container { width: 100%; }
         .error-label {
@@ -244,7 +199,7 @@
             margin-top: 0px;
         }
 
-        .clef { position: absolute; left: 15px; top: 15px; font-size: 85px; font-family: serif; color: #000; }
+        .clef { position: absolute; left: 15px; top: 15px; font-size: 85px; font-family: serif; color: #000; transition: top 0.3s, font-size 0.3s; }
         
         .staff-lines { position: absolute; left: 0; top: 40px; width: 100%; height: 80px; display: flex; flex-direction: column; justify-content: space-between; z-index: 1; }
         .line { width: 100%; height: 2px; background: #000; }
@@ -379,7 +334,6 @@
             text-align: center;
         }
 
-        /* Настройки */
         .settings-row { margin-bottom: 10px; text-align: left; }
         .settings-row label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
         .settings-row select { padding: 6px; width: 100%; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;}
@@ -387,23 +341,8 @@
         .settings-row.checkbox-row input { width: 18px; height: 18px; }
         .settings-row.checkbox-row label { margin: 0; cursor: pointer; }
 
-        /* Магазин */
-        .shop-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin: 20px 0;
-        }
-        .shop-item {
-            background: #f8f9fa;
-            border: 2px solid #ddd;
-            border-radius: 12px;
-            padding: 15px 10px;
-            width: 110px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+        .shop-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0; }
+        .shop-item { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; padding: 15px 10px; width: 110px; cursor: pointer; transition: 0.2s; }
         .shop-item:hover { border-color: #ffc107; }
         .shop-item.owned { background: #d4edda; border-color: #28a745; }
         .shop-item.equipped { background: #cce5ff; border-color: #007bff; }
@@ -453,6 +392,10 @@
                     </select>
                 </div>
                 <div class="settings-row checkbox-row">
+                    <input type="checkbox" id="setting-mix-bass">
+                    <label for="setting-mix-bass" style="color: #007bff;">Включить басовый ключ</label>
+                </div>
+                <div class="settings-row checkbox-row">
                     <input type="checkbox" id="setting-blackkeys">
                     <label for="setting-blackkeys">Использовать диезы (черные клавиши)</label>
                 </div>
@@ -499,7 +442,7 @@
     <div class="main-area">
         <div class="stage">
             <div class="staff-container">
-                <div class="clef">𝄞</div>
+                <div class="clef" id="clef-symbol">𝄞</div>
                 <div class="staff-lines">
                     <div class="line"></div>
                     <div class="line"></div>
@@ -602,9 +545,10 @@
     let useBlackKeys = false;
     let showWhiteHints = true;
     let showBlackHints = true;
+    let mixBassClef = false; 
+    let currentClef = 'treble';
 
     const MELODY_LENGTH = 12;
-    const TOTAL_WHITE_KEYS = 14;
     
     const EMOTION_IDLE = '😋';
     const EMOTION_HAPPY = '😃';
@@ -633,60 +577,78 @@
         { id: 'flower', name: 'Заколка', emoji: '🌸', price: 200 }
     ];
 
-    const gameNotes = [
-        { id: 0, name: 'До', step: -2, midi: 60, color: '#e63946', isBlack: false },
-        { id: 1, name: 'Ре', step: -1, midi: 62, color: '#f4a261', isBlack: false },
-        { id: 2, name: 'Ми', step: 0,  midi: 64, color: '#e9c46a', isBlack: false },
-        { id: 3, name: 'Фа', step: 1,  midi: 65, color: '#2a9d8f', isBlack: false },
-        { id: 4, name: 'Соль', step: 2, midi: 67, color: '#00b4d8', isBlack: false },
-        { id: 5, name: 'Ля', step: 3,  midi: 69, color: '#3d5a80', isBlack: false },
-        { id: 6, name: 'Си', step: 4,  midi: 71, color: '#9b5de5', isBlack: false },
-        { id: 7, name: 'До', step: 5,  midi: 72, color: '#e63946', isBlack: false },
-        { id: 8, name: 'Ре', step: 6,  midi: 74, color: '#f4a261', isBlack: false },
-        { id: 9, name: 'Ми', step: 7,  midi: 76, color: '#e9c46a', isBlack: false },
-        { id: 10, name: 'Фа', step: 8, midi: 77, color: '#2a9d8f', isBlack: false },
-        { id: 11, name: 'Соль', step: 9, midi: 79, color: '#00b4d8', isBlack: false },
-        { id: 12, name: 'Ля', step: 10, midi: 81, color: '#3d5a80', isBlack: false },
-        { id: 13, name: 'Си', step: 11, midi: 83, color: '#9b5de5', isBlack: false },
-        
-        { id: 14, name: 'До#', step: -2, midi: 61, color: '#222', isBlack: true },
-        { id: 15, name: 'Ре#', step: -1, midi: 63, color: '#222', isBlack: true },
-        { id: 16, name: 'Фа#', step: 1,  midi: 66, color: '#222', isBlack: true },
-        { id: 17, name: 'Соль#', step: 2, midi: 68, color: '#222', isBlack: true },
-        { id: 18, name: 'Ля#', step: 3,  midi: 70, color: '#222', isBlack: true },
-        { id: 19, name: 'До#', step: 5,  midi: 73, color: '#222', isBlack: true },
-        { id: 20, name: 'Ре#', step: 6,  midi: 75, color: '#222', isBlack: true },
-        { id: 21, name: 'Фа#', step: 8,  midi: 78, color: '#222', isBlack: true },
-        { id: 22, name: 'Соль#', step: 9, midi: 80, color: '#222', isBlack: true },
-        { id: 23, name: 'Ля#', step: 10, midi: 82, color: '#222', isBlack: true }
-    ];
+    const pitchClasses = {
+        0: { name: 'До', color: '#e63946', isBlack: false },
+        1: { name: 'До#', color: '#222', isBlack: true },
+        2: { name: 'Ре', color: '#f4a261', isBlack: false },
+        3: { name: 'Ре#', color: '#222', isBlack: true },
+        4: { name: 'Ми', color: '#e9c46a', isBlack: false },
+        5: { name: 'Фа', color: '#2a9d8f', isBlack: false },
+        6: { name: 'Фа#', color: '#222', isBlack: true },
+        7: { name: 'Соль', color: '#00b4d8', isBlack: false },
+        8: { name: 'Соль#', color: '#222', isBlack: true },
+        9: { name: 'Ля', color: '#3d5a80', isBlack: false },
+        10: { name: 'Ля#', color: '#222', isBlack: true },
+        11: { name: 'Си', color: '#9b5de5', isBlack: false }
+    };
 
-    const keyboardLayout = [
-        { midi: 60, type: 'white', name: 'До', color: '#e63946' }, { midi: 61, type: 'black', name: 'До#' },
-        { midi: 62, type: 'white', name: 'Ре', color: '#f4a261' }, { midi: 63, type: 'black', name: 'Ре#' },
-        { midi: 64, type: 'white', name: 'Ми', color: '#e9c46a' },
-        { midi: 65, type: 'white', name: 'Фа', color: '#2a9d8f' }, { midi: 66, type: 'black', name: 'Фа#' },
-        { midi: 67, type: 'white', name: 'Соль', color: '#00b4d8' }, { midi: 68, type: 'black', name: 'Соль#' },
-        { midi: 69, type: 'white', name: 'Ля', color: '#3d5a80' }, { midi: 70, type: 'black', name: 'Ля#' },
-        { midi: 71, type: 'white', name: 'Си', color: '#9b5de5' },
-        { midi: 72, type: 'white', name: 'До', color: '#e63946' }, { midi: 73, type: 'black', name: 'До#' },
-        { midi: 74, type: 'white', name: 'Ре', color: '#f4a261' }, { midi: 75, type: 'black', name: 'Ре#' },
-        { midi: 76, type: 'white', name: 'Ми', color: '#e9c46a' },
-        { midi: 77, type: 'white', name: 'Фа', color: '#2a9d8f' }, { midi: 78, type: 'black', name: 'Фа#' },
-        { midi: 79, type: 'white', name: 'Соль', color: '#00b4d8' }, { midi: 80, type: 'black', name: 'Соль#' },
-        { midi: 81, type: 'white', name: 'Ля', color: '#3d5a80' }, { midi: 82, type: 'black', name: 'Ля#' },
-        { midi: 83, type: 'white', name: 'Си', color: '#9b5de5' }
-    ];
+    function getKeyboardLayout(clef) {
+        // Скрипичный: старт с До 1 октавы (60). Басовый: старт с До большой октавы (36).
+        let baseMidi = clef === 'treble' ? 60 : 36; 
+        let layout = [];
+        // 25 клавиш, чтобы покрыть ровно 15 белых клавиш (от До до До включительно)
+        for(let i = 0; i < 25; i++) {
+            let midi = baseMidi + i;
+            let info = pitchClasses[midi % 12];
+            layout.push({
+                midi: midi,
+                type: info.isBlack ? 'black' : 'white',
+                name: info.name,
+                color: info.color
+            });
+        }
+        return layout;
+    }
+
+    function getGameNotes(clef) {
+        let baseMidi = clef === 'treble' ? 60 : 36;
+        let currentStep = clef === 'treble' ? -2 : -4; 
+        let notes = [];
+        for (let i = 0; i < 25; i++) {
+            let midi = baseMidi + i;
+            let pc = midi % 12;
+            let info = pitchClasses[pc];
+            
+            notes.push({
+                id: i,
+                name: info.name,
+                step: currentStep,
+                midi: midi,
+                color: info.color,
+                isBlack: info.isBlack
+            });
+            
+            let nextPc = (midi + 1) % 12;
+            let isNextWhite = !pitchClasses[nextPc].isBlack;
+            if (info.isBlack || isNextWhite) {
+                currentStep++;
+            }
+        }
+        return notes;
+    }
 
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     let actx;
 
-    function buildKeyboard() {
+    function buildKeyboard(layout) {
+        if (!layout) layout = getKeyboardLayout(currentClef);
         const kbContainer = document.getElementById('piano-keyboard');
         kbContainer.innerHTML = '';
+        
+        const totalWhiteKeys = layout.filter(k => k.type === 'white').length;
         let whiteKeyIndex = 0;
 
-        keyboardLayout.forEach(key => {
+        layout.forEach(key => {
             const btn = document.createElement('div');
             
             btn.addEventListener('pointerdown', (e) => {
@@ -707,8 +669,8 @@
                 whiteKeyIndex++;
             } else {
                 btn.className = 'key-black';
-                btn.style.width = `calc(100% / ${TOTAL_WHITE_KEYS} * 0.62)`;
-                btn.style.left = `${(whiteKeyIndex / TOTAL_WHITE_KEYS) * 100}%`;
+                btn.style.width = `calc(100% / ${totalWhiteKeys} * 0.62)`;
+                btn.style.left = `${(whiteKeyIndex / totalWhiteKeys) * 100}%`;
                 btn.style.transform = 'translateX(-50%)';
                 
                 if (showBlackHints) {
@@ -721,8 +683,6 @@
             }
         });
     }
-
-    buildKeyboard();
 
     function playTone(midi) {
         if (!actx) actx = new AudioCtx();
@@ -814,7 +774,28 @@
 
     function generateScreenMelody() {
         currentMelody = [];
-        const availableNotes = gameNotes.filter(n => useBlackKeys || !n.isBlack);
+        
+        if (mixBassClef) {
+            currentClef = Math.random() > 0.5 ? 'bass' : 'treble';
+        } else {
+            currentClef = 'treble';
+        }
+
+        const clefEl = document.getElementById('clef-symbol');
+        if (currentClef === 'treble') {
+            clefEl.innerText = '𝄞';
+            clefEl.style.top = '15px';
+            clefEl.style.fontSize = '85px';
+        } else {
+            clefEl.innerText = '𝄢';
+            clefEl.style.top = '25px';
+            clefEl.style.fontSize = '75px';
+        }
+
+        buildKeyboard(getKeyboardLayout(currentClef));
+
+        const allNotes = getGameNotes(currentClef);
+        const availableNotes = allNotes.filter(n => useBlackKeys || !n.isBlack);
 
         for (let i = 0; i < MELODY_LENGTH; i++) {
             const randomNoteIndex = Math.floor(Math.random() * availableNotes.length);
@@ -864,10 +845,22 @@
                 noteEl.appendChild(acc);
             }
 
-            if (noteObj.step === -2 || noteObj.step === 10) {
-                createLedgerLine(noteEl, '8px');
-            } else if (noteObj.step === 11) { 
-                createLedgerLine(noteEl, '18px');
+            // Динамические добавочные линейки сверху нотного стана
+            if (noteObj.step >= 10) {
+                let numLines = Math.floor((noteObj.step - 8) / 2);
+                for (let l = 1; l <= numLines; l++) {
+                    let relativeTop = (noteObj.step * 10 - l * 20 - 72) + 'px';
+                    createLedgerLine(noteEl, relativeTop);
+                }
+            }
+            
+            // Динамические добавочные линейки снизу нотного стана
+            if (noteObj.step <= -2) {
+                let numLines = Math.floor((-noteObj.step) / 2);
+                for (let l = 1; l <= numLines; l++) {
+                    let relativeTop = (noteObj.step * 10 + l * 20 + 8) + 'px';
+                    createLedgerLine(noteEl, relativeTop);
+                }
             }
 
             layer.appendChild(noteEl);
@@ -1161,12 +1154,11 @@
 
     function saveSettings() {
         maxErrors = parseInt(document.getElementById('setting-difficulty').value);
+        mixBassClef = document.getElementById('setting-mix-bass').checked;
         useBlackKeys = document.getElementById('setting-blackkeys').checked;
         showWhiteHints = document.getElementById('setting-hint-white').checked;
         showBlackHints = document.getElementById('setting-hint-black').checked;
         
-        buildKeyboard(); 
-        document.getElementById('error-text').innerText = `0 / ${maxErrors}`;
         closeSettings();
         startGame();
     }
@@ -1227,13 +1219,15 @@
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function(event) {
         const now = (new Date()).getTime();
-        // Если между касаниями меньше 300мс - это двойной тап
         if (now - lastTouchEnd <= 300) {
             event.preventDefault(); 
             if(event.target) event.target.click(); 
         }
         lastTouchEnd = now;
     }, { passive: false });
+
+    // Инициализация при первой загрузке
+    buildKeyboard(getKeyboardLayout(currentClef));
 </script>
 </body>
 </html>
