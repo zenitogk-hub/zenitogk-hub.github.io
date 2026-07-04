@@ -25,6 +25,7 @@
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
+            touch-action: manipulation;
         }
         
         body {
@@ -35,7 +36,7 @@
             display: flex;
             height: 100dvh;
             overflow: hidden; 
-            touch-action: none; 
+            touch-action: manipulation; 
             gap: 10px;
         }
 
@@ -74,7 +75,7 @@
             transition: transform 0.2s;
             position: relative;
             margin-bottom: 15px;
-            cursor: pointer; /* Указатель при наведении на персонажа */
+            cursor: pointer;
         }
         
         .character-box.bounce { transform: scale(1.2) translateY(-10px); }
@@ -419,7 +420,6 @@
 </head>
 <body>
 
-    <!-- Универсальное диалоговое окно -->
     <div id="dialog-screen" class="overlay-screen" style="z-index: 200; background: rgba(0,0,0,0.5);">
         <div class="modal-panel" style="background: transparent;">
             <div class="modal-content" style="background: #fff; border-radius: 12px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
@@ -517,7 +517,6 @@
     </div>
 
     <div class="sidebar">
-        <!-- Клик по персонажу теперь тоже вызывает использование звезды -->
         <div class="character-box" id="character" onclick="attemptSpendStar(false)">
             <span id="char-face">😋</span>
             <div class="accessory-layer" id="accessory-layer"></div>
@@ -559,7 +558,7 @@
         "name": "Детский тренажер нот",
         "short_name": "Тренажер Нот",
         "start_url": window.location.href,
-        "display": "standalone",
+        "display": "fullscreen",
         "background_color": "#007bff",
         "theme-color": "#007bff",
         "orientation": "landscape",
@@ -796,6 +795,10 @@
         document.getElementById('stars-screen').style.display = 'none';
         document.getElementById('settings-screen').style.display = 'none';
         
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch((err) => console.log(err));
+        }
+        
         isPlaying = true;
         currentNoteIndex = 0;
         completedScreens = 0;
@@ -926,7 +929,7 @@
             if (maxErrors > 0 && errorsCount >= maxErrors) {
                 const availableStars = completedScreens - spentStars + boughtStars;
                 if (availableStars > 0) {
-                    attemptSpendStar(true); // Автоматическое предложение спасения
+                    attemptSpendStar(true); 
                 } else {
                     stopGame(true);
                 }
@@ -938,7 +941,6 @@
         }
     }
 
-    // --- Монетки и Магазин ---
     function updateCoinsDisplay() {
         document.getElementById('sidebar-coins').innerText = coinsCount;
         document.getElementById('shop-coins').innerText = coinsCount;
@@ -1043,7 +1045,6 @@
         }
     }
 
-    // --- Механика списания ошибок звездой ---
     function attemptSpendStar(isGameOverRescue = false) {
         if (!isPlaying && !isGameOverRescue) return;
 
@@ -1066,18 +1067,17 @@
         showDialog(
             isGameOverRescue ? "Слишком много ошибок!" : "Списание ошибок",
             "Хочешь потратить 1 ⭐, чтобы убрать 5 ошибок и играть дальше?",
-            true, // Показываем кнопку "Отмена"
-            () => { // Если игрок согласился
+            true, 
+            () => { 
                 spentStars++;
                 errorsCount = Math.max(0, errorsCount - 5);
                 updateErrorBar();
                 setEmotion(getIdleEmotion());
                 updateStatus();
-                // Если мы спасали игру, то игра продолжается
             },
-            () => { // Если игрок отказался
+            () => { 
                 if (isGameOverRescue) {
-                    stopGame(true); // Конец игре
+                    stopGame(true); 
                 }
             }
         );
@@ -1150,7 +1150,6 @@
         document.getElementById('stars-screen').style.display = 'none';
     }
 
-    // --- Настройки ---
     function openSettings() {
         if(isPlaying) stopGame(); 
         document.getElementById('settings-screen').style.display = 'flex';
@@ -1216,6 +1215,25 @@
     } else if (isIOS) {
         installBtn.style.display = 'block';
     }
+
+    // Блокировка мультитач-зума (раздвигание пальцами)
+    document.addEventListener('touchstart', function(event) {
+        if (event.touches.length > 1) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+
+    // Жесткая блокировка зума по двойному быстрому тапу
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+        const now = (new Date()).getTime();
+        // Если между касаниями меньше 300мс - это двойной тап
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault(); 
+            if(event.target) event.target.click(); 
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
 </script>
 </body>
 </html>
