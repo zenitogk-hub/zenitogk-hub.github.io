@@ -332,14 +332,15 @@
         .settings-row.checkbox-row input { width: 18px; height: 18px; }
         .settings-row.checkbox-row label { margin: 0; cursor: pointer; }
 
-        .shop-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0; }
-        .shop-item { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; padding: 15px 10px; width: 110px; cursor: pointer; transition: 0.2s; }
+        /* Обновленные стили магазина */
+        .shop-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 5px 0; overflow-y: auto; padding: 5px; }
+        .shop-item { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; padding: 8px 5px; width: 95px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .shop-item:hover { border-color: #ffc107; }
         .shop-item.owned { background: #d4edda; border-color: #28a745; }
         .shop-item.equipped { background: #cce5ff; border-color: #007bff; }
         .shop-item.consumable { background: #fff3cd; border-color: #ffeeba; }
-        .shop-item-emoji { font-size: 35px; margin-bottom: 5px; }
-        .shop-item-name { font-size: 13px; font-weight: bold; color: #333; margin-bottom: 5px; }
+        .shop-item-emoji { font-size: 28px; margin-bottom: 3px; }
+        .shop-item-name { font-size: 11px; font-weight: bold; color: #333; margin-bottom: 3px; text-align: center; line-height: 1.1; }
         .shop-item-price { font-size: 12px; color: #666; font-weight: bold; }
 
         .stars-wrapper { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; justify-content: center; max-height: 50vh; overflow-y: auto; }
@@ -412,19 +413,23 @@
         </div>
     </div>
 
+    <!-- Обновленный магазин -->
     <div id="shop-screen" class="overlay-screen">
-        <div class="modal-panel">
-            <div class="modal-content" style="max-width: 600px;">
-                <h3>Магазин 🛒</h3>
-                <div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin-bottom: 15px; background: #f8f9fa; border-radius: 8px; padding: 10px;">
-                    <p style="font-weight:bold; color:#ff8c00; margin:0;">Твои монетки: 🪙 <span id="shop-coins">0</span></p>
-                    <p style="font-weight:bold; color:#28a745; margin:0;">Доступно звёзд: ⭐ <span id="shop-stars">0</span></p>
-                </div>
+        <div class="modal-panel" style="padding: 10px;">
+            <div class="modal-content" style="max-width: 600px; max-height: 100%; display: flex; flex-direction: column; height: 100%;">
+                <h3 style="margin: 5px 0 10px 0;">Магазин 🛒</h3>
                 
-                <button class="btn" style="background:#17a2b8; color:white; margin-bottom: 20px; width: auto; padding: 10px 20px;" onclick="exchangeStarForCoins()">🔄 Обменять 1 ⭐ на 100 🪙</button>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 8px; flex-shrink: 0;">
+                    <span style="font-weight:bold; color:#ff8c00; font-size: 16px;">🪙 <span id="shop-coins">0</span></span>
+                    <span style="font-weight:bold; color:#ffca28; font-size: 16px;">⭐ <span id="shop-stars">0</span></span>
+                    <button class="btn btn-shop" style="width: auto; padding: 6px 12px; margin: 0; font-size: 13px;" onclick="exchangeStarForCoins()">Обменять 1⭐ на 100🪙</button>
+                </div>
 
                 <div class="shop-grid" id="shop-grid"></div>
-                <button class="btn btn-start" style="width: auto; padding: 10px 40px;" onclick="closeShop()">Закрыть магазин</button>
+                
+                <div style="flex-shrink: 0; margin-top: 10px;">
+                    <button class="btn btn-start" style="width: auto; padding: 10px 40px;" onclick="closeShop()">Закрыть магазин</button>
+                </div>
             </div>
         </div>
     </div>
@@ -711,6 +716,7 @@
         let now = actx.currentTime;
         
         if (currentInstrument === 'piano') {
+            // ФОРТЕПИАНО
             let osc1 = actx.createOscillator();
             let osc2 = actx.createOscillator();
             let gainNode = actx.createGain();
@@ -735,6 +741,7 @@
             osc2.stop(now + 1.2);
             
         } else if (currentInstrument === 'wind') {
+            // ДУХОВОЙ
             let osc = actx.createOscillator();
             let gainNode = actx.createGain();
             
@@ -763,6 +770,7 @@
             osc.stop(now + 0.75);
             
         } else if (currentInstrument === 'string') {
+            // СТРУННЫЙ
             let osc = actx.createOscillator();
             let filter = actx.createBiquadFilter();
             let gainNode = actx.createGain();
@@ -1002,7 +1010,7 @@
     }
 
     function startGame() {
-        resetProgress();
+        resetProgress(); // Сбрасываем весь прогресс при старте новой игры
         
         document.getElementById('btn-start').style.display = 'none';
         document.getElementById('btn-continue').style.display = 'none';
@@ -1051,39 +1059,10 @@
         const allNotes = getGameNotes(currentClef);
         const availableNotes = allNotes.filter(n => useBlackKeys || !n.isBlack);
 
-        // Генерация первой ноты случайным образом
-        let currentIndex = Math.floor(Math.random() * availableNotes.length);
-        currentMelody.push(availableNotes[currentIndex]);
-
-        // Генерация остальных нот методом "Случайного блуждания" (Random Walk)
-        for (let i = 1; i < MELODY_LENGTH; i++) {
-            // 75% шанс на плавный ход, 25% шанс на любой случайный скачок
-            if (Math.random() < 0.75) {
-                // Плавный ход: шаг от -3 до +3 ноты по доступному массиву
-                let step = Math.floor(Math.random() * 7) - 3;
-                
-                // Чтобы не топтаться на одной ноте, заменяем 0 на шаг в сторону
-                if (step === 0) step = Math.random() > 0.5 ? 1 : -1;
-                
-                currentIndex += step;
-                
-                // Обработка выхода за границы массива
-                if (currentIndex < 0) {
-                    currentIndex = Math.abs(currentIndex); 
-                } else if (currentIndex >= availableNotes.length) {
-                    currentIndex = availableNotes.length - (currentIndex - availableNotes.length) - 1;
-                }
-                
-                // Финальная защита от ошибок индексации
-                currentIndex = Math.max(0, Math.min(currentIndex, availableNotes.length - 1));
-            } else {
-                // Случайный скачок в любую точку
-                currentIndex = Math.floor(Math.random() * availableNotes.length);
-            }
-            
-            currentMelody.push(availableNotes[currentIndex]);
+        for (let i = 0; i < MELODY_LENGTH; i++) {
+            const randomNoteIndex = Math.floor(Math.random() * availableNotes.length);
+            currentMelody.push(availableNotes[randomNoteIndex]);
         }
-        
         renderNotes();
         updateStatus();
         saveGameState();
@@ -1118,8 +1097,8 @@
             showStarsReward(Math.max(0, completedScreens - spentStars + boughtStars), false);
         }
         
-        resetProgress();
-        saveGameState();
+        resetProgress(); // Сбрасываем весь прогресс при нормальном завершении (или проигрыше)
+        saveGameState(); // Сохраняем пустую сессию, чтобы не появилась кнопка "Продолжить"
     }
 
     function renderNotes() {
@@ -1252,8 +1231,8 @@
 
     function updateCoinsDisplay() {
         document.getElementById('sidebar-coins').innerText = coinsCount;
-        const shopCoinsEl = document.getElementById('shop-coins');
-        if (shopCoinsEl) shopCoinsEl.innerText = coinsCount;
+        const shopCoins = document.getElementById('shop-coins');
+        if(shopCoins) shopCoins.innerText = coinsCount;
     }
 
     function openShop() {
@@ -1265,18 +1244,20 @@
         document.getElementById('shop-screen').style.display = 'none';
         saveGameState();
     }
-
+    
     function exchangeStarForCoins() {
         const availableStars = completedScreens - spentStars + boughtStars;
+        
         if (availableStars > 0) {
             spentStars++; 
-            coinsCount += 100;
+            coinsCount += 100; 
+            
             updateCoinsDisplay();
             updateStatus(); 
             renderShop(); 
-            saveGameState();
+            saveGameState(); 
         } else {
-            showDialog("Упс!", "У тебя нет свободных звёзд для обмена. Пройди уровень без ошибок!", false);
+            showDialog("Упс!", "У тебя нет доступных звёздочек для обмена. Заработай их, играя без ошибок!", false);
         }
     }
 
@@ -1301,9 +1282,11 @@
     function renderShop() {
         updateCoinsDisplay();
         
+        // --- НОВЫЙ БЛОК ДЛЯ ОБНОВЛЕНИЯ ЗВЕЗД ---
         const availableStars = completedScreens - spentStars + boughtStars;
         const shopStarsEl = document.getElementById('shop-stars');
-        if (shopStarsEl) shopStarsEl.innerText = Math.max(0, availableStars);
+        if (shopStarsEl) shopStarsEl.innerText = availableStars;
+        // ---------------------------------------
 
         const grid = document.getElementById('shop-grid');
         grid.innerHTML = '';
