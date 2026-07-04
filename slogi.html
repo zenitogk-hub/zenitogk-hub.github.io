@@ -383,6 +383,12 @@
         <div class="modal-panel">
             <div class="modal-content">
                 <h3>Настройки</h3>
+                
+                <div class="settings-row" style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+                    <label style="margin-bottom: 4px;">Словарь данных:</label>
+                    <div id="dict-status" style="font-size: 14px; font-weight: 800;">Ожидание загрузки...</div>
+                </div>
+
                 <div class="settings-row" style="margin-top: 15px;">
                     <label>Сложность (допустимо ошибок):</label>
                     <select id="setting-difficulty">
@@ -520,7 +526,7 @@
 
     /* ============ ИГРОВЫЕ ПЕРЕМЕННЫЕ ============ */
     const WORDS_PER_LEVEL = 5;
-    let dictionary = ["МА-МА", "МО-ЛО-КО", "КО-Т", "СО-БА-КА", "МА-ШИ-НА", "Я-Б-ЛО-КО", "ДЕ-РЕ-ВО", "ЛУ-НА", "СЫ-Р"];
+    let dictionary = ["МА-МА", "МО-ЛО-КО", "КО-Т", "СО-БА-КА", "МА-ШИ-НА", "Я-Б-ЛО-КО", "ДЕ-РЕ-ВО", "ЛУ-НА", "СЫ-Р", "БА-БУ-Ш-КА", "КА-РА-Н-ДА-Ш", "К-РО-КО-ДИ-Л", "ЧЕ-РЕ-ПА-ХА"];
     
     let isPlaying = false;
     let level = 1;
@@ -546,7 +552,6 @@
     const EMOTION_CRY = '😭';
     let emotionTimeout;
 
-    // Расширенный ассортимент магазина из piano.html
     const shopItems = [
         { id: 'star', name: 'Звезда', emoji: '⭐', price: 200, type: 'consumable' },
         { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50, type: 'accessory' },
@@ -605,17 +610,29 @@
         return div;
     }
 
-    /* ============ СЛОВАРЬ ============ */
+    /* ============ СЛОВАРЬ (Загрузка) ============ */
     async function loadDictionary() {
+        const dictStatusEl = document.getElementById('dict-status');
         try {
             let res = await fetch('dic.txt');
             if (res.ok) {
                 let text = await res.text();
                 let loadedWords = text.split('\n').map(w => w.trim().toUpperCase()).filter(w => w.length > 0);
                 let validWords = loadedWords.filter(word => word.split('-').every(p => validSyllables.has(p)));
-                if(validWords.length > 0) dictionary = validWords;
+                
+                if(validWords.length > 0) {
+                    dictionary = validWords;
+                    dictStatusEl.innerText = `Подключен dic.txt (${dictionary.length} слов)`;
+                    dictStatusEl.style.color = '#28a745'; 
+                    return;
+                }
             }
-        } catch (e) { console.log("Используем встроенный словарь."); }
+            throw new Error("Invalid or empty dic.txt");
+        } catch (e) { 
+            console.log("Используем встроенный словарь."); 
+            dictStatusEl.innerText = `Встроенный словарь (${dictionary.length} слов)`;
+            dictStatusEl.style.color = '#6c757d'; 
+        }
     }
 
     /* ============ ОЗВУЧКА ============ */
@@ -674,7 +691,6 @@
         renderWordDisplay(); updateLevelProgress(); saveGameState();
     }
 
-    // Изменено: теперь разделяющие дефисы выводятся на экран
     function renderWordDisplay() {
         const container = document.getElementById('word-display');
         container.innerHTML = '';
