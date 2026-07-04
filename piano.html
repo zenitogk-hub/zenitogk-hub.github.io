@@ -705,7 +705,7 @@
         let now = actx.currentTime;
         
         if (currentInstrument === 'piano') {
-            // ФОРТЕПИАНО (Мягкая атака, богатое затухание)
+            // ФОРТЕПИАНО
             let osc1 = actx.createOscillator();
             let osc2 = actx.createOscillator();
             let gainNode = actx.createGain();
@@ -730,14 +730,13 @@
             osc2.stop(now + 1.2);
             
         } else if (currentInstrument === 'wind') {
-            // ДУХОВОЙ (Флейта: плавная атака, выраженное удержание, лёгкое вибрато)
+            // ДУХОВОЙ
             let osc = actx.createOscillator();
             let gainNode = actx.createGain();
             
             osc.type = 'sine';
             osc.frequency.value = freq;
             
-            // LFO для создания эффекта дыхания (вибрато)
             let lfo = actx.createOscillator();
             let lfoGain = actx.createGain();
             lfo.frequency.value = 5.5; 
@@ -750,9 +749,9 @@
             gainNode.connect(actx.destination);
             
             gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(0.35, now + 0.08); // Мягкий вдох
+            gainNode.gain.linearRampToValueAtTime(0.35, now + 0.08); 
             gainNode.gain.setValueAtTime(0.35, now + 0.45);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.75); // Конец выдоха
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.75); 
             
             lfo.start(now);
             osc.start(now);
@@ -760,7 +759,7 @@
             osc.stop(now + 0.75);
             
         } else if (currentInstrument === 'string') {
-            // СТРУННЫЙ (Скрипка: смычковая атака, богатые гармоники sawtooth с фильтром)
+            // СТРУННЫЙ
             let osc = actx.createOscillator();
             let filter = actx.createBiquadFilter();
             let gainNode = actx.createGain();
@@ -768,12 +767,10 @@
             osc.type = 'sawtooth';
             osc.frequency.value = freq;
             
-            // Фильтр низких частот убирает излишний резкий писк пилы, делая её тёплой смычковой скрипкой
             filter.type = 'lowpass';
             filter.frequency.setValueAtTime(freq * 1.8, now);
             filter.Q.value = 1.2;
             
-            // Глубокое струнное вибрато
             let lfo = actx.createOscillator();
             let lfoGain = actx.createGain();
             lfo.frequency.value = 6.0;
@@ -787,9 +784,9 @@
             gainNode.connect(actx.destination);
             
             gainNode.gain.setValueAtTime(0, now);
-            gainNode.gain.linearRampToValueAtTime(0.3, now + 0.14); // Тянущийся смычок
+            gainNode.gain.linearRampToValueAtTime(0.3, now + 0.14); 
             gainNode.gain.setValueAtTime(0.3, now + 0.5);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.85); // Снятие смычка
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.85); 
             
             lfo.start(now);
             osc.start(now);
@@ -972,7 +969,38 @@
         }
     }
 
+    function resetProgress() {
+        coinsCount = 0;
+        completedScreens = 0;
+        spentStars = 0;
+        boughtStars = 0;
+        errorsCount = 0;
+        inventory = {};
+        equippedAccessories = {};
+        currentMelody = [];
+        currentNoteIndex = 0;
+        
+        updateCoinsDisplay();
+        updateCollectiblesDisplay();
+        updateAccessoryDisplay();
+        
+        const starsDisplay = document.getElementById('stars-display');
+        if(starsDisplay) {
+            starsDisplay.innerHTML = 'Пока нет звёзд';
+            starsDisplay.className = 'sidebar-stars empty';
+        }
+        
+        const sidebarLevel = document.getElementById('sidebar-level');
+        if(sidebarLevel) {
+            sidebarLevel.innerText = "1";
+        }
+        
+        window.savedSessionData = null; 
+    }
+
     function startGame() {
+        resetProgress(); // Сбрасываем весь прогресс при старте новой игры
+        
         document.getElementById('btn-start').style.display = 'none';
         document.getElementById('btn-continue').style.display = 'none';
         document.getElementById('btn-stop').style.display = 'block';
@@ -985,13 +1013,6 @@
         }
         
         isPlaying = true;
-        currentNoteIndex = 0;
-        completedScreens = 0;
-        spentStars = 0;
-        boughtStars = 0; 
-        errorsCount = 0;
-        
-        document.getElementById('sidebar-level').innerText = "1";
         updateErrorBar();
         setEmotion(getIdleEmotion());
         generateScreenMelody();
@@ -1064,7 +1085,9 @@
             setEmotion(EMOTION_IDLE);
             showStarsReward(Math.max(0, completedScreens - spentStars + boughtStars), false);
         }
-        saveGameState();
+        
+        resetProgress(); // Сбрасываем весь прогресс при нормальном завершении (или проигрыше)
+        saveGameState(); // Сохраняем пустую сессию, чтобы не появилась кнопка "Продолжить"
     }
 
     function renderNotes() {
@@ -1457,7 +1480,6 @@
 
     /* ============ НАСТРОЙКИ (ОБНОВЛЕННАЯ ЛОГИКА) ============ */
     function openSettings() {
-        // Синхронизируем интерфейс с текущими переменными
         document.getElementById('setting-difficulty').value = maxErrors;
         document.getElementById('setting-instrument').value = currentInstrument;
         document.getElementById('setting-mix-bass').checked = mixBassClef;
@@ -1465,7 +1487,6 @@
         document.getElementById('setting-hint-white').checked = showWhiteHints;
         document.getElementById('setting-hint-black').checked = showBlackHints;
 
-        // Блокируем выбор сложности, если игра УЖЕ запущена
         document.getElementById('setting-difficulty').disabled = isPlaying;
         
         document.getElementById('settings-screen').style.display = 'flex';
@@ -1476,7 +1497,6 @@
     }
 
     function saveSettings() {
-        // Сложность сохраняется только если игра не активна
         if (!isPlaying) {
             maxErrors = parseInt(document.getElementById('setting-difficulty').value);
         }
@@ -1487,7 +1507,6 @@
         showWhiteHints = document.getElementById('setting-hint-white').checked;
         showBlackHints = document.getElementById('setting-hint-black').checked;
         
-        // Если применили настройки во время запущенной игры — обновляем визуал без перезапуска
         if (isPlaying) {
             buildKeyboard(getKeyboardLayout(currentClef));
             renderNotes();
