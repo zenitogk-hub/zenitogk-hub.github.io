@@ -38,6 +38,60 @@
             overflow: hidden; 
             touch-action: manipulation; 
             gap: 10px;
+            transition: background-color 0.5s;
+        }
+
+        /* Босс-режим */
+        body.boss-mode {
+            background-color: #2c3e50;
+        }
+        body.boss-mode .stage {
+            box-shadow: 0 0 25px rgba(220, 53, 69, 0.6);
+            border: 2px solid #dc3545;
+        }
+        #boss-monster {
+            position: absolute;
+            top: 15px;
+            right: 80px;
+            font-size: 55px;
+            display: none;
+            z-index: 10;
+            animation: float 2s infinite ease-in-out;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+        body.boss-mode #boss-monster {
+            display: block;
+        }
+        #boss-monster.shake {
+            animation: shake 0.3s;
+        }
+
+        /* Комбо-режим */
+        #combo-text {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            font-weight: 900;
+            color: #ff3300;
+            text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff;
+            display: none;
+            z-index: 50;
+            animation: popIn 0.3s forwards, comboFloat 1.5s infinite alternate ease-in-out;
+        }
+        @keyframes comboFloat {
+            0% { transform: translateX(-50%) scale(1); }
+            100% { transform: translateX(-50%) scale(1.1); }
+        }
+        .combo-pulse {
+            animation: comboPulseAnim 0.6s infinite !important;
+            color: #e74c3c !important;
+        }
+        @keyframes comboPulseAnim {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.25); }
+            100% { transform: scale(1); }
         }
 
         /* Игровая зона */
@@ -65,7 +119,6 @@
             justify-content: space-between;
         }
 
-        /* Обертка для позиционирования коллекционных предметов вокруг смайлика */
         .character-wrapper {
             position: relative;
             margin-top: 15px;
@@ -88,7 +141,6 @@
         .character-box.bounce { transform: scale(1.2) translateY(-10px); }
         .character-box.shake { animation: shake 0.3s; }
 
-        /* Контейнер для украшений (надеваются на смайлик) */
         .accessory-layer {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -101,7 +153,6 @@
         .acc-bow { bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 40px; }
         .acc-flower { top: -5px; right: -15px; font-size: 35px; transform: rotate(20deg); }
 
-        /* Контейнер для коллекционных предметов (располагаются вокруг) */
         #collectibles-layer {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -135,7 +186,7 @@
 
         .level-display { font-size: 14px; font-weight: bold; color: #555; }
         .level-display span { color: #007bff; font-size: 16px; }
-        .coins-display { font-size: 16px; font-weight: bold; color: #ff8c00; }
+        .coins-display { font-size: 16px; font-weight: bold; color: #ff8c00; transition: transform 0.2s; display: inline-block; }
 
         .sidebar-stars {
             font-size: 20px;
@@ -196,6 +247,7 @@
         .btn-install { background: #28a745; color: white; display: none; animation: pulse 2s infinite; }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        @keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0); } }
 
         /* Нотный стан */
         .stage {
@@ -207,6 +259,7 @@
             display: flex;
             align-items: center;
             overflow: hidden;
+            transition: box-shadow 0.3s, border 0.3s;
         }
 
         #bass-hint-btn {
@@ -218,7 +271,6 @@
         }
         #bass-hint-btn:active { transform: scale(0.9); }
 
-        /* Кнопка проигрывания мелодии */
         #play-melody-btn {
             position: absolute;
             left: 40px;
@@ -258,7 +310,6 @@
         .note.error { background: #dc3545; animation: shake 0.3s; }
         .note.error .accidental { color: #dc3545; }
 
-        /* Стиль для проигрываемой ноты (желтая обводка) */
         .note.playing {
             background: #ffc107 !important;
             transform: rotate(-15deg) scale(1.3);
@@ -278,7 +329,6 @@
             background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             flex: 1; overflow: hidden; display: flex; align-items: flex-end; padding: 10px;
         }
-
         .keyboard { position: relative; height: 100%; width: 100%; display: flex; gap: 1px; }
 
         .key-white {
@@ -332,7 +382,7 @@
         .settings-row.checkbox-row input { width: 18px; height: 18px; }
         .settings-row.checkbox-row label { margin: 0; cursor: pointer; }
 
-        /* Обновленные стили магазина */
+        /* Магазин */
         .shop-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 5px 0; overflow-y: auto; padding: 5px; }
         .shop-item { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; padding: 8px 5px; width: 95px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .shop-item:hover { border-color: #ffc107; }
@@ -413,7 +463,6 @@
         </div>
     </div>
 
-    <!-- Обновленный магазин -->
     <div id="shop-screen" class="overlay-screen">
         <div class="modal-panel" style="padding: 10px;">
             <div class="modal-content" style="max-width: 600px; max-height: 100%; display: flex; flex-direction: column; height: 100%;">
@@ -450,7 +499,9 @@
     </div>
 
     <div class="main-area">
-        <div class="stage">
+        <div class="stage" id="game-stage">
+            <div id="boss-monster">🐉</div>
+            <div id="combo-text">🔥 КОМБО! x3 МОНЕТ 🔥</div>
             <div id="bass-hint-btn" onclick="toggleBassHints()">?</div>
             <div class="staff-container">
                 <div class="clef" id="clef-symbol">𝄞</div>
@@ -492,7 +543,7 @@
 
         <div class="stats-box">
             <div class="level-display">Уровень: <span id="sidebar-level">1</span></div>
-            <div class="coins-display">🪙 <span id="sidebar-coins">0</span></div>
+            <div class="coins-display"><span id="coin-icon">🪙</span> <span id="sidebar-coins">0</span></div>
             <div id="stars-display" class="sidebar-stars empty">Пока нет звёзд</div>
         </div>
 
@@ -507,7 +558,6 @@
     </div>
 
 <script>
-    /* ============ ОПРЕДЕЛЕНИЕ PWA СРЕДЫ ============ */
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     let deferredPrompt = null;
@@ -532,7 +582,6 @@
     const blobManifest = new Blob([JSON.stringify(manifestObj)], {type: 'application/json'});
     document.getElementById('manifest-link').setAttribute('href', URL.createObjectURL(blobManifest));
 
-    /* ============ СИСТЕМА ДИАЛОГОВ ============ */
     function showDialog(title, message, showCancelBtn, onConfirm, onCancel) {
         document.getElementById('dialog-title').innerText = title;
         document.getElementById('dialog-message').innerText = message;
@@ -556,7 +605,6 @@
         document.getElementById('dialog-screen').style.display = 'flex';
     }
 
-    /* ============ ИГРОВАЯ ЛОГИКА ============ */
     let maxErrors = 20;
     let useBlackKeys = false;
     let showWhiteHints = true;
@@ -584,6 +632,10 @@
     let isPlaying = false;
     let isAutoPlaying = false;
     let emotionTimeout;
+    
+    // Новые переменные для комбо и босса
+    let comboCount = 0;
+    let isBossLevel = false;
 
     let inventory = {}; 
     let equippedAccessories = {}; 
@@ -594,7 +646,6 @@
         { id: 'glasses', name: 'Очки', emoji: '🕶️', price: 100, type: 'accessory' },
         { id: 'bow', name: 'Бантик', emoji: '🎀', price: 150, type: 'accessory' },
         { id: 'flower', name: 'Заколка', emoji: '🌸', price: 200, type: 'accessory' },
-        
         { id: 'medal', name: 'Медаль', emoji: '🥇', price: 350, type: 'collectible' },
         { id: 'trophy', name: 'Кубок', emoji: '🏆', price: 500, type: 'collectible' },
         { id: 'crown', name: 'Корона', emoji: '👑', price: 750, type: 'collectible' },
@@ -707,7 +758,6 @@
         });
     }
 
-    /* ============ СИНТЕЗАТОР ЗВУКОВ РАЗНЫХ ИНСТРУМЕНТОВ ============ */
     function playTone(midi) {
         if (!actx) actx = new AudioCtx();
         if (actx.state === 'suspended') actx.resume();
@@ -716,7 +766,6 @@
         let now = actx.currentTime;
         
         if (currentInstrument === 'piano') {
-            // ФОРТЕПИАНО
             let osc1 = actx.createOscillator();
             let osc2 = actx.createOscillator();
             let gainNode = actx.createGain();
@@ -741,7 +790,6 @@
             osc2.stop(now + 1.2);
             
         } else if (currentInstrument === 'wind') {
-            // ДУХОВОЙ
             let osc = actx.createOscillator();
             let gainNode = actx.createGain();
             
@@ -770,7 +818,6 @@
             osc.stop(now + 0.75);
             
         } else if (currentInstrument === 'string') {
-            // СТРУННЫЙ
             let osc = actx.createOscillator();
             let filter = actx.createBiquadFilter();
             let gainNode = actx.createGain();
@@ -806,7 +853,6 @@
         }
     }
 
-    /* ============ СИСТЕМА ЛОКАЛЬНОГО СОХРАНЕНИЯ ПРОЦЕССА ============ */
     function saveGameState() {
         const state = {
             coinsCount,
@@ -826,13 +872,14 @@
             currentClef,
             bassHintsActive,
             currentNoteIndex,
-            currentMelody
+            currentMelody,
+            comboCount
         };
-        localStorage.setItem('piano_game_state_v2', JSON.stringify(state));
+        localStorage.setItem('piano_game_state_v3', JSON.stringify(state));
     }
 
     function loadGameState() {
-        const saved = localStorage.getItem('piano_game_state_v2');
+        const saved = localStorage.getItem('piano_game_state_v3');
         if (!saved) return;
         try {
             const state = JSON.parse(saved);
@@ -844,6 +891,7 @@
             errorsCount = state.errorsCount || 0;
             inventory = state.inventory || {};
             equippedAccessories = state.equippedAccessories || {};
+            comboCount = state.comboCount || 0;
             
             maxErrors = state.maxErrors !== undefined ? state.maxErrors : 20;
             mixBassClef = !!state.mixBassClef;
@@ -887,7 +935,11 @@
         currentMelody = state.currentMelody;
         completedScreens = state.completedScreens || 0;
         errorsCount = state.errorsCount || 0;
+        comboCount = state.comboCount || 0;
         
+        checkBossLevel();
+        checkComboUI();
+
         document.getElementById('sidebar-level').innerText = completedScreens + 1;
         
         const clefEl = document.getElementById('clef-symbol');
@@ -980,6 +1032,24 @@
         }
     }
 
+    function resetCombo() {
+        comboCount = 0;
+        checkComboUI();
+    }
+
+    function checkComboUI() {
+        const comboText = document.getElementById('combo-text');
+        const coinsIcon = document.querySelector('.coins-display');
+        
+        if (comboCount >= 5) {
+            comboText.style.display = 'block';
+            coinsIcon.classList.add('combo-pulse');
+        } else {
+            comboText.style.display = 'none';
+            coinsIcon.classList.remove('combo-pulse');
+        }
+    }
+
     function resetProgress() {
         coinsCount = 0;
         completedScreens = 0;
@@ -990,6 +1060,7 @@
         equippedAccessories = {};
         currentMelody = [];
         currentNoteIndex = 0;
+        resetCombo();
         
         updateCoinsDisplay();
         updateCollectiblesDisplay();
@@ -1010,7 +1081,7 @@
     }
 
     function startGame() {
-        resetProgress(); // Сбрасываем весь прогресс при старте новой игры
+        resetProgress();
         
         document.getElementById('btn-start').style.display = 'none';
         document.getElementById('btn-continue').style.display = 'none';
@@ -1029,8 +1100,18 @@
         generateScreenMelody();
     }
 
+    function checkBossLevel() {
+        isBossLevel = (completedScreens + 1) % 5 === 0 && completedScreens > 0;
+        if (isBossLevel) {
+            document.body.classList.add('boss-mode');
+        } else {
+            document.body.classList.remove('boss-mode');
+        }
+    }
+
     function generateScreenMelody() {
         currentMelody = [];
+        checkBossLevel();
         
         if (mixBassClef) {
             currentClef = Math.random() > 0.5 ? 'bass' : 'treble';
@@ -1088,6 +1169,8 @@
         document.getElementById('btn-stop').style.display = 'none';
         document.getElementById('notes-layer').innerHTML = '';
         document.getElementById('bass-hint-btn').style.display = 'none';
+        document.body.classList.remove('boss-mode');
+        resetCombo();
         
         if (isGameOver) {
             setEmotion(EMOTION_CRY, 'shake');
@@ -1097,8 +1180,8 @@
             showStarsReward(Math.max(0, completedScreens - spentStars + boughtStars), false);
         }
         
-        resetProgress(); // Сбрасываем весь прогресс при нормальном завершении (или проигрыше)
-        saveGameState(); // Сохраняем пустую сессию, чтобы не появилась кнопка "Продолжить"
+        resetProgress(); 
+        saveGameState(); 
     }
 
     function renderNotes() {
@@ -1141,7 +1224,6 @@
                 }
             }
 
-            // Восстановление закраски ноты, если игра возобновлена
             if (index < currentNoteIndex) {
                 noteEl.classList.add('success');
             }
@@ -1188,13 +1270,27 @@
             currentEl.classList.remove('active', 'error', 'playing');
             currentEl.classList.add('success');
             setEmotion(EMOTION_HAPPY, 'bounce');
-            currentNoteIndex++;
-
-            coinsCount += 5;
+            
+            comboCount++;
+            let earnedCoins = 5;
+            if (comboCount >= 5) {
+                earnedCoins = 15;
+            }
+            checkComboUI();
+            
+            coinsCount += earnedCoins;
             updateCoinsDisplay();
+            currentNoteIndex++;
 
             if (currentNoteIndex >= MELODY_LENGTH) {
                 completedScreens++;
+                
+                if (isBossLevel) {
+                    coinsCount += 100;
+                    updateCoinsDisplay();
+                    showDialog("Босс повержен! 🏆", "Ты прошел босс-уровень без единой ошибки и получаешь +100 монет!", false);
+                }
+                
                 document.getElementById('sidebar-level').innerText = completedScreens + 1;
                 currentNoteIndex = 0;
                 setTimeout(() => {
@@ -1206,6 +1302,20 @@
                 saveGameState();
             }
         } else {
+            resetCombo();
+            
+            if (isBossLevel) {
+                currentNoteIndex = 0;
+                setEmotion(EMOTION_FEAR, 'shake');
+                const bossEl = document.getElementById('boss-monster');
+                bossEl.classList.add('shake');
+                setTimeout(() => bossEl.classList.remove('shake'), 300);
+                
+                renderNotes(); 
+                highlightCurrentNote();
+                return;
+            }
+
             errorsCount++;
             updateErrorBar();
             
@@ -1282,11 +1392,9 @@
     function renderShop() {
         updateCoinsDisplay();
         
-        // --- НОВЫЙ БЛОК ДЛЯ ОБНОВЛЕНИЯ ЗВЕЗД ---
         const availableStars = completedScreens - spentStars + boughtStars;
         const shopStarsEl = document.getElementById('shop-stars');
         if (shopStarsEl) shopStarsEl.innerText = availableStars;
-        // ---------------------------------------
 
         const grid = document.getElementById('shop-grid');
         grid.innerHTML = '';
@@ -1513,7 +1621,6 @@
         document.getElementById('stars-screen').style.display = 'none';
     }
 
-    /* ============ НАСТРОЙКИ (ОБНОВЛЕННАЯ ЛОГИКА) ============ */
     function openSettings() {
         document.getElementById('setting-difficulty').value = maxErrors;
         document.getElementById('setting-instrument').value = currentInstrument;
@@ -1556,7 +1663,6 @@
         if (isPlaying) renderNotes();
     });
 
-    /* ============ ЛОГИКА PWA УСТАНОВКИ ============ */
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
@@ -1613,7 +1719,6 @@
         lastTouchEnd = now;
     }, { passive: false });
 
-    // Инициализация загрузки при старте
     loadGameState();
     if (!isPlaying) {
         buildKeyboard(getKeyboardLayout(currentClef));
