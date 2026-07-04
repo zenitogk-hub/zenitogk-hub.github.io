@@ -92,11 +92,7 @@
             z-index: 10;
         }
 
-        .accessory-item {
-            position: absolute;
-            display: block;
-        }
-
+        .accessory-item { position: absolute; display: block; }
         .acc-hat { top: -40px; left: 50%; transform: translateX(-50%); font-size: 55px; }
         .acc-glasses { top: 5px; left: 50%; transform: translateX(-50%); font-size: 65px; }
         .acc-bow { bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 40px; }
@@ -192,6 +188,28 @@
             overflow: hidden;
         }
 
+        /* Кнопка подсказки для басового ключа */
+        #bass-hint-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #ffc107;
+            color: #333;
+            font-size: 22px;
+            font-weight: bold;
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            z-index: 10;
+            transition: transform 0.1s;
+        }
+        #bass-hint-btn:active { transform: scale(0.9); }
+
         .staff-container {
             position: relative;
             height: 160px;
@@ -226,6 +244,20 @@
         .note.error { background: #dc3545; animation: shake 0.3s; }
         .note.error .accidental { color: #dc3545; }
 
+        /* Стили текста подсказки под нотой */
+        .note-hint-label {
+            position: absolute;
+            font-size: 14px;
+            font-weight: bold;
+            color: #007bff;
+            text-align: center;
+            width: 30px;
+            margin-left: -3px; /* Центрирование относительно ноты */
+            z-index: 5;
+            /* Белая обводка текста на случай, если текст попадет на линию */
+            text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 0px 0px 4px #fff;
+        }
+
         /* Клавиатура */
         .keyboard-wrapper {
             background: #fff;
@@ -238,13 +270,7 @@
             padding: 10px;
         }
 
-        .keyboard {
-            position: relative;
-            height: 100%;
-            width: 100%;
-            display: flex;
-            gap: 1px;
-        }
+        .keyboard { position: relative; height: 100%; width: 100%; display: flex; gap: 1px; }
 
         .key-white {
             flex: 1;
@@ -328,11 +354,7 @@
             justify-content: center;
         }
         
-        .modal-content {
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
+        .modal-content { width: 100%; max-width: 500px; text-align: center; }
 
         .settings-row { margin-bottom: 10px; text-align: left; }
         .settings-row label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
@@ -415,7 +437,7 @@
 
     <div id="shop-screen" class="overlay-screen">
         <div class="modal-panel">
-            <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-content" style="max-width: 600px;">
                 <h3>Магазин 🛒</h3>
                 <p style="font-weight:bold; color:#ff8c00; margin:0;">Твои монетки: 🪙 <span id="shop-coins">0</span></p>
                 <div class="shop-grid" id="shop-grid"></div>
@@ -441,6 +463,7 @@
 
     <div class="main-area">
         <div class="stage">
+            <div id="bass-hint-btn" onclick="toggleBassHints()">?</div>
             <div class="staff-container">
                 <div class="clef" id="clef-symbol">𝄞</div>
                 <div class="staff-lines">
@@ -547,6 +570,7 @@
     let showBlackHints = true;
     let mixBassClef = false; 
     let currentClef = 'treble';
+    let bassHintsActive = false; // Состояние подсказок для басового ключа
 
     const MELODY_LENGTH = 12;
     
@@ -569,12 +593,19 @@
     let inventory = {}; 
     let equippedAccessories = {}; 
     
+    // Обновленный магазин с коллекционными предметами
     const shopItems = [
-        { id: 'star', name: 'Звезда', emoji: '⭐', price: 200 },
-        { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50 },
-        { id: 'glasses', name: 'Очки', emoji: '🕶️', price: 100 },
-        { id: 'bow', name: 'Бантик', emoji: '🎀', price: 150 },
-        { id: 'flower', name: 'Заколка', emoji: '🌸', price: 200 }
+        { id: 'star', name: 'Звезда', emoji: '⭐', price: 200, type: 'consumable' },
+        { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50, type: 'accessory' },
+        { id: 'glasses', name: 'Очки', emoji: '🕶️', price: 100, type: 'accessory' },
+        { id: 'bow', name: 'Бантик', emoji: '🎀', price: 150, type: 'accessory' },
+        { id: 'flower', name: 'Заколка', emoji: '🌸', price: 200, type: 'accessory' },
+        
+        { id: 'medal', name: 'Медаль', emoji: '🥇', price: 350, type: 'collectible' },
+        { id: 'trophy', name: 'Кубок', emoji: '🏆', price: 500, type: 'collectible' },
+        { id: 'crown', name: 'Корона', emoji: '👑', price: 750, type: 'collectible' },
+        { id: 'unicorn', name: 'Единорог', emoji: '🦄', price: 1000, type: 'collectible' },
+        { id: 'diamond', name: 'Алмаз', emoji: '💎', price: 1500, type: 'collectible' }
     ];
 
     const pitchClasses = {
@@ -593,10 +624,8 @@
     };
 
     function getKeyboardLayout(clef) {
-        // Скрипичный: старт с До 1 октавы (60). Басовый: старт с До большой октавы (36).
         let baseMidi = clef === 'treble' ? 60 : 36; 
         let layout = [];
-        // 25 клавиш, чтобы покрыть ровно 15 белых клавиш (от До до До включительно)
         for(let i = 0; i < 25; i++) {
             let midi = baseMidi + i;
             let info = pitchClasses[midi % 12];
@@ -782,14 +811,19 @@
         }
 
         const clefEl = document.getElementById('clef-symbol');
+        const hintBtn = document.getElementById('bass-hint-btn');
+        bassHintsActive = false; // Сбрасываем подсказки при новом экране
+
         if (currentClef === 'treble') {
             clefEl.innerText = '𝄞';
             clefEl.style.top = '15px';
             clefEl.style.fontSize = '85px';
+            hintBtn.style.display = 'none';
         } else {
             clefEl.innerText = '𝄢';
             clefEl.style.top = '25px';
             clefEl.style.fontSize = '75px';
+            hintBtn.style.display = 'flex';
         }
 
         buildKeyboard(getKeyboardLayout(currentClef));
@@ -805,6 +839,15 @@
         updateStatus();
     }
 
+    // Переключение подсказок для басового ключа
+    function toggleBassHints() {
+        bassHintsActive = !bassHintsActive;
+        const labels = document.querySelectorAll('.note-hint-label');
+        labels.forEach(lbl => {
+            lbl.style.display = bassHintsActive ? 'block' : 'none';
+        });
+    }
+
     function stopGame(isGameOver = false) {
         if (!isPlaying) return;
         isPlaying = false;
@@ -812,6 +855,7 @@
         document.getElementById('btn-start').style.display = 'block';
         document.getElementById('btn-stop').style.display = 'none';
         document.getElementById('notes-layer').innerHTML = '';
+        document.getElementById('bass-hint-btn').style.display = 'none';
         
         if (isGameOver) {
             setEmotion(EMOTION_CRY, 'shake');
@@ -836,7 +880,8 @@
             
             const basePathY = 110; 
             noteEl.style.top = (basePathY - noteObj.step * 10) + 'px';
-            noteEl.style.left = (index * spacingX + 15) + 'px';
+            const leftPos = index * spacingX + 15;
+            noteEl.style.left = leftPos + 'px';
 
             if (noteObj.isBlack) {
                 const acc = document.createElement('div');
@@ -845,7 +890,6 @@
                 noteEl.appendChild(acc);
             }
 
-            // Динамические добавочные линейки сверху нотного стана
             if (noteObj.step >= 10) {
                 let numLines = Math.floor((noteObj.step - 8) / 2);
                 for (let l = 1; l <= numLines; l++) {
@@ -854,7 +898,6 @@
                 }
             }
             
-            // Динамические добавочные линейки снизу нотного стана
             if (noteObj.step <= -2) {
                 let numLines = Math.floor((-noteObj.step) / 2);
                 for (let l = 1; l <= numLines; l++) {
@@ -864,6 +907,15 @@
             }
 
             layer.appendChild(noteEl);
+
+            // Создаем текстовую подсказку названия ноты (по умолчанию скрыта)
+            let hintLabel = document.createElement('div');
+            hintLabel.className = 'note-hint-label';
+            hintLabel.innerText = noteObj.name;
+            hintLabel.style.left = (leftPos - 3) + 'px'; 
+            hintLabel.style.top = '145px'; // Все подсказки выстроены в линию внизу стана
+            hintLabel.style.display = bassHintsActive ? 'block' : 'none';
+            layer.appendChild(hintLabel);
         });
 
         highlightCurrentNote();
@@ -955,9 +1007,12 @@
         
         shopItems.forEach(item => {
             const el = document.createElement('div');
-            const isConsumable = item.id === 'star';
-            const isOwned = !isConsumable && inventory[item.id];
-            const isEquipped = !isConsumable && equippedAccessories[item.id];
+            
+            const isConsumable = item.type === 'consumable';
+            const isCollectible = item.type === 'collectible';
+            const isAccessory = item.type === 'accessory';
+            const isOwned = inventory[item.id];
+            const isEquipped = equippedAccessories[item.id];
             
             let extraClass = '';
             let priceText = '';
@@ -965,7 +1020,14 @@
             if (isConsumable) {
                 extraClass = 'consumable';
                 priceText = '🪙 ' + item.price;
-            } else {
+            } else if (isCollectible) {
+                if (isOwned) {
+                    extraClass = 'owned';
+                    priceText = 'Куплено';
+                } else {
+                    priceText = '🪙 ' + item.price;
+                }
+            } else { // accessory
                 if (isEquipped) {
                     extraClass = 'equipped';
                     priceText = 'Надето';
@@ -998,15 +1060,8 @@
                     return;
                 }
 
-                if (isEquipped) {
-                    delete equippedAccessories[item.id];
-                    updateAccessoryDisplay();
-                    renderShop();
-                } else if (isOwned) {
-                    equippedAccessories[item.id] = true;
-                    updateAccessoryDisplay();
-                    renderShop();
-                } else {
+                if (isCollectible) {
+                    if (isOwned) return; 
                     if (coinsCount >= item.price) {
                         coinsCount -= item.price;
                         inventory[item.id] = true;
@@ -1014,6 +1069,28 @@
                         renderShop();
                     } else {
                         showDialog("Упс!", "Недостаточно монеток! Зарабатывай их правильными нажатиями.", false);
+                    }
+                    return;
+                }
+
+                if (isAccessory) {
+                    if (isEquipped) {
+                        delete equippedAccessories[item.id];
+                        updateAccessoryDisplay();
+                        renderShop();
+                    } else if (isOwned) {
+                        equippedAccessories[item.id] = true;
+                        updateAccessoryDisplay();
+                        renderShop();
+                    } else {
+                        if (coinsCount >= item.price) {
+                            coinsCount -= item.price;
+                            inventory[item.id] = true;
+                            updateCoinsDisplay();
+                            renderShop();
+                        } else {
+                            showDialog("Упс!", "Недостаточно монеток! Зарабатывай их правильными нажатиями.", false);
+                        }
                     }
                 }
             };
@@ -1028,7 +1105,7 @@
         for (const [accId, isEquipped] of Object.entries(equippedAccessories)) {
             if (isEquipped) {
                 const item = shopItems.find(i => i.id === accId);
-                if (item && item.id !== 'star') {
+                if (item && item.type === 'accessory') {
                     const el = document.createElement('span');
                     el.className = `accessory-item acc-${item.id}`; 
                     el.innerText = item.emoji;
