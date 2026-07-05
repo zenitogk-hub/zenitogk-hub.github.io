@@ -53,98 +53,72 @@
             flex-direction: column;
             height: 100dvh;
             overflow: hidden; 
+            transition: background-color 0.5s;
         }
+
+        /* --- БОСС РЕЖИМ И КОМБО --- */
+        body.boss-mode { background-color: #2c3e50; }
+        body.boss-mode .sector1 { box-shadow: 0 0 25px rgba(220, 53, 69, 0.6); border: 2px solid #dc3545; }
+        #boss-monster {
+            position: absolute; top: 15px; right: 15px; font-size: 55px;
+            display: none; z-index: 10; animation: float 2s infinite ease-in-out;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+        body.boss-mode #boss-monster { display: block; }
+        #boss-monster.shake { animation: shake 0.3s; }
+
+        #combo-text {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            font-size: 20px; font-weight: 900; color: #ff3300;
+            text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff;
+            display: none; z-index: 50; animation: popIn 0.3s forwards, comboFloat 1.5s infinite alternate ease-in-out;
+        }
+        @keyframes comboFloat { 0% { transform: translateX(-50%) scale(1); } 100% { transform: translateX(-50%) scale(1.1); } }
+        .combo-pulse { animation: comboPulseAnim 0.6s infinite !important; color: #e74c3c !important; }
+        @keyframes comboPulseAnim { 0% { transform: scale(1); } 50% { transform: scale(1.25); } 100% { transform: scale(1); } }
+        @keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0); } }
 
         /* --- ВЕРХНЯЯ ЧАСТЬ --- */
         .top-panel {
-            display: flex;
-            height: 25vh;
-            min-height: 160px;
-            padding: 8px;
-            gap: 8px;
-            flex-shrink: 0;
+            display: flex; height: 25vh; min-height: 160px; padding: 8px; gap: 8px; flex-shrink: 0;
         }
 
-        /* Сектор 1: Слово */
         .sector1 {
-            flex: 1;
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            padding: 10px;
-            padding-bottom: 55px; 
+            flex: 1; background: var(--card-bg); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative; padding: 10px; padding-bottom: 55px; transition: box-shadow 0.3s, border 0.3s;
         }
 
         .word-display {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            gap: 4px;
-            font-size: clamp(24px, 7vw, 42px);
-            font-weight: 800;
-            line-height: 1.2;
-            text-align: center;
+            display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+            gap: 4px; font-size: clamp(24px, 7vw, 42px); font-weight: 800; line-height: 1.2; text-align: center;
         }
 
-        .word-syllable {
-            color: var(--gray-color);
-            transition: color 0.3s, transform 0.2s;
-        }
-        
-        .word-syllable.active {
-            transform: scale(1.1);
-            text-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
+        .word-syllable { color: var(--gray-color); transition: color 0.3s, transform 0.2s; }
+        .word-syllable.active { transform: scale(1.1); text-shadow: 0 0 10px rgba(0,0,0,0.1); }
         .word-syllable .consonant { color: var(--secondary-color); }
         .word-syllable .vowel { color: var(--danger-color); }
         .word-syllable .soft { color: var(--soft-color); }
         .word-syllable.hidden-color * { color: var(--gray-color) !important; }
-
-        .word-hyphen {
-            color: var(--text-color);
-            font-weight: 800;
-        }
+        .word-hyphen { color: var(--text-color); font-weight: 800; }
 
         .tts-btn {
-            position: absolute;
-            top: 8px; left: 8px;
-            width: 36px; height: 36px;
-            border: none; border-radius: 50%;
-            background: #e3f2fd; color: var(--secondary-color);
-            font-size: 18px; cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: transform 0.1s;
+            position: absolute; top: 8px; left: 8px; width: 36px; height: 36px; border: none; border-radius: 50%;
+            background: #e3f2fd; color: var(--secondary-color); font-size: 18px; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.1s; z-index: 20;
         }
         .tts-btn:active { transform: scale(0.9); }
 
         .top-stats-box {
-            position: absolute;
-            bottom: 6px; left: 8px; right: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
+            position: absolute; bottom: 6px; left: 8px; right: 8px; display: flex; flex-direction: column; align-items: center; gap: 4px;
         }
 
         .level-display { font-size: 13px; font-weight: bold; color: #555; }
         .level-display span { color: var(--secondary-color); font-size: 15px; }
 
         .sidebar-stars {
-            font-size: 18px;
-            color: #ffca28;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 4px;
-            text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
-            line-height: 1.2;
+            font-size: 18px; color: #ffca28; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.2); line-height: 1.2;
         }
         .sidebar-stars span { transition: transform 0.2s; cursor: pointer; }
         .sidebar-stars span:hover { transform: scale(1.2); }
@@ -152,33 +126,12 @@
 
         /* Сектор 2: Меню и персонаж */
         .sector2 {
-            width: 110px;
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 6px;
-            flex-shrink: 0;
-            justify-content: space-between;
+            width: 110px; background: var(--card-bg); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; align-items: center; padding: 6px; flex-shrink: 0; justify-content: space-between;
         }
 
-        .character-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            margin-top: 5px;
-        }
-
-        .character-box {
-            font-size: 45px;
-            width: 55px; height: 55px;
-            display: flex; align-items: center; justify-content: center;
-            position: relative; z-index: 2;
-        }
+        .character-wrapper { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; margin-top: 5px; }
+        .character-box { font-size: 45px; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; cursor: pointer;}
         .character-box.bounce { transform: scale(1.2) translateY(-5px); }
         .character-box.shake { animation: shake 0.3s; }
 
@@ -189,17 +142,8 @@
         .acc-bow { bottom: -15px; left: 50%; transform: translateX(-50%); font-size: 25px; }
         .acc-flower { top: -5px; right: -10px; font-size: 22px; transform: rotate(20deg); }
 
-        #collectibles-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 1;
-        }
-        .collectible-item { 
-            position: absolute; 
-            font-size: 20px; 
-            display: block; 
-            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); 
-        }
+        #collectibles-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .collectible-item { position: absolute; font-size: 20px; display: block; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); }
         .col-medal { bottom: -10px; left: -15px; }
         .col-trophy { bottom: -10px; right: -15px; }
         .col-crown { top: -15px; left: -20px; transform: rotate(-20deg); }
@@ -210,7 +154,7 @@
             width: 100%; text-align: center; font-size: 11px; font-weight: bold; line-height: 1.2;
             background: #f8f9fa; border-radius: 6px; padding: 6px 4px; margin: 4px 0;
         }
-        .stats-mini span.coins { color: #ff8c00; font-size: 13px; display: block; margin-bottom: 4px;}
+        .stats-mini span.coins { color: #ff8c00; font-size: 13px; display: block; margin-bottom: 4px; transition: transform 0.2s;}
         
         .error-track-mini { width: 100%; height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; margin: 4px 0; }
         .error-fill-mini { height: 100%; width: 0%; background: #28a745; transition: width 0.3s, background-color 0.3s; }
@@ -231,50 +175,25 @@
 
         /* --- НИЖНЯЯ ЧАСТЬ (ТАБЛИЦА) --- */
         .sector3 {
-            flex: 1;
-            padding: 4px 8px 8px 8px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
+            flex: 1; padding: 4px 8px 8px 8px; overflow-y: auto; display: flex; flex-direction: column;
         }
 
         .syllable-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            border: 2px solid var(--grid-border);
-            border-radius: 8px;
-            flex: 1; 
-            background: var(--cell-border);
-            gap: 1px; 
-            overflow: hidden;
+            display: grid; grid-template-columns: repeat(12, 1fr); border: 2px solid var(--grid-border);
+            border-radius: 8px; flex: 1; background: var(--cell-border); gap: 1px; overflow: hidden;
         }
 
         .grid-cell {
-            background: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: clamp(12px, 3.5vw, 22px);
-            font-weight: 800;
-            cursor: pointer;
-            transition: background 0.1s, transform 0.1s;
+            background: #fff; display: flex; align-items: center; justify-content: center;
+            font-size: clamp(12px, 3.5vw, 22px); font-weight: 800; cursor: pointer; transition: background 0.1s, transform 0.1s;
         }
         
-        .grid-cell:nth-child(-n+12) {
-            border-bottom: 3px solid var(--grid-border);
-            background: #f8f9fa;
-        }
-        
-        .grid-cell:nth-child(12n+1) {
-            border-right: 3px solid var(--grid-border);
-            background: #f8f9fa;
-        }
+        .grid-cell:nth-child(-n+12) { border-bottom: 3px solid var(--grid-border); background: #f8f9fa; }
+        .grid-cell:nth-child(12n+1) { border-right: 3px solid var(--grid-border); background: #f8f9fa; }
+        .grid-cell:nth-child(1) { background: #e2e8f0; }
 
-        .grid-cell:nth-child(1) {
-            background: #e2e8f0;
-        }
-
-        .grid-cell.header { font-size: clamp(10px, 3vw, 18px); }
+        /* Увеличенный шрифт для подсказок-заголовков */
+        .grid-cell.header { font-size: clamp(18px, 5vw, 26px); }
         .grid-cell:active { background: #e2e8f0; transform: scale(0.9); }
         .grid-cell.empty { background: #f4f4f4; cursor: default; }
         .grid-cell.empty:active { transform: none; }
@@ -282,6 +201,16 @@
         .grid-cell .consonant { color: var(--secondary-color); }
         .grid-cell .vowel { color: var(--danger-color); }
         .grid-cell .soft { color: var(--soft-color); }
+
+        /* Анимация подсказки */
+        @keyframes hintBlink {
+            0% { box-shadow: inset 0 0 15px var(--primary-color); background: #e8f5e9; }
+            50% { box-shadow: inset 0 0 0 transparent; background: #f8f9fa; }
+            100% { box-shadow: inset 0 0 15px var(--primary-color); background: #e8f5e9; }
+        }
+        .grid-cell.header.hint-blink {
+            animation: hintBlink 1.2s infinite; position: relative; z-index: 5; border-radius: 4px;
+        }
 
         /* --- МОДАЛЬНЫЕ ОКНА --- */
         .overlay-screen {
@@ -295,19 +224,22 @@
         .btn-large { padding: 12px 25px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin: 5px; color: white;}
         .btn-blue { background: #007bff; }
         .btn-gray { background: #6c757d; }
+        .btn-shop-action { background: #ffc107; color: #333; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer;}
 
         .settings-row { margin-bottom: 12px; text-align: left; }
         .settings-row label { display: block; font-size: 14px; font-weight: bold; color: #555; margin-bottom: 4px; }
         .settings-row select { padding: 8px; width: 100%; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;}
 
-        .shop-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0; }
-        .shop-item { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; padding: 10px; width: 100px; cursor: pointer; transition: 0.2s; }
+        /* Магазин - Стиль из Пианино */
+        .shop-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 15px 0; overflow-y: auto; max-height: 50vh; padding: 5px; }
+        .shop-item { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; padding: 8px 5px; width: 95px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .shop-item:hover { border-color: #ffc107; }
         .shop-item.owned { background: #d4edda; border-color: #28a745; }
         .shop-item.equipped { background: #cce5ff; border-color: #007bff; }
         .shop-item.consumable { background: #fff3cd; border-color: #ffeeba; }
-        .shop-item-emoji { font-size: 30px; margin-bottom: 5px; }
-        .shop-item-name { font-size: 12px; font-weight: bold; margin-bottom: 2px; }
-        .shop-item-price { font-size: 11px; color: #666; font-weight: bold; }
+        .shop-item-emoji { font-size: 28px; margin-bottom: 3px; }
+        .shop-item-name { font-size: 11px; font-weight: bold; color: #333; margin-bottom: 3px; text-align: center; line-height: 1.1; }
+        .shop-item-price { font-size: 12px; color: #666; font-weight: bold; }
 
         .stars-wrapper { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; justify-content: center;}
         .star { font-size: 35px; color: #ffca28; opacity: 0; transform: scale(0.3); animation: popIn 0.3s forwards; }
@@ -320,6 +252,8 @@
 
     <div class="top-panel">
         <div class="sector1">
+            <div id="boss-monster">🐉</div>
+            <div id="combo-text">🔥 КОМБО! x3 МОНЕТ 🔥</div>
             <button class="tts-btn" onclick="speakCurrentWord()">🔊</button>
             <div class="word-display" id="word-display"></div>
             
@@ -358,6 +292,7 @@
         <div class="syllable-grid" id="syllable-grid"></div>
     </div>
 
+    <!-- Модальные окна -->
     <div id="dialog-screen" class="overlay-screen" style="z-index: 200; background: rgba(0,0,0,0.6);">
         <div class="modal-panel">
             <div class="modal-content">
@@ -404,11 +339,18 @@
         </div>
     </div>
 
+    <!-- Обновленный Магазин -->
     <div id="shop-screen" class="overlay-screen">
-        <div class="modal-panel">
-            <div class="modal-content">
-                <h3>Магазин 🛒</h3>
-                <p style="font-weight:bold; color:#ff8c00;">Твои монетки: 🪙 <span id="shop-coins">0</span></p>
+        <div class="modal-panel" style="padding: 10px;">
+            <div class="modal-content" style="max-width: 600px; display: flex; flex-direction: column;">
+                <h3 style="margin: 5px 0 10px 0;">Магазин 🛒</h3>
+                
+                <div style="display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 8px;">
+                    <span style="font-weight:bold; color:#ff8c00; font-size: 16px;">🪙 <span id="shop-coins">0</span></span>
+                    <span style="font-weight:bold; color:#ffca28; font-size: 16px;">⭐ <span id="shop-stars">0</span></span>
+                    <button class="btn-shop-action" onclick="exchangeStarForCoins()">Обменять 1⭐ на 100🪙</button>
+                </div>
+
                 <div class="shop-grid" id="shop-grid"></div>
                 <button class="btn-large btn-blue" onclick="closeShop()">Закрыть</button>
             </div>
@@ -446,67 +388,40 @@
 
     let deferredPrompt;
     const installBtn = document.getElementById('btn-install');
-    
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
 
-    if (isStandalone) {
-        installBtn.style.display = 'none';
-    } else if (isIOS) {
-        installBtn.style.display = 'flex';
-    }
+    if (isStandalone) installBtn.style.display = 'none';
+    else if (isIOS) installBtn.style.display = 'flex';
 
     window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault(); 
-        deferredPrompt = e;
-        installBtn.style.display = 'flex';
+        e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'flex';
     });
     
     installBtn.addEventListener('click', async () => {
-        if (isIOS) {
-            document.getElementById('iosHintModal').style.display = 'flex';
-            return;
-        }
-        if (!deferredPrompt) {
-            showDialog("Установка", 'Откройте меню браузера и выберите "Установить приложение" или "Добавить на главный экран"', false);
-            return;
-        }
+        if (isIOS) { document.getElementById('iosHintModal').style.display = 'flex'; return; }
+        if (!deferredPrompt) { showDialog("Установка", 'Откройте меню браузера и выберите "Установить приложение"', false); return; }
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            installBtn.style.display = 'none';
-        }
+        if (outcome === 'accepted') installBtn.style.display = 'none';
         deferredPrompt = null;
     });
 
-    window.addEventListener('appinstalled', () => {
-        installBtn.style.display = 'none';
-        deferredPrompt = null;
-    });
+    window.addEventListener('appinstalled', () => { installBtn.style.display = 'none'; deferredPrompt = null; });
+    function closeIosHint() { document.getElementById('iosHintModal').style.display = 'none'; }
 
-    function closeIosHint() {
-        document.getElementById('iosHintModal').style.display = 'none';
-    }
-
-    document.addEventListener('touchstart', function(event) {
-        if (event.touches.length > 1) event.preventDefault();
-    }, { passive: false });
+    document.addEventListener('touchstart', function(event) { if (event.touches.length > 1) event.preventDefault(); }, { passive: false });
 
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function(event) {
         const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) {
-            event.preventDefault(); 
-            if(event.target) event.target.click(); 
-        }
+        if (now - lastTouchEnd <= 300) { event.preventDefault(); if(event.target) event.target.click(); }
         lastTouchEnd = now;
     }, { passive: false });
-
 
     /* ============ ДАННЫЕ ТАБЛИЦЫ СЛОГОВ ============ */
     const consonantsList = ["Н","М","Т","К","Х","Б","В","Г","Д","Ж","З","Л","П","Р","С","Ф","Ц","Ч","Ш","Щ","Й"];
     const vowelsList = ["А","У","О","Ы","Э","И","Е","Я","Ё","Ю","Ь"];
-    
     const columnsData = {
         "А": ["НА","МА","ТА","КА","ХА","БА","ВА","ГА","ДА","ЖА","ЗА","ЛА","ПА","РА","СА","ФА","ЦА","ЧА","ША","ЩА","ЙА"],
         "У": ["НУ","МУ","ТУ","КУ","ХУ","БУ","ВУ","ГУ","ДУ","ЖУ","ЗУ","ЛУ","ПУ","РУ","СУ","ФУ","ЦУ","ЧУ","ШУ","ЩУ","ЙУ"],
@@ -543,6 +458,9 @@
     let boughtStars = 0;
     let completedLevelsTotal = 0;
 
+    let comboCount = 0;
+    let isBossLevel = false;
+
     let inventory = {}; 
     let equippedAccessories = {}; 
 
@@ -550,6 +468,7 @@
     const EMOTION_HAPPY = '😃';
     const EMOTION_SAD = '😣';
     const EMOTION_CRY = '😭';
+    const EMOTION_FEAR = '😰';
     let emotionTimeout;
 
     const shopItems = [
@@ -558,7 +477,6 @@
         { id: 'glasses', name: 'Очки', emoji: '🕶️', price: 100, type: 'accessory' },
         { id: 'bow', name: 'Бантик', emoji: '🎀', price: 150, type: 'accessory' },
         { id: 'flower', name: 'Заколка', emoji: '🌸', price: 200, type: 'accessory' },
-        
         { id: 'medal', name: 'Медаль', emoji: '🥇', price: 350, type: 'collectible' },
         { id: 'trophy', name: 'Кубок', emoji: '🏆', price: 500, type: 'collectible' },
         { id: 'crown', name: 'Корона', emoji: '👑', price: 750, type: 'collectible' },
@@ -584,10 +502,17 @@
         grid.innerHTML = '';
         
         grid.appendChild(createCell('?', true, 'header')); 
-        vowelsList.forEach(v => grid.appendChild(createCell(v, true, 'header')));
+        vowelsList.forEach(v => {
+            let cell = createCell(v, true, 'header');
+            cell.id = `header-vowel-${v}`;
+            grid.appendChild(cell);
+        });
 
         consonantsList.forEach((c, rowIndex) => {
-            grid.appendChild(createCell(c, true, 'header'));
+            let cell = createCell(c, true, 'header');
+            cell.id = `header-cons-${c}`;
+            grid.appendChild(cell);
+
             vowelsList.forEach(v => {
                 let syll = columnsData[v][rowIndex];
                 if (syll) grid.appendChild(createCell(syll, false));
@@ -610,6 +535,35 @@
         return div;
     }
 
+    /* ============ ПОДСКАЗКИ (СИЯНИЕ БУКВ) ============ */
+    function updateGridHints() {
+        // Убираем старые подсказки
+        document.querySelectorAll('.hint-blink').forEach(el => el.classList.remove('hint-blink'));
+        
+        if (!isPlaying || currentPartIndex >= currentWordParts.length) return;
+        
+        let currentSyll = currentWordParts[currentPartIndex];
+        if (!currentSyll) return;
+        
+        if (currentSyll.length === 1) {
+            // Отдельная буква - мигает её заголовок
+            if (consonantsList.includes(currentSyll)) {
+                let el = document.getElementById(`header-cons-${currentSyll}`);
+                if (el) el.classList.add('hint-blink');
+            } else if (vowelsList.includes(currentSyll)) {
+                let el = document.getElementById(`header-vowel-${currentSyll}`);
+                if (el) el.classList.add('hint-blink');
+            }
+        } else if (currentSyll.length >= 2) {
+            // Две буквы (например МО) - мигает только согласная (М)
+            let firstChar = currentSyll[0];
+            if (consonantsList.includes(firstChar)) {
+                let el = document.getElementById(`header-cons-${firstChar}`);
+                if (el) el.classList.add('hint-blink');
+            }
+        }
+    }
+
     /* ============ АВТО-РАЗБИВКА И ЗАГРУЗКА СЛОВАРЯ ============ */
     async function loadDictionary() {
         const dictStatusEl = document.getElementById('dict-status');
@@ -622,29 +576,17 @@
                 let processedWords = [];
                 for (let word of loadedWords) {
                     if (word.includes('-')) {
-                        if (word.split('-').every(p => validSyllables.has(p))) {
-                            processedWords.push(word);
-                        }
+                        if (word.split('-').every(p => validSyllables.has(p))) processedWords.push(word);
                     } else {
-                        // Умный алгоритм автоматической разбивки сплошного слова
-                        let parts = [];
-                        let i = 0;
-                        let isValid = true;
+                        let parts = []; let i = 0; let isValid = true;
                         while (i < word.length) {
                             if (i + 1 < word.length && validSyllables.has(word.substring(i, i + 2))) {
-                                parts.push(word.substring(i, i + 2));
-                                i += 2;
+                                parts.push(word.substring(i, i + 2)); i += 2;
                             } else if (validSyllables.has(word[i])) {
-                                parts.push(word[i]);
-                                i += 1;
-                            } else {
-                                isValid = false;
-                                break;
-                            }
+                                parts.push(word[i]); i += 1;
+                            } else { isValid = false; break; }
                         }
-                        if (isValid && parts.length > 0) {
-                            processedWords.push(parts.join('-'));
-                        }
+                        if (isValid && parts.length > 0) processedWords.push(parts.join('-'));
                     }
                 }
                 
@@ -669,10 +611,7 @@
         let candidate = window.speechSynthesis.getVoices().find(v => v.lang.startsWith('ru'));
         if (candidate) russianVoice = candidate;
     }
-    if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = initVoice;
-        setTimeout(initVoice, 500);
-    }
+    if ('speechSynthesis' in window) { window.speechSynthesis.onvoiceschanged = initVoice; setTimeout(initVoice, 500); }
     function speakText(text) {
         if (!russianVoice) return;
         window.speechSynthesis.cancel();
@@ -680,8 +619,28 @@
         utter.lang = "ru-RU"; utter.voice = russianVoice; utter.rate = 0.85;
         window.speechSynthesis.speak(utter);
     }
-    function speakCurrentWord() {
-        if (currentWordRaw) speakText(currentWordRaw.replace(/-/g, ''));
+    function speakCurrentWord() { if (currentWordRaw) speakText(currentWordRaw.replace(/-/g, '')); }
+
+    /* ============ КОМБО И БОСС ============ */
+    function checkBossLevel() {
+        // Босс появляется каждый 5-й уровень
+        isBossLevel = (level % 5 === 0) && level > 0;
+        if (isBossLevel) document.body.classList.add('boss-mode');
+        else document.body.classList.remove('boss-mode');
+    }
+
+    function resetCombo() {
+        comboCount = 0; checkComboUI();
+    }
+
+    function checkComboUI() {
+        const comboText = document.getElementById('combo-text');
+        const coinsIcon = document.querySelector('.stats-mini span.coins');
+        if (comboCount >= 5) {
+            comboText.style.display = 'block'; coinsIcon.classList.add('combo-pulse');
+        } else {
+            comboText.style.display = 'none'; coinsIcon.classList.remove('combo-pulse');
+        }
     }
 
     /* ============ ИГРОВАЯ МЕХАНИКА ============ */
@@ -691,6 +650,7 @@
         document.getElementById('btn-stop').style.display = 'flex';
         
         isPlaying = true; wordsCompletedInLevel = 0; spentStars = 0; boughtStars = 0; errorsCount = 0;
+        resetCombo();
         updateErrorBar(); setEmotion(EMOTION_IDLE); nextWord();
     }
 
@@ -700,6 +660,9 @@
         document.getElementById('btn-start').style.display = 'flex';
         document.getElementById('btn-stop').style.display = 'none';
         document.getElementById('word-display').innerHTML = '';
+        document.body.classList.remove('boss-mode');
+        resetCombo();
+        document.querySelectorAll('.hint-blink').forEach(el => el.classList.remove('hint-blink'));
         
         if (isGameOver) { setEmotion(EMOTION_CRY, 'shake'); showStarsReward(0, true); } 
         else { setEmotion(EMOTION_IDLE); showStarsReward(Math.max(0, completedLevelsTotal - spentStars + boughtStars), false); }
@@ -708,15 +671,22 @@
 
     function nextWord() {
         if(wordsCompletedInLevel >= WORDS_PER_LEVEL) {
+            if (isBossLevel) {
+                // Награда за прохождение босс-уровня
+                coinsCount += 100;
+                updateCoinsDisplay();
+                showDialog("Босс повержен! 🏆", "Ты прошел босс-уровень и получаешь +100 монет!", false);
+            }
             completedLevelsTotal++; level++; wordsCompletedInLevel = 0;
             saveGameState();
             showStarsReward(completedLevelsTotal - spentStars + boughtStars, false);
             return;
         }
+        checkBossLevel();
         currentWordRaw = dictionary[Math.floor(Math.random() * dictionary.length)];
         currentWordParts = currentWordRaw.split('-');
         currentPartIndex = 0;
-        renderWordDisplay(); updateLevelProgress(); saveGameState();
+        renderWordDisplay(); updateLevelProgress(); updateGridHints(); saveGameState();
     }
 
     function renderWordDisplay() {
@@ -725,14 +695,12 @@
         currentWordParts.forEach((part, index) => {
             if (index > 0) {
                 const hyphen = document.createElement('span');
-                hyphen.className = 'word-hyphen';
-                hyphen.innerText = '-';
+                hyphen.className = 'word-hyphen'; hyphen.innerText = '-';
                 container.appendChild(hyphen);
             }
             
             const span = document.createElement('span');
-            span.className = 'word-syllable hidden-color';
-            span.id = `syllable-${index}`;
+            span.className = 'word-syllable hidden-color'; span.id = `syllable-${index}`;
             span.innerHTML = formatHTML(part);
             if (index < currentPartIndex) span.classList.remove('hidden-color');
             else if (index === currentPartIndex) span.classList.add('active');
@@ -747,14 +715,22 @@
 
     function handleCellClick(syllableText) {
         if (!isPlaying) return;
+        
         if (syllableText === currentWordParts[currentPartIndex]) {
             speakText(syllableText);
             let el = document.getElementById(`syllable-${currentPartIndex}`);
             if (el) el.classList.remove('hidden-color', 'active');
             setEmotion(EMOTION_HAPPY, 'bounce');
-            coinsCount += 5; updateCoinsDisplay();
+            
+            comboCount++;
+            let earnedCoins = (comboCount >= 5) ? 15 : 5;
+            coinsCount += earnedCoins; 
+            updateCoinsDisplay();
+            checkComboUI();
             
             currentPartIndex++;
+            updateGridHints();
+
             if (currentPartIndex >= currentWordParts.length) {
                 wordsCompletedInLevel++; updateLevelProgress();
                 setTimeout(() => { if(isPlaying) nextWord(); }, 1000);
@@ -764,6 +740,18 @@
                 saveGameState();
             }
         } else {
+            resetCombo();
+            
+            // Если босс уровень - просто сбрасываем слово без ошибок
+            if (isBossLevel) {
+                currentPartIndex = 0;
+                setEmotion(EMOTION_FEAR, 'shake');
+                const bossEl = document.getElementById('boss-monster');
+                if (bossEl) { bossEl.classList.add('shake'); setTimeout(() => bossEl.classList.remove('shake'), 300); }
+                renderWordDisplay(); updateGridHints();
+                return;
+            }
+
             errorsCount++; updateErrorBar();
             if (maxErrors > 0 && errorsCount >= maxErrors) {
                 if ((completedLevelsTotal - spentStars + boughtStars) > 0) attemptSpendStar(true);
@@ -781,7 +769,7 @@
         clearTimeout(emotionTimeout);
         if (isPlaying && emoji !== EMOTION_CRY) {
             emotionTimeout = setTimeout(() => {
-                charFace.innerText = (maxErrors > 0 && (errorsCount / maxErrors) >= 0.7) ? EMOTION_SAD : EMOTION_IDLE;
+                charFace.innerText = (maxErrors > 0 && (errorsCount / maxErrors) >= 0.7) ? EMOTION_FEAR : EMOTION_IDLE;
                 charBox.className = 'character-box';
             }, 1000);
         }
@@ -797,32 +785,28 @@
         updateStatus();
     }
 
-    function updateCoinsDisplay() { document.getElementById('sidebar-coins').innerText = coinsCount; document.getElementById('shop-coins').innerText = coinsCount; }
+    function updateCoinsDisplay() { 
+        document.getElementById('sidebar-coins').innerText = coinsCount; 
+        if(document.getElementById('shop-coins')) document.getElementById('shop-coins').innerText = coinsCount; 
+    }
 
     function updateStatus() {
         const starsDisplay = document.getElementById('stars-display');
         const avStars = completedLevelsTotal - spentStars + boughtStars; 
         
         if (avStars <= 0) {
-            starsDisplay.innerHTML = 'Пока нет звёзд';
-            starsDisplay.className = 'sidebar-stars empty';
+            starsDisplay.innerHTML = 'Пока нет звёзд'; starsDisplay.className = 'sidebar-stars empty';
         } else {
-            starsDisplay.className = 'sidebar-stars';
-            starsDisplay.innerHTML = '';
-            
+            starsDisplay.className = 'sidebar-stars'; starsDisplay.innerHTML = '';
             if (avStars <= 10) {
                 for (let i = 0; i < avStars; i++) {
-                    let star = document.createElement('span');
-                    star.innerText = '⭐';
-                    star.title = "Нажми, чтобы списать 5 ошибок!";
-                    star.onclick = () => attemptSpendStar(false);
+                    let star = document.createElement('span'); star.innerText = '⭐';
+                    star.title = "Нажми, чтобы списать 5 ошибок!"; star.onclick = () => attemptSpendStar(false);
                     starsDisplay.appendChild(star);
                 }
             } else {
-                let starBtn = document.createElement('span');
-                starBtn.innerText = `⭐ x ${avStars}`;
-                starBtn.title = "Нажми, чтобы списать 5 ошибок!";
-                starBtn.onclick = () => attemptSpendStar(false);
+                let starBtn = document.createElement('span'); starBtn.innerText = `⭐ x ${avStars}`;
+                starBtn.title = "Нажми, чтобы списать 5 ошибок!"; starBtn.onclick = () => attemptSpendStar(false);
                 starsDisplay.appendChild(starBtn);
             }
         }
@@ -865,8 +849,21 @@
     function openShop() { renderShop(); document.getElementById('shop-screen').style.display = 'flex'; }
     function closeShop() { document.getElementById('shop-screen').style.display = 'none'; saveGameState(); }
 
+    function exchangeStarForCoins() {
+        const availableStars = completedLevelsTotal - spentStars + boughtStars;
+        if (availableStars > 0) {
+            spentStars++; coinsCount += 100; 
+            updateCoinsDisplay(); updateStatus(); renderShop(); saveGameState(); 
+        } else {
+            showDialog("Упс!", "У тебя нет доступных звёздочек для обмена.", false);
+        }
+    }
+
     function renderShop() {
         updateCoinsDisplay();
+        const availableStars = completedLevelsTotal - spentStars + boughtStars;
+        if (document.getElementById('shop-stars')) document.getElementById('shop-stars').innerText = availableStars;
+
         const grid = document.getElementById('shop-grid'); grid.innerHTML = '';
         shopItems.forEach(item => {
             const isCons = item.type === 'consumable';
@@ -877,8 +874,7 @@
             let exClass = '', prText = '';
             if (isCons) { exClass = 'consumable'; prText = '🪙 ' + item.price; }
             else if (isCollectible) {
-                if (isOwn) { exClass = 'owned'; prText = 'Куплено'; }
-                else { prText = '🪙 ' + item.price; }
+                if (isOwn) { exClass = 'owned'; prText = 'Куплено'; } else { prText = '🪙 ' + item.price; }
             } else {
                 if (isEq) { exClass = 'equipped'; prText = 'Надето'; }
                 else if (isOwn) { exClass = 'owned'; prText = 'Куплено'; }
@@ -895,11 +891,7 @@
                 } else if (isCollectible) {
                     if (isOwn) return;
                     if (coinsCount >= item.price) {
-                        coinsCount -= item.price;
-                        inventory[item.id] = true;
-                        updateCollectiblesDisplay();
-                        renderShop();
-                        saveGameState();
+                        coinsCount -= item.price; inventory[item.id] = true; updateCollectiblesDisplay(); renderShop(); saveGameState();
                     } else showDialog("Упс!", "Не хватает монеток!", false);
                 } else {
                     if (isEq) {
@@ -927,17 +919,12 @@
     }
 
     function updateCollectiblesDisplay() {
-        const colLayer = document.getElementById('collectibles-layer');
-        if (!colLayer) return;
-        colLayer.innerHTML = '';
+        const colLayer = document.getElementById('collectibles-layer'); if (!colLayer) return; colLayer.innerHTML = '';
         for (const [itemId, isOwned] of Object.entries(inventory)) {
             if (isOwned) {
                 const item = shopItems.find(i => i.id === itemId);
                 if (item && item.type === 'collectible') {
-                    const el = document.createElement('span');
-                    el.className = `collectible-item col-${item.id}`;
-                    el.innerText = item.emoji;
-                    colLayer.appendChild(el);
+                    const el = document.createElement('span'); el.className = `collectible-item col-${item.id}`; el.innerText = item.emoji; colLayer.appendChild(el);
                 }
             }
         }
@@ -949,27 +936,28 @@
         document.getElementById('setting-difficulty').disabled = isPlaying;
         document.getElementById('settings-screen').style.display = 'flex';
     }
-    function closeSettings() { document.getElementById('settings-screen').style.display = 'none'; }
+    function closeSettings() { document.getElementById('settings-screen').style.display = 'none'; saveGameState(); }
     function saveSettings() { if (!isPlaying) maxErrors = parseInt(document.getElementById('setting-difficulty').value); saveGameState(); closeSettings(); }
 
     /* ============ СОХРАНЕНИЯ ============ */
     function saveGameState() {
-        localStorage.setItem('syllable_game_state', JSON.stringify({
+        localStorage.setItem('syllable_game_state_v2', JSON.stringify({
             coinsCount, level, wordsCompletedInLevel, completedLevelsTotal, spentStars, boughtStars, errorsCount, 
-            inventory, equippedAccessories, maxErrors, isPlaying, currentWordRaw, currentPartIndex
+            inventory, equippedAccessories, maxErrors, isPlaying, currentWordRaw, currentPartIndex, comboCount, isBossLevel
         }));
     }
 
     function loadGameState() {
         try {
-            const state = JSON.parse(localStorage.getItem('syllable_game_state'));
+            const state = JSON.parse(localStorage.getItem('syllable_game_state_v2')) || JSON.parse(localStorage.getItem('syllable_game_state'));
             if (!state) { updateLevelProgress(); updateStatus(); return; }
             coinsCount = state.coinsCount || 0; level = state.level || 1; wordsCompletedInLevel = state.wordsCompletedInLevel || 0;
             completedLevelsTotal = state.completedLevelsTotal || 0; spentStars = state.spentStars || 0; boughtStars = state.boughtStars || 0;
             errorsCount = state.errorsCount || 0; inventory = state.inventory || {}; equippedAccessories = state.equippedAccessories || {};
+            comboCount = state.comboCount || 0; isBossLevel = state.isBossLevel || false;
             maxErrors = state.maxErrors !== undefined ? state.maxErrors : 20;
             
-            updateCoinsDisplay(); updateAccessoryDisplay(); updateCollectiblesDisplay(); updateStatus(); updateLevelProgress();
+            updateCoinsDisplay(); updateAccessoryDisplay(); updateCollectiblesDisplay(); updateStatus(); updateLevelProgress(); checkComboUI(); checkBossLevel();
             
             if (state.isPlaying && state.currentWordRaw) {
                 document.getElementById('btn-continue').style.display = 'flex';
@@ -983,7 +971,7 @@
         const state = window.savedSessionData; if (!state) return;
         document.getElementById('btn-start').style.display = 'none'; document.getElementById('btn-continue').style.display = 'none'; document.getElementById('btn-stop').style.display = 'flex';
         isPlaying = true; currentWordRaw = state.currentWordRaw; currentWordParts = currentWordRaw.split('-'); currentPartIndex = state.currentPartIndex || 0;
-        renderWordDisplay(); updateLevelProgress(); updateErrorBar(); window.savedSessionData = null; saveGameState();
+        renderWordDisplay(); updateLevelProgress(); updateErrorBar(); updateGridHints(); window.savedSessionData = null; saveGameState();
     }
 
     window.onload = async () => { buildGrid(); await loadDictionary(); loadGameState(); };
