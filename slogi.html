@@ -68,10 +68,11 @@
         #boss-monster.shake { animation: shake 0.3s; }
 
         #combo-text {
-            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
-            font-size: 20px; font-weight: 900; color: #ff3300;
+            position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+            font-size: clamp(14px, 4vw, 18px); font-weight: 900; color: #ff3300;
             text-shadow: 2px 2px 0px #fff, -2px -2px 0px #fff, 2px -2px 0px #fff, -2px 2px 0px #fff;
             display: none; z-index: 50; animation: popIn 0.3s forwards, comboFloat 1.5s infinite alternate ease-in-out;
+            white-space: nowrap;
         }
         @keyframes comboFloat { 0% { transform: translateX(-50%) scale(1); } 100% { transform: translateX(-50%) scale(1.1); } }
         .combo-pulse { animation: comboPulseAnim 0.6s infinite !important; color: #e74c3c !important; }
@@ -80,34 +81,40 @@
 
         /* --- ВЕРХНЯЯ ЧАСТЬ --- */
         .top-panel {
-            /* Высота уменьшена для освобождения места 3 сектору */
             display: flex; height: 22vh; min-height: 130px; padding: 8px; gap: 8px; flex-shrink: 0;
         }
 
         .sector1 {
             flex: 1; background: var(--card-bg); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: relative; padding: 10px; padding-bottom: 45px; transition: box-shadow 0.3s, border 0.3s;
+            position: relative; 
+            /* Увеличен отступ сверху, чтобы комбо не перекрывало текст */
+            padding: 35px 10px 45px 10px; 
+            transition: box-shadow 0.3s, border 0.3s;
         }
 
         .word-display {
             display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
-            /* Шрифт увеличен */
             gap: 4px; font-size: clamp(26px, 8vw, 48px); font-weight: 800; line-height: 1.2; text-align: center;
         }
 
-        .word-syllable { color: var(--gray-color); transition: color 0.3s, transform 0.2s; }
+        .word-syllable { 
+            color: var(--gray-color); 
+            transition: color 0.3s, transform 0.2s; 
+            display: inline-block;
+        }
         
-        /* Анимация текущего слога */
+        /* НОВАЯ, БОЛЕЕ ВЫРАЖЕННАЯ АНИМАЦИЯ */
         @keyframes activePulseAnim {
-            0%, 100% { transform: scale(1.1) rotate(0deg); }
-            50% { transform: scale(1.15) rotate(-3deg); }
+            0% { transform: scale(1.1) translateY(0) rotate(0deg); }
+            50% { transform: scale(1.4) translateY(-6px) rotate(-4deg); filter: drop-shadow(0 6px 4px rgba(0,0,0,0.2)); }
+            100% { transform: scale(1.1) translateY(0) rotate(0deg); }
         }
         .word-syllable.active { 
             transform: scale(1.1); 
-            text-shadow: 0 0 10px rgba(0,0,0,0.1); 
-            animation: activePulseAnim 1.2s infinite alternate ease-in-out;
-            color: var(--text-color); /* Принудительно выделяем цвет (поверх hidden-color) */
+            animation: activePulseAnim 0.7s infinite ease-in-out;
+            position: relative;
+            z-index: 5;
         }
         
         .word-syllable .consonant { color: var(--secondary-color); }
@@ -123,7 +130,6 @@
         }
         .tts-btn:active { transform: scale(0.9); }
 
-        /* Новая кнопка настроек в левом нижнем углу */
         .settings-btn {
             position: absolute; bottom: 8px; left: 8px; width: 36px; height: 36px; border: none; border-radius: 50%;
             background: #e3f2fd; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -203,21 +209,18 @@
         .syllable-grid {
             display: grid; grid-template-columns: repeat(12, 1fr); border: 2px solid var(--grid-border);
             border-radius: 8px; flex: 1; background: var(--cell-border); gap: 1px; overflow: hidden;
-            position: relative; /* Для позиционирования подсветки ряда */
         }
 
         .grid-cell {
             background: #fff; display: flex; align-items: center; justify-content: center;
-            /* Шрифты увеличены и уплотнены, чтобы не ломать высоту */
             font-size: clamp(14px, 4vw, 24px); font-weight: 800; cursor: pointer; transition: background 0.1s, transform 0.1s;
-            line-height: 1.1;
+            line-height: 1.1; position: relative;
         }
         
         .grid-cell:nth-child(-n+12) { border-bottom: 3px solid var(--grid-border); background: #f8f9fa; }
         .grid-cell:nth-child(12n+1) { border-right: 3px solid var(--grid-border); background: #f8f9fa; }
         .grid-cell:nth-child(1) { background: #e2e8f0; }
 
-        /* Увеличенный шрифт для подсказок-заголовков */
         .grid-cell.header { font-size: clamp(19px, 5.5vw, 28px); }
         .grid-cell:active { background: #e2e8f0; transform: scale(0.9); }
         .grid-cell.empty { background: #f4f4f4; cursor: default; }
@@ -227,24 +230,14 @@
         .grid-cell .vowel { color: var(--danger-color); }
         .grid-cell .soft { color: var(--soft-color); }
 
-        /* Анимация подсказки */
+        /* Анимация подсказки (применяется индивидуально к ячейкам ряда) */
         @keyframes hintBlink {
             0% { box-shadow: inset 0 0 15px var(--primary-color); background: #e8f5e9; }
             50% { box-shadow: inset 0 0 0 transparent; background: #f8f9fa; }
             100% { box-shadow: inset 0 0 15px var(--primary-color); background: #e8f5e9; }
         }
-        .grid-cell.header.hint-blink {
-            animation: hintBlink 1.2s infinite; position: relative; z-index: 5; border-radius: 4px;
-        }
-        
-        /* Длинный мигающий ряд для слогов */
-        #row-hint-overlay {
-            grid-column: 1 / 13;
-            pointer-events: none;
-            z-index: 5;
-            display: none;
-            border-radius: 4px;
-            animation: hintBlink 1.2s infinite;
+        .grid-cell.hint-blink {
+            animation: hintBlink 1.2s infinite; position: relative; z-index: 5;
         }
 
         /* --- МОДАЛЬНЫЕ ОКНА --- */
@@ -265,7 +258,7 @@
         .settings-row label { display: block; font-size: 14px; font-weight: bold; color: #555; margin-bottom: 4px; }
         .settings-row select { padding: 8px; width: 100%; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;}
 
-        /* Магазин - Стиль из Пианино */
+        /* Магазин */
         .shop-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 15px 0; overflow-y: auto; max-height: 50vh; padding: 5px; }
         .shop-item { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; padding: 8px 5px; width: 95px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .shop-item:hover { border-color: #ffc107; }
@@ -534,29 +527,35 @@
         const grid = document.getElementById('syllable-grid');
         grid.innerHTML = '';
         
-        // Создаем невидимый слой для подсветки ряда
-        const rowOverlay = document.createElement('div');
-        rowOverlay.id = 'row-hint-overlay';
-        grid.appendChild(rowOverlay);
+        let cellQuestion = createCell('?', true, 'header');
+        cellQuestion.dataset.row = '0';
+        grid.appendChild(cellQuestion); 
         
-        grid.appendChild(createCell('?', true, 'header')); 
         vowelsList.forEach(v => {
             let cell = createCell(v, true, 'header');
             cell.id = `header-vowel-${v}`;
+            cell.dataset.row = '0';
             grid.appendChild(cell);
         });
 
         consonantsList.forEach((c, rowIndex) => {
+            let actualRow = (rowIndex + 1).toString();
+            
             let cell = createCell(c, true, 'header');
             cell.id = `header-cons-${c}`;
+            cell.dataset.row = actualRow;
             grid.appendChild(cell);
 
             vowelsList.forEach(v => {
                 let syll = columnsData[v][rowIndex];
-                if (syll) grid.appendChild(createCell(syll, false));
-                else {
+                if (syll) {
+                    let c = createCell(syll, false);
+                    c.dataset.row = actualRow;
+                    grid.appendChild(c);
+                } else {
                     let emptyDiv = document.createElement('div');
                     emptyDiv.className = 'grid-cell empty';
+                    emptyDiv.dataset.row = actualRow;
                     grid.appendChild(emptyDiv);
                 }
             });
@@ -573,13 +572,9 @@
         return div;
     }
 
-    /* ============ ПОДСКАЗКИ (СИЯНИЕ БУКВ И РЯДОВ) ============ */
+    /* ============ ПОДСКАЗКИ (НАДЕЖНОЕ СИЯНИЕ РЯДОВ) ============ */
     function updateGridHints() {
-        // Убираем старые подсказки
         document.querySelectorAll('.hint-blink').forEach(el => el.classList.remove('hint-blink'));
-        
-        let overlay = document.getElementById('row-hint-overlay');
-        if (overlay) overlay.style.display = 'none';
         
         if (!isPlaying || currentPartIndex >= currentWordParts.length) return;
         
@@ -587,7 +582,6 @@
         if (!currentSyll) return;
         
         if (currentSyll.length === 1) {
-            // Отдельная буква - мигает её заголовок
             if (consonantsList.includes(currentSyll)) {
                 let el = document.getElementById(`header-cons-${currentSyll}`);
                 if (el) el.classList.add('hint-blink');
@@ -596,13 +590,14 @@
                 if (el) el.classList.add('hint-blink');
             }
         } else if (currentSyll.length >= 2) {
-            // Для слога включаем подсветку всего ряда
             let firstChar = currentSyll[0];
             let consIndex = consonantsList.indexOf(firstChar);
-            if (consIndex !== -1 && overlay) {
-                // consIndex - от 0. Ряд 1 - это гласные. Согласные начинаются со 2-го ряда.
-                overlay.style.gridRow = (consIndex + 2).toString();
-                overlay.style.display = 'block';
+            if (consIndex !== -1) {
+                // Ищем все ячейки с нужным атрибутом data-row и добавляем им класс мигания
+                let actualRow = (consIndex + 1).toString();
+                document.querySelectorAll(`[data-row="${actualRow}"]`).forEach(el => {
+                    el.classList.add('hint-blink');
+                });
             }
         }
     }
@@ -706,8 +701,6 @@
         resetCombo();
         
         document.querySelectorAll('.hint-blink').forEach(el => el.classList.remove('hint-blink'));
-        let overlay = document.getElementById('row-hint-overlay');
-        if (overlay) overlay.style.display = 'none';
         
         if (isGameOver) { setEmotion(EMOTION_CRY, 'shake'); showStarsReward(0, true); } 
         else { setEmotion(EMOTION_IDLE); showStarsReward(Math.max(0, completedLevelsTotal - spentStars + boughtStars), false); }
