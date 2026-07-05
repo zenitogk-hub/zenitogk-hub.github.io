@@ -88,7 +88,6 @@
             flex: 1; background: var(--card-bg); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             position: relative; 
-            /* Увеличен отступ сверху, чтобы комбо не перекрывало текст */
             padding: 35px 10px 45px 10px; 
             transition: box-shadow 0.3s, border 0.3s;
         }
@@ -104,7 +103,6 @@
             display: inline-block;
         }
         
-        /* НОВАЯ, БОЛЕЕ ВЫРАЖЕННАЯ АНИМАЦИЯ */
         @keyframes activePulseAnim {
             0% { transform: scale(1.1) translateY(0) rotate(0deg); }
             50% { transform: scale(1.4) translateY(-6px) rotate(-4deg); filter: drop-shadow(0 6px 4px rgba(0,0,0,0.2)); }
@@ -164,19 +162,31 @@
         .character-box.shake { animation: shake 0.3s; }
 
         .accessory-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        .accessory-item { position: absolute; display: block; }
+        .accessory-item { position: absolute; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2)); }
+        
+        /* Аксессуары */
         .acc-hat { top: -25px; left: 50%; transform: translateX(-50%); font-size: 35px; }
+        .acc-cap { top: -25px; left: 50%; transform: translateX(-50%); font-size: 35px; }
         .acc-glasses { top: 2px; left: 50%; transform: translateX(-50%); font-size: 45px; }
+        .acc-headphones { top: 3px; left: 50%; transform: translateX(-50%); font-size: 48px; }
         .acc-bow { bottom: -15px; left: 50%; transform: translateX(-50%); font-size: 25px; }
+        .acc-tie { bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 30px; }
         .acc-flower { top: -5px; right: -10px; font-size: 22px; transform: rotate(20deg); }
 
         #collectibles-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
         .collectible-item { position: absolute; font-size: 20px; display: block; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); }
+        
+        /* Предметы коллекции */
         .col-medal { bottom: -10px; left: -15px; }
         .col-trophy { bottom: -10px; right: -15px; }
         .col-crown { top: -15px; left: -20px; transform: rotate(-20deg); }
         .col-unicorn { top: -15px; right: -20px; transform: rotate(15deg); }
         .col-diamond { top: 15px; left: -22px; font-size: 18px; }
+        .col-car { bottom: -10px; left: -25px; font-size: 22px; }
+        .col-rocket { top: -10px; right: -25px; font-size: 22px; transform: rotate(15deg); }
+        .col-sword { top: 15px; right: -25px; font-size: 20px; transform: rotate(45deg); }
+        .col-dino { bottom: -10px; right: -25px; font-size: 22px; transform: scaleX(-1); }
+        .col-robot { top: -10px; left: -25px; font-size: 22px; }
 
         .stats-mini {
             width: 100%; text-align: center; font-size: 11px; font-weight: bold; line-height: 1.2;
@@ -203,18 +213,21 @@
 
         /* --- НИЖНЯЯ ЧАСТЬ (ТАБЛИЦА) --- */
         .sector3 {
-            flex: 1; padding: 4px 8px 8px 8px; overflow-y: auto; display: flex; flex-direction: column;
+            flex: 1; padding: 4px 8px 8px 8px; 
+            /* ЗАПРЕТ РУЧНОГО СКРОЛЛА */
+            overflow-y: hidden; 
+            position: relative;
         }
 
         .syllable-grid {
             display: grid; grid-template-columns: repeat(12, 1fr); border: 2px solid var(--grid-border);
-            border-radius: 8px; flex: 1; background: var(--cell-border); gap: 1px; overflow: hidden;
+            border-radius: 8px; background: var(--cell-border); gap: 1px;
         }
 
         .grid-cell {
             background: #fff; display: flex; align-items: center; justify-content: center;
             font-size: clamp(14px, 4vw, 24px); font-weight: 800; cursor: pointer; transition: background 0.1s, transform 0.1s;
-            line-height: 1.1; position: relative;
+            line-height: 1.1; position: relative; padding: 5px 0; 
         }
         
         .grid-cell:nth-child(-n+12) { border-bottom: 3px solid var(--grid-border); background: #f8f9fa; }
@@ -230,7 +243,6 @@
         .grid-cell .vowel { color: var(--danger-color); }
         .grid-cell .soft { color: var(--soft-color); }
 
-        /* Анимация подсказки (применяется индивидуально к ячейкам ряда) */
         @keyframes hintBlink {
             0% { box-shadow: inset 0 0 15px var(--primary-color); background: #e8f5e9; }
             50% { box-shadow: inset 0 0 0 transparent; background: #f8f9fa; }
@@ -462,12 +474,12 @@
         "Ь": ["НЬ","МЬ","ТЬ","КЬ","ХЬ","БЬ","ВЬ","ГЬ","ДЬ","","ЗЬ","ЛЬ","ПЬ","РЬ","СЬ","ФЬ","","ЧЬ","ШЬ","ЩЬ",""]
     };
 
-    const validSyllables = new Set([...consonantsList, ...vowelsList.filter(v => v !== 'Ь')]);
+    const validSyllables = new Set([...consonantsList, ...vowelsList, "Ъ", "Ь"]);
     for (let v of vowelsList) columnsData[v].forEach(s => { if (s) validSyllables.add(s); });
 
     /* ============ ИГРОВЫЕ ПЕРЕМЕННЫЕ ============ */
     const WORDS_PER_LEVEL = 5;
-    let dictionary = ["МА-МА", "МО-ЛО-КО", "КО-Т", "СО-БА-КА", "МА-ШИ-НА", "Я-Б-ЛО-КО", "ДЕ-РЕ-ВО", "ЛУ-НА", "СЫ-Р", "БА-БУ-Ш-КА", "КА-РА-Н-ДА-Ш", "К-РО-КО-ДИ-Л", "ЧЕ-РЕ-ПА-ХА"];
+    let dictionary = ["МА-МА", "МО-ЛО-КО", "КО-Т", "СО-БА-КА", "МА-ШИ-НА", "Я-Б-ЛО-КО", "ДЕ-РЕ-ВО", "ЛУ-НА", "СЫ-Р", "БА-БУ-Ш-КА", "КА-РА-Н-ДА-Ш", "К-РО-КО-ДИ-Л", "ЧЕ-РЕ-ПА-ХА", "ЧА-Й", "ПО-ПУ-ГА-Й", "МУ-РА-ВЕ-Й", "О-БЪ-Е-М", "Д-ВЕ-РЬ"];
     
     let isPlaying = false;
     let level = 1;
@@ -497,16 +509,25 @@
     const EMOTION_FEAR = '😰';
     let emotionTimeout;
 
+    // ОБНОВЛЕННЫЙ СПИСОК ПРЕДМЕТОВ ДЛЯ МАЛЬЧИКОВ И ДЕВОЧЕК
     const shopItems = [
         { id: 'star', name: 'Звезда', emoji: '⭐', price: 200, type: 'consumable' },
         { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50, type: 'accessory' },
+        { id: 'cap', name: 'Кепка', emoji: '🧢', price: 50, type: 'accessory' },
         { id: 'glasses', name: 'Очки', emoji: '🕶️', price: 100, type: 'accessory' },
+        { id: 'headphones', name: 'Наушники', emoji: '🎧', price: 120, type: 'accessory' },
         { id: 'bow', name: 'Бантик', emoji: '🎀', price: 150, type: 'accessory' },
+        { id: 'tie', name: 'Галстук', emoji: '👔', price: 150, type: 'accessory' },
         { id: 'flower', name: 'Заколка', emoji: '🌸', price: 200, type: 'accessory' },
         { id: 'medal', name: 'Медаль', emoji: '🥇', price: 350, type: 'collectible' },
+        { id: 'car', name: 'Машинка', emoji: '🚗', price: 400, type: 'collectible' },
         { id: 'trophy', name: 'Кубок', emoji: '🏆', price: 500, type: 'collectible' },
+        { id: 'rocket', name: 'Ракета', emoji: '🚀', price: 600, type: 'collectible' },
         { id: 'crown', name: 'Корона', emoji: '👑', price: 750, type: 'collectible' },
+        { id: 'dino', name: 'Динозавр', emoji: '🦖', price: 800, type: 'collectible' },
         { id: 'unicorn', name: 'Единорог', emoji: '🦄', price: 1000, type: 'collectible' },
+        { id: 'robot', name: 'Робот', emoji: '🤖', price: 1200, type: 'collectible' },
+        { id: 'sword', name: 'Меч', emoji: '🗡️', price: 1350, type: 'collectible' },
         { id: 'diamond', name: 'Алмаз', emoji: '💎', price: 1500, type: 'collectible' }
     ];
 
@@ -572,7 +593,7 @@
         return div;
     }
 
-    /* ============ ПОДСКАЗКИ (НАДЕЖНОЕ СИЯНИЕ РЯДОВ) ============ */
+    /* ============ ПОДСКАЗКИ И АВТОСКРОЛЛ ============ */
     function updateGridHints() {
         document.querySelectorAll('.hint-blink').forEach(el => el.classList.remove('hint-blink'));
         
@@ -581,23 +602,48 @@
         let currentSyll = currentWordParts[currentPartIndex];
         if (!currentSyll) return;
         
+        let targetElements = [];
+
         if (currentSyll.length === 1) {
             if (consonantsList.includes(currentSyll)) {
                 let el = document.getElementById(`header-cons-${currentSyll}`);
-                if (el) el.classList.add('hint-blink');
+                if (el) { el.classList.add('hint-blink'); targetElements.push(el); }
             } else if (vowelsList.includes(currentSyll)) {
                 let el = document.getElementById(`header-vowel-${currentSyll}`);
-                if (el) el.classList.add('hint-blink');
+                if (el) { el.classList.add('hint-blink'); targetElements.push(el); }
+            } else {
+                let el = document.getElementById(`header-vowel-${currentSyll}`);
+                if (!el) el = document.getElementById(`header-cons-${currentSyll}`);
+                if (el) { el.classList.add('hint-blink'); targetElements.push(el); }
             }
         } else if (currentSyll.length >= 2) {
             let firstChar = currentSyll[0];
             let consIndex = consonantsList.indexOf(firstChar);
             if (consIndex !== -1) {
-                // Ищем все ячейки с нужным атрибутом data-row и добавляем им класс мигания
                 let actualRow = (consIndex + 1).toString();
                 document.querySelectorAll(`[data-row="${actualRow}"]`).forEach(el => {
                     el.classList.add('hint-blink');
+                    targetElements.push(el);
                 });
+            }
+        }
+
+        // --- ЛОГИКА АВТОСКРОЛЛА ---
+        if (targetElements.length > 0) {
+            let target = targetElements[0];
+            let container = document.querySelector('.sector3');
+            
+            let targetRect = target.getBoundingClientRect();
+            let containerRect = container.getBoundingClientRect();
+            
+            // Добавим отступ (padding), чтобы строка не прилипала к самому краю, прежде чем прокрутиться
+            let padding = 10; 
+
+            // Если элемент ушел за верхнюю или нижнюю границу контейнера
+            if (targetRect.top < (containerRect.top + padding) || targetRect.bottom > (containerRect.bottom - padding)) {
+                // Вычисляем смещение так, чтобы искомый ряд оказался ровно по центру сектора
+                let offset = targetRect.top - containerRect.top - (containerRect.height / 2) + (targetRect.height / 2);
+                container.scrollBy({ top: offset, behavior: 'smooth' });
             }
         }
     }
@@ -686,9 +732,27 @@
         document.getElementById('btn-continue').style.display = 'none';
         document.getElementById('btn-stop').style.display = 'flex';
         
-        isPlaying = true; wordsCompletedInLevel = 0; spentStars = 0; boughtStars = 0; errorsCount = 0;
+        isPlaying = true; 
+        level = 1; 
+        wordsCompletedInLevel = 0; 
+        completedLevelsTotal = 0; 
+        spentStars = 0; 
+        boughtStars = 0; 
+        errorsCount = 0;
+
+        coinsCount = 0;
+        inventory = {};
+        equippedAccessories = {};
+        
+        updateCoinsDisplay();
+        updateAccessoryDisplay();
+        updateCollectiblesDisplay();
+        updateStatus();
+
         resetCombo();
-        updateErrorBar(); setEmotion(EMOTION_IDLE); nextWord();
+        updateErrorBar(); 
+        setEmotion(EMOTION_IDLE); 
+        nextWord();
     }
 
     function stopGame(isGameOver = false) {
