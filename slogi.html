@@ -689,9 +689,9 @@
     function playWavSound(soundName) {
         if (!soundName) return;
         
-        // Переводим в верхний регистр для точного совпадения с именами файлов
+        // Ищем файл в той же папке, где лежит HTML (без дополнительных подпапок)
         const fileName = soundName.toUpperCase() + '.wav';
-        const audio = new Audio('sounds_final/' + fileName);
+        const audio = new Audio(fileName);
         
         audio.play().catch(error => {
             console.error("Ошибка воспроизведения файла " + fileName + ":", error);
