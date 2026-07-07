@@ -687,30 +687,66 @@
 
     /* ============ ОЗВУЧКА АУДИОФАЙЛАМИ ============ */
     let currentAudio = null;
+    let currentSequenceId = 0; 
 
-    function speakText(text) {
-        if (!text) return;
-        
-        // Прерываем предыдущий аудиофайл, если он играет в этот момент
+    function stopAllAudio() {
+        currentSequenceId++; 
         if (currentAudio) {
             currentAudio.pause();
             currentAudio.currentTime = 0;
+            currentAudio = null;
         }
-        
-        // Имя файла приводится к верхнему регистру (например: "НА.wav", "БЬ.wav", "МАМА.wav")
-        const fileName = `${text.toUpperCase()}.wav`;
-        
-        currentAudio = new Audio(fileName);
-        currentAudio.play().catch(err => {
-            console.warn(`Не удалось воспроизвести файл: ${fileName}. Возможно, его нет в папке.`, err);
+    }
+
+    function playAudioFile(text) {
+        return new Promise((resolve) => {
+            if (!text) {
+                resolve();
+                return;
+            }
+
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }
+
+            const fileName = `${text.toUpperCase()}.wav`;
+            currentAudio = new Audio(fileName);
+
+            currentAudio.onended = () => {
+                currentAudio = null;
+                resolve();
+            };
+
+            currentAudio.play().catch(err => {
+                console.error(`[Ошибка Аудио] Не удалось воспроизвести файл: ${fileName}. Возможно, файл отсутствует или воспроизведение заблокировано политикой браузера.`, err);
+                currentAudio = null;
+                resolve(); 
+            });
         });
     }
 
-    function speakCurrentWord() { 
-        if (currentWordRaw) {
-            // Воспроизводим всё слово целиком (без дефисов, например: "МАМА")
-            speakText(currentWordRaw.replace(/-/g, '')); 
-        } 
+    function speakText(text) {
+        stopAllAudio(); 
+        playAudioFile(text);
+    }
+
+    async function speakCurrentWord() {
+        if (!currentWordParts || currentWordParts.length === 0) return;
+
+        stopAllAudio(); 
+        const seqId = currentSequenceId; 
+
+        for (let i = 0; i < currentWordParts.length; i++) {
+            if (seqId !== currentSequenceId) return;
+
+            const part = currentWordParts[i];
+            await playAudioFile(part);
+
+            if (i < currentWordParts.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 600));
+            }
+        }
     }
 
     /* ============ КОМБО И БОСС ============ */
@@ -766,6 +802,7 @@
     function stopGame(isGameOver = false) {
         if (!isPlaying) return;
         isPlaying = false;
+        stopAllAudio();
         document.getElementById('btn-start').style.display = 'flex';
         document.getElementById('btn-stop').style.display = 'none';
         document.getElementById('word-display').innerHTML = '';
