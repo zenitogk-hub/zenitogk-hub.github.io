@@ -688,9 +688,30 @@
     /* ============ ОЗВУЧКА АУДИОФАЙЛАМИ ============ */
     let currentAudio = null;
     let currentSequenceId = 0; 
+    let audioCache = {};
+
+    function preloadAllSyllables() {
+        const allSyllables = new Set();
+        consonantsList.forEach(c => allSyllables.add(c));
+        vowelsList.forEach(v => allSyllables.add(v));
+        for (let v of vowelsList) {
+            columnsData[v].forEach(s => { if (s) allSyllables.add(s); });
+        }
+        
+        allSyllables.forEach(syll => {
+            const audio = new Audio(`${syll.toUpperCase()}.wav`);
+            audio.preload = 'auto';
+            audio.load();
+            audioCache[syll] = audio;
+        });
+        console.log(`Предзагружено слогов: ${Object.keys(audioCache).length}`);
+    }
 
     function stopAllAudio() {
         currentSequenceId++; 
+        Object.values(audioCache).forEach(a => {
+            try { a.pause(); a.currentTime = 0; } catch(e){}
+        });
         if (currentAudio) {
             currentAudio.pause();
             currentAudio.currentTime = 0;
@@ -705,21 +726,27 @@
                 return;
             }
 
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
+            let audio = audioCache[text.toUpperCase()];
+            
+            if (!audio) {
+                audio = new Audio(`${text.toUpperCase()}.wav`);
+                audioCache[text.toUpperCase()] = audio;
+            } else {
+                audio.currentTime = 0;
             }
 
-            const fileName = `${text.toUpperCase()}.wav`;
-            currentAudio = new Audio(fileName);
+            currentAudio = audio;
 
-            currentAudio.onended = () => {
+            const onEnded = () => {
+                audio.removeEventListener('ended', onEnded);
                 currentAudio = null;
                 resolve();
             };
+            audio.addEventListener('ended', onEnded);
 
-            currentAudio.play().catch(err => {
-                console.error(`[Ошибка Аудио] Не удалось воспроизвести файл: ${fileName}. Возможно, файл отсутствует или воспроизведение заблокировано политикой браузера.`, err);
+            audio.play().catch(err => {
+                console.error(`[Ошибка Аудио] Не удалось воспроизвести файл: ${text.toUpperCase()}.wav`, err);
+                audio.removeEventListener('ended', onEnded);
                 currentAudio = null;
                 resolve(); 
             });
@@ -742,10 +769,6 @@
 
             const part = currentWordParts[i];
             await playAudioFile(part);
-
-            if (i < currentWordParts.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 20));
-            }
         }
     }
 
@@ -1119,7 +1142,7 @@
         renderWordDisplay(); updateLevelProgress(); updateErrorBar(); updateGridHints(); window.savedSessionData = null; saveGameState();
     }
 
-    window.onload = async () => { buildGrid(); await loadDictionary(); loadGameState(); };
+    window.onload = async () => { buildGrid(); preloadAllSyllables(); await loadDictionary(); loadGameState(); };
 </script>
 </body>
 </html>
