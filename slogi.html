@@ -509,7 +509,6 @@
     const EMOTION_FEAR = '😰';
     let emotionTimeout;
 
-    // ОБНОВЛЕННЫЙ СПИСОК ПРЕДМЕТОВ ДЛЯ МАЛЬЧИКОВ И ДЕВОЧЕК
     const shopItems = [
         { id: 'star', name: 'Звезда', emoji: '⭐', price: 200, type: 'consumable' },
         { id: 'hat', name: 'Шляпка', emoji: '🎩', price: 50, type: 'accessory' },
@@ -636,12 +635,9 @@
             let targetRect = target.getBoundingClientRect();
             let containerRect = container.getBoundingClientRect();
             
-            // Добавим отступ (padding), чтобы строка не прилипала к самому краю, прежде чем прокрутиться
             let padding = 10; 
 
-            // Если элемент ушел за верхнюю или нижнюю границу контейнера
             if (targetRect.top < (containerRect.top + padding) || targetRect.bottom > (containerRect.bottom - padding)) {
-                // Вычисляем смещение так, чтобы искомый ряд оказался ровно по центру сектора
                 let offset = targetRect.top - containerRect.top - (containerRect.height / 2) + (targetRect.height / 2);
                 container.scrollBy({ top: offset, behavior: 'smooth' });
             }
@@ -689,21 +685,33 @@
         }
     }
 
-    /* ============ ОЗВУЧКА ============ */
-    let russianVoice = null;
-    function initVoice() {
-        let candidate = window.speechSynthesis.getVoices().find(v => v.lang.startsWith('ru'));
-        if (candidate) russianVoice = candidate;
-    }
-    if ('speechSynthesis' in window) { window.speechSynthesis.onvoiceschanged = initVoice; setTimeout(initVoice, 500); }
+    /* ============ ОЗВУЧКА АУДИОФАЙЛАМИ ============ */
+    let currentAudio = null;
+
     function speakText(text) {
-        if (!russianVoice) return;
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(text.toLowerCase());
-        utter.lang = "ru-RU"; utter.voice = russianVoice; utter.rate = 0.85;
-        window.speechSynthesis.speak(utter);
+        if (!text) return;
+        
+        // Прерываем предыдущий аудиофайл, если он играет в этот момент
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+        }
+        
+        // Имя файла приводится к верхнему регистру (например: "НА.wav", "БЬ.wav", "МАМА.wav")
+        const fileName = `${text.toUpperCase()}.wav`;
+        
+        currentAudio = new Audio(fileName);
+        currentAudio.play().catch(err => {
+            console.warn(`Не удалось воспроизвести файл: ${fileName}. Возможно, его нет в папке.`, err);
+        });
     }
-    function speakCurrentWord() { if (currentWordRaw) speakText(currentWordRaw.replace(/-/g, '')); }
+
+    function speakCurrentWord() { 
+        if (currentWordRaw) {
+            // Воспроизводим всё слово целиком (без дефисов, например: "МАМА")
+            speakText(currentWordRaw.replace(/-/g, '')); 
+        } 
+    }
 
     /* ============ КОМБО И БОСС ============ */
     function checkBossLevel() {
@@ -915,7 +923,7 @@
     function attemptSpendStar(isGameOverRescue = false) {
         if (!isPlaying && !isGameOverRescue) return;
         if ((completedLevelsTotal - spentStars + boughtStars) <= 0) {
-            if (isGameOverRescue) stopGame(true); else showDialog("Нет звёзд", "Пройди уровень или купи звезду!", false);
+            if (isGameOverRescue) stopGame(true); else showDialog("Нет звёзд", "Пройди уровень или купи звезда!", false);
             return;
         }
         if (errorsCount <= 0 && !isGameOverRescue) return;
