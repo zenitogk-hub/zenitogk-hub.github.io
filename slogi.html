@@ -294,7 +294,7 @@
         <div class="sector1">
             <div id="boss-monster">🐉</div>
             <div id="combo-text">🔥 КОМБО! x3 МОНЕТ 🔥</div>
-            <button class="tts-btn" onclick="speakCurrentWord()">🔊</button>
+            <button class="tts-btn" onclick="playFullWordSynthesis()">🔊</button>
             <button class="settings-btn" onclick="openSettings()">⚙️</button>
             <div class="word-display" id="word-display"></div>
             
@@ -485,7 +485,7 @@
     let level = 1;
     let wordsCompletedInLevel = 0;
     
-    let currentWordRaw = ""; 
+    window.currentWordRaw = ""; // Сделали глобальной для доступа из playFullWordSynthesis()
     let currentWordParts = [];
     let currentPartIndex = 0;
 
@@ -686,90 +686,48 @@
     }
 
     /* ============ ОЗВУЧКА АУДИОФАЙЛАМИ ============ */
-    let currentAudio = null;
-    let currentSequenceId = 0; 
-    let audioCache = {};
-
-    function preloadAllSyllables() {
-        const allSyllables = new Set();
-        consonantsList.forEach(c => allSyllables.add(c));
-        vowelsList.forEach(v => allSyllables.add(v));
-        for (let v of vowelsList) {
-            columnsData[v].forEach(s => { if (s) allSyllables.add(s); });
-        }
+    function playWavSound(soundName) {
+        if (!soundName) return;
         
-        allSyllables.forEach(syll => {
-            const audio = new Audio(`${syll.toUpperCase()}.wav`);
-            audio.preload = 'auto';
-            audio.load();
-            audioCache[syll] = audio;
+        // Переводим в верхний регистр для точного совпадения с именами файлов
+        const fileName = soundName.toUpperCase() + '.wav';
+        const audio = new Audio('sounds_final/' + fileName);
+        
+        audio.play().catch(error => {
+            console.error("Ошибка воспроизведения файла " + fileName + ":", error);
         });
-        console.log(`Предзагружено слогов: ${Object.keys(audioCache).length}`);
     }
 
-    function stopAllAudio() {
-        currentSequenceId++; 
-        Object.values(audioCache).forEach(a => {
-            try { a.pause(); a.currentTime = 0; } catch(e){}
-        });
-        if (currentAudio) {
-            currentAudio.pause();
-            currentAudio.currentTime = 0;
-            currentAudio = null;
+    /* ============ ЛОГИКА СИНТЕЗАТОРА РЕЧИ ============ */
+    function playFullWordSynthesis() {
+        if (!window.currentWordRaw && !document.getElementById('current-word')) return;
+
+        let rawText = window.currentWordRaw || document.getElementById('current-word').value || document.getElementById('current-word').innerText;
+
+        window.speechSynthesis.cancel();
+
+        const cleanWord = rawText.replace(/-/g, '').toLowerCase();
+
+        const utterance = new SpeechSynthesisUtterance(cleanWord);
+        utterance.lang = 'ru-RU';
+
+        const voices = window.speechSynthesis.getVoices();
+
+        let targetVoice = voices.find(v => v.lang.startsWith('ru') && 
+            (v.name.includes('Google') || v.name.includes('Elena') || v.name.includes('Milena') || v.name.includes('Katya') || v.name.includes('Zira')));
+
+        if (!targetVoice) {
+            targetVoice = voices.find(v => v.lang.startsWith('ru'));
         }
-    }
 
-    function playAudioFile(text) {
-        return new Promise((resolve) => {
-            if (!text) {
-                resolve();
-                return;
-            }
-
-            let audio = audioCache[text.toUpperCase()];
-            
-            if (!audio) {
-                audio = new Audio(`${text.toUpperCase()}.wav`);
-                audioCache[text.toUpperCase()] = audio;
-            } else {
-                audio.currentTime = 0;
-            }
-
-            currentAudio = audio;
-
-            const onEnded = () => {
-                audio.removeEventListener('ended', onEnded);
-                currentAudio = null;
-                resolve();
-            };
-            audio.addEventListener('ended', onEnded);
-
-            audio.play().catch(err => {
-                console.error(`[Ошибка Аудио] Не удалось воспроизвести файл: ${text.toUpperCase()}.wav`, err);
-                audio.removeEventListener('ended', onEnded);
-                currentAudio = null;
-                resolve(); 
-            });
-        });
-    }
-
-    function speakText(text) {
-        stopAllAudio(); 
-        playAudioFile(text);
-    }
-
-    async function speakCurrentWord() {
-        if (!currentWordParts || currentWordParts.length === 0) return;
-
-        stopAllAudio(); 
-        const seqId = currentSequenceId; 
-
-        for (let i = 0; i < currentWordParts.length; i++) {
-            if (seqId !== currentSequenceId) return;
-
-            const part = currentWordParts[i];
-            await playAudioFile(part);
+        if (targetVoice) {
+            utterance.voice = targetVoice;
         }
+
+        utterance.rate = 0.85; 
+        utterance.pitch = 1.1; 
+
+        window.speechSynthesis.speak(utterance);
     }
 
     /* ============ КОМБО И БОСС ============ */
@@ -825,7 +783,10 @@
     function stopGame(isGameOver = false) {
         if (!isPlaying) return;
         isPlaying = false;
-        stopAllAudio();
+        
+        // Прерываем любую активную озвучку слова
+        window.speechSynthesis.cancel();
+        
         document.getElementById('btn-start').style.display = 'flex';
         document.getElementById('btn-stop').style.display = 'none';
         document.getElementById('word-display').innerHTML = '';
@@ -852,8 +813,8 @@
             return;
         }
         checkBossLevel();
-        currentWordRaw = dictionary[Math.floor(Math.random() * dictionary.length)];
-        currentWordParts = currentWordRaw.split('-');
+        window.currentWordRaw = dictionary[Math.floor(Math.random() * dictionary.length)];
+        currentWordParts = window.currentWordRaw.split('-');
         currentPartIndex = 0;
         renderWordDisplay(); updateLevelProgress(); updateGridHints(); saveGameState();
     }
@@ -886,7 +847,8 @@
         if (!isPlaying) return;
         
         if (syllableText === currentWordParts[currentPartIndex]) {
-            speakText(syllableText);
+            playWavSound(syllableText);
+            
             let el = document.getElementById(`syllable-${currentPartIndex}`);
             if (el) el.classList.remove('hidden-color', 'active');
             setEmotion(EMOTION_HAPPY, 'bounce');
@@ -1111,7 +1073,7 @@
     function saveGameState() {
         localStorage.setItem('syllable_game_state_v2', JSON.stringify({
             coinsCount, level, wordsCompletedInLevel, completedLevelsTotal, spentStars, boughtStars, errorsCount, 
-            inventory, equippedAccessories, maxErrors, isPlaying, currentWordRaw, currentPartIndex, comboCount, isBossLevel
+            inventory, equippedAccessories, maxErrors, isPlaying, currentWordRaw: window.currentWordRaw, currentPartIndex, comboCount, isBossLevel
         }));
     }
 
@@ -1138,11 +1100,18 @@
     function continueGame() {
         const state = window.savedSessionData; if (!state) return;
         document.getElementById('btn-start').style.display = 'none'; document.getElementById('btn-continue').style.display = 'none'; document.getElementById('btn-stop').style.display = 'flex';
-        isPlaying = true; currentWordRaw = state.currentWordRaw; currentWordParts = currentWordRaw.split('-'); currentPartIndex = state.currentPartIndex || 0;
+        isPlaying = true; window.currentWordRaw = state.currentWordRaw; currentWordParts = window.currentWordRaw.split('-'); currentPartIndex = state.currentPartIndex || 0;
         renderWordDisplay(); updateLevelProgress(); updateErrorBar(); updateGridHints(); window.savedSessionData = null; saveGameState();
     }
 
-    window.onload = async () => { buildGrid(); preloadAllSyllables(); await loadDictionary(); loadGameState(); };
+    window.onload = async () => { buildGrid(); await loadDictionary(); loadGameState(); };
+
+    /* ============ ИНИЦИАЛИЗАЦИЯ ДВИЖКА РЕЧИ ============ */
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+    }
 </script>
 </body>
 </html>
