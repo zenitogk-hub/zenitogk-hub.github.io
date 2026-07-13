@@ -15,6 +15,7 @@
 <title>СЛ LogViewer Mobile</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   :root {
     --bg-primary: #111827;
@@ -337,16 +338,29 @@
   .cloud-progress-bar { height: 100%; background: #3b82f6; width: 0%; transition: width 0.3s; }
 
   /* AI CHAT CSS */
-  .chat-msg { margin-bottom: 12px; max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; position: relative; }
-  .chat-user { background: #3b82f6; color: white; margin-left: auto; border-bottom-right-radius: 2px; }
-  .chat-ai { background: var(--bg-tertiary); color: var(--text-primary); margin-right: auto; border-bottom-left-radius: 2px; border: 1px solid var(--border-color); }
+  .chat-msg { margin-bottom: 12px; max-width: 95%; padding: 12px 16px; border-radius: 12px; font-size: 13px; line-height: 1.5; word-wrap: break-word; position: relative; }
+  .chat-user { background: #3b82f6; color: white; margin-left: auto; border-bottom-right-radius: 2px; max-width: 85%; }
+  .chat-ai { background: var(--bg-tertiary); color: var(--text-primary); margin-right: auto; border-bottom-left-radius: 2px; border: 1px solid var(--border-color); width: 100%; }
   .chat-actions { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; opacity: 0.6; justify-content: flex-end; }
   .chat-actions button { cursor: pointer; background: none; border: none; color: inherit; padding: 0; font-weight: 500; }
   .chat-actions button:hover { opacity: 1; text-decoration: underline; }
-  .chat-ai b { color: #60a5fa; font-weight: 600; }
+  
+  /* Красивый рендер Markdown для ответов ИИ */
+  .chat-ai h1, .chat-ai h2, .chat-ai h3 { font-weight: bold; margin-top: 12px; margin-bottom: 6px; color: var(--text-primary); }
+  .chat-ai h2 { font-size: 1.2em; border-bottom: 1px solid var(--border-color); padding-bottom: 3px; }
+  .chat-ai h3 { font-size: 1.1em; color: #60a5fa; }
+  .chat-ai ul { list-style-type: disc; margin-left: 20px; margin-bottom: 8px; }
+  .chat-ai ol { list-style-type: decimal; margin-left: 20px; margin-bottom: 8px; }
+  .chat-ai table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; background: var(--bg-secondary); }
+  .chat-ai th, .chat-ai td { border: 1px solid var(--border-color); padding: 6px 8px; text-align: left; }
+  .chat-ai th { background: var(--bg-primary); color: var(--text-primary); }
+  .chat-ai p { margin-bottom: 8px; }
+  .chat-ai pre { background: var(--bg-primary); padding: 8px; border-radius: 6px; overflow-x: auto; margin-bottom: 8px; border: 1px solid var(--border-color); }
+  .chat-ai code { font-family: monospace; background: var(--bg-primary); padding: 2px 4px; border-radius: 4px; color: #fca5a5; font-size: 0.9em; }
+  .chat-ai pre code { color: inherit; background: transparent; padding: 0; }
 
-  /* === AI REPORT MODE (patched) === */
-  .chat-ai .report-header { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; font-size:11px; opacity:0.7; }
+  /* AI REPORT MODE */
+  .chat-ai .report-header { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; font-size:11px; opacity:0.7; }
   .chat-ai .report-header .model-tag { background:#1f2937; padding:2px 6px; border-radius:4px; font-family:monospace; }
   .ai-toolbar { display:flex; gap:6px; padding:6px; border-top:1px solid var(--border-color); background:var(--bg-primary); }
   .ai-toolbar button { background:var(--bg-tertiary); color:var(--text-primary); border:1px solid var(--border-color); padding:6px 10px; border-radius:6px; font-size:12px; cursor:pointer; flex:1; }
@@ -354,6 +368,13 @@
   .ai-toolbar button:disabled { opacity:0.4; cursor:not-allowed; }
   .ai-status-line { font-size:11px; opacity:0.7; padding:4px 6px; text-align:center; min-height:18px; }
 
+  /* Custom Model Dropdown */
+  .ai-model-option { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; cursor: pointer; border-bottom: 1px solid var(--border-color); }
+  .ai-model-option:hover { background: var(--bg-tertiary); }
+  .ai-model-option.hidden-model { opacity: 0.5; background: var(--bg-primary); }
+  .ai-icon-btn { cursor: pointer; font-size: 14px; opacity: 0.6; padding: 0 4px; transition: 0.2s; }
+  .ai-icon-btn:hover { opacity: 1; transform: scale(1.1); }
+  .ai-icon-btn.active-star { color: #f59e0b; opacity: 1; }
 </style>
 </head>
 <body>
@@ -487,16 +508,23 @@
   </div>
 
   <div id="aiView" style="display:none;" class="flex flex-col h-full p-2">
-  <div class="mb-2 flex flex-shrink-0 gap-1">
-    <select id="aiModelSelect" class="text-xs !py-2 flex-1"><option value="">Загрузка моделей ИИ...</option></select>
-    <button onclick="regenerateAiReport()" id="aiRegenBtn" class="btn-secondary text-xs !py-2 !px-3" title="Перегенерировать отчёт" disabled>🔄</button>
+  <div class="mb-2 flex flex-shrink-0 gap-1 items-center z-40">
+    <div class="relative flex-1" id="aiModelContainer">
+      <div id="aiModelSelectBox" class="text-xs !py-2 px-3 border rounded-lg flex justify-between items-center cursor-pointer font-medium" style="background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary);" onclick="document.getElementById('aiModelDropdown').classList.toggle('hidden')">
+         <span id="aiModelSelectedText" class="truncate flex-1">Загрузка моделей ИИ...</span>
+         <span class="ml-2 opacity-70">▼</span>
+      </div>
+      <div id="aiModelDropdown" class="absolute left-0 right-0 top-full mt-1 border rounded-lg shadow-lg z-50 hidden max-h-64 overflow-y-auto" style="background: var(--modal-bg); border-color: var(--border-color);">
+         </div>
+    </div>
+    <button onclick="regenerateAiReport()" id="aiRegenBtn" class="btn-secondary text-xs !py-2 !px-3 h-full" title="Перегенерировать отчёт" disabled>🔄</button>
   </div>
   <div id="aiChatHistory" class="flex-1 scroll-area p-3 mb-2 rounded-lg border flex flex-col gap-2" style="background: var(--bg-secondary); border-color: var(--border-color);">
     <div class="text-center text-sm my-auto flex flex-col items-center justify-center h-full" style="color: var(--text-muted);" id="aiEmptyState">
       <div class="text-5xl mb-3">🤖</div>
       <p class="mb-2 px-4">Я ИИ-диагност лифтов серии СЛ.</p>
       <p class="mb-5 px-4 text-xs" style="opacity:0.7;">Откройте лог-файл и нажмите кнопку ниже, чтобы получить диагностический отчёт.</p>
-      <button onclick="generateAiReport()" class="btn-primary" style="background: #10b981; font-weight: bold; width: 80%;">📊 Сгенерировать диагностический отчёт</button>
+      <button onclick="generateAiReport()" class="btn-primary" style="background: #10b981; font-weight: bold; width: 80%;">📊 Сгенерировать отчёт</button>
     </div>
   </div>
   <div class="ai-status-line" id="aiStatusLine"></div>
@@ -653,6 +681,14 @@ function closeIosHint() { document.getElementById('iosHintModal').classList.remo
 if (isStandalone) { const ib = document.getElementById('installHeaderBtn'); if (ib) ib.style.display = 'none'; }
 try { if (localStorage.getItem('sl-install-dismissed') === '1') installBanner.classList.remove('show'); } catch(e) {}
 if ('serviceWorker' in navigator) window.addEventListener('load', registerServiceWorker);
+
+// Закрытие выпадающего списка ИИ при клике вне
+document.addEventListener('click', (e) => {
+  const container = document.getElementById('aiModelContainer');
+  if (container && !container.contains(e.target)) {
+    document.getElementById('aiModelDropdown').classList.add('hidden');
+  }
+});
 
 // ============ THEME ============
 let currentTheme = 'dark';
@@ -1590,32 +1626,119 @@ async function sendUploadFiles() {
 // ============ AI: ДИАГНОСТИЧЕСКИЙ ОТЧЁТ (report mode) ============
 const AI_WORKER_URL = 'https://aiworker.zenitogk.workers.dev';
 
-let aiMessages = [];          // [{role, content}] — не копим длинную историю
-let aiReportRequest = null;    // фиксированный user-запрос для регенерации
-let aiReportText = '';         // последний отчёт (для копирования/сохранения)
-let aiReportModel = '';        // модель, которой сгенерирован отчёт
-let aiReportDate = '';         // когда сгенерирован
+let aiMessages = [];          // [{role, content}]
+let aiReportRequest = null;    // фиксированный user-запрос
+let aiReportText = '';         
+let aiReportModel = '';        
+let aiReportDate = '';         
 let aiModelsLoaded = false;
+let allAvailableModels = [];
+let aiSelectedModelId = '';
+
+let aiPrefs = JSON.parse(localStorage.getItem('sl_ai_prefs') || '{"favs":[],"hidden":[]}');
+
+function saveAiPrefs() {
+  localStorage.setItem('sl_ai_prefs', JSON.stringify(aiPrefs));
+}
+
+function renderAiModelDropdown() {
+  const dropdown = document.getElementById('aiModelDropdown');
+  const boxText = document.getElementById('aiModelSelectedText');
+  
+  if (allAvailableModels.length === 0) {
+    boxText.textContent = "Нет доступных моделей";
+    dropdown.innerHTML = "";
+    return;
+  }
+  
+  // Сортировка: избранные -> обычные -> скрытые (внизу, полупрозрачные)
+  const sorted = [...allAvailableModels].sort((a, b) => {
+    const aFav = aiPrefs.favs.includes(a.id);
+    const bFav = aiPrefs.favs.includes(b.id);
+    const aHid = aiPrefs.hidden.includes(a.id);
+    const bHid = aiPrefs.hidden.includes(b.id);
+    
+    if (aHid && !bHid) return 1;
+    if (!aHid && bHid) return -1;
+    if (aFav && !bFav) return -1;
+    if (!aFav && bFav) return 1;
+    return a.label.localeCompare(b.label);
+  });
+  
+  let html = '';
+  sorted.forEach(m => {
+    const isFav = aiPrefs.favs.includes(m.id);
+    const isHid = aiPrefs.hidden.includes(m.id);
+    const avgText = m.avgTimeMs ? `<span class="text-[10px] ml-2 opacity-50">~${(m.avgTimeMs/1000).toFixed(1)}с</span>` : '';
+    const classNames = `ai-model-option ${isHid ? 'hidden-model' : ''}`;
+    
+    html += `
+      <div class="${classNames}">
+        <span class="ai-icon-btn ${isFav ? 'active-star' : ''}" onclick="toggleFavModel(event, '${m.id}')" title="${isFav ? 'Убрать из избранного' : 'В избранное'}">★</span>
+        <div class="flex-1 px-2 truncate cursor-pointer" onclick="selectModel('${m.id}', '${m.label.replace(/'/g, "\\'")}')">
+          <span class="text-xs">${m.label}</span>${avgText}
+        </div>
+        <span class="ai-icon-btn" onclick="toggleHideModel(event, '${m.id}')" title="${isHid ? 'Восстановить' : 'Скрыть'}">${isHid ? '👁️' : '❌'}</span>
+      </div>
+    `;
+  });
+  
+  dropdown.innerHTML = html;
+  
+  // Автовыбор первой не скрытой, если еще не выбрана
+  if (!aiSelectedModelId || !allAvailableModels.find(m => m.id === aiSelectedModelId)) {
+    const firstValid = sorted.find(m => !aiPrefs.hidden.includes(m.id)) || sorted[0];
+    if (firstValid) selectModel(firstValid.id, firstValid.label);
+  } else {
+    const current = allAvailableModels.find(m => m.id === aiSelectedModelId);
+    if(current) boxText.textContent = current.label;
+  }
+}
+
+function selectModel(id, label) {
+  aiSelectedModelId = id;
+  document.getElementById('aiModelSelectedText').textContent = label;
+  document.getElementById('aiModelDropdown').classList.add('hidden');
+}
+
+function toggleFavModel(e, id) {
+  e.stopPropagation();
+  if (aiPrefs.favs.includes(id)) {
+    aiPrefs.favs = aiPrefs.favs.filter(i => i !== id);
+  } else {
+    aiPrefs.favs.push(id);
+    aiPrefs.hidden = aiPrefs.hidden.filter(i => i !== id); // убираем из скрытых, если там была
+  }
+  saveAiPrefs();
+  renderAiModelDropdown();
+}
+
+function toggleHideModel(e, id) {
+  e.stopPropagation();
+  if (aiPrefs.hidden.includes(id)) {
+    aiPrefs.hidden = aiPrefs.hidden.filter(i => i !== id);
+  } else {
+    aiPrefs.hidden.push(id);
+    aiPrefs.favs = aiPrefs.favs.filter(i => i !== id); // убираем из избранных
+    if (aiSelectedModelId === id) aiSelectedModelId = ''; // сброс выбора
+  }
+  saveAiPrefs();
+  renderAiModelDropdown();
+}
 
 async function loadAiModels() {
   if (aiModelsLoaded) return;
-  const sel = document.getElementById('aiModelSelect');
+  const boxText = document.getElementById('aiModelSelectedText');
   try {
     const res = await fetch(`${AI_WORKER_URL}/v1/models`);
     if (!res.ok) throw new Error('API Error');
     const data = await res.json();
-    sel.innerHTML = '';
-    const validModels = data.models.filter(m => m.available !== false && !m.paidOnly);
-    if (validModels.length === 0) {
-      sel.innerHTML = '<option value="">Нет доступных бесплатных моделей</option>';
-      return;
-    }
-    validModels.forEach(m => {
-      sel.innerHTML += `<option value="${m.id}">${m.label}</option>`;
-    });
+    
+    allAvailableModels = data.models.filter(m => m.available !== false && !m.paidOnly);
     aiModelsLoaded = true;
+    renderAiModelDropdown();
   } catch (err) {
-    sel.innerHTML = '<option value="">Ошибка загрузки моделей. Проверьте AI_WORKER_URL</option>';
+    boxText.textContent = 'Ошибка загрузки моделей. Проверьте AI_WORKER_URL';
     console.error("AI Models fetch error:", err);
   }
 }
@@ -1623,7 +1746,7 @@ async function loadAiModels() {
 // =====================================================================
 // УНИВЕРСАЛЬНЫЙ SYSTEM PROMPT
 // =====================================================================
-const AI_BASE_SYSTEM_PROMPT = `Ты — инженер-диагност лифтов серии «СЛ» (Система Лифт), работающий в паре с оператором. Твоя задача — по фрагменту лога и справочнику ошибок выдать ОДИН структурированный диагностический отчёт. Не задавай уточняющих вопросов. Не веди диалог. Выдай финальный отчёт, который оператор скопирует и использует.
+const AI_BASE_SYSTEM_PROMPT = `Ты — инженер-диагност лифтов серии «СЛ» (Система Лифт), работающий в паре с оператором. Твоя задача — по фрагменту лога и справочнику ошибок выдать ОДИН структурированный диагностический отчёт. Не задавай уточняющих вопросов. Не веди диалог. Выдай финальный отчёт, который оператор скопирует и использует. Отвечай только в формате Markdown.
 
 ═══════════════════════════════════════════════════════════════════════
 ФОРМАТ ЛОГА
@@ -1766,7 +1889,6 @@ CORR        Корректировка (юстировка).
 // ФОРМИРОВАНИЕ КОНТЕКСТА
 // =====================================================================
 
-// Возвращает массив уникальных 4-значных кодов ошибок/предупреждений
 function collectErrorCodes(errorEntries) {
   const set = new Set();
   for (const e of errorEntries) {
@@ -1776,7 +1898,6 @@ function collectErrorCodes(errorEntries) {
   return [...set];
 }
 
-// Возвращает индекс предыдущего ENGINE;START в массиве строк (или -1)
 function findPrevEngineStart(rows, idx) {
   for (let i = idx - 1; i >= 0; i--) {
     if (rows[i] && rows[i][1] === 'ENGINE' && rows[i][2] === 'START') return i;
@@ -1784,7 +1905,6 @@ function findPrevEngineStart(rows, idx) {
   return -1;
 }
 
-// Компактный справочник: только коды, реально встречающиеся в логе
 function buildCompactErrReference(errorDB, codes) {
   if (!codes || !codes.length) return '(ошибок в логе не обнаружено)';
   const db = errorDB || {};
@@ -1952,14 +2072,10 @@ function renderReportInUi(model, text) {
   const c = document.getElementById('aiChatHistory');
   document.getElementById('aiEmptyState').style.display = 'none';
   clearReportInUi();
-  const formatted = String(text)
-    .replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-    .replace(/^## (.*)$/gm, '<b style="font-size:14px;display:block;margin-top:8px;">$1</b>')
-    .replace(/^# (.*)$/gm, '<b style="font-size:15px;display:block;margin-top:10px;">$1</b>')
-    .replace(/`([^`]+)`/g, '<code style="background:#1f2937;padding:1px 4px;border-radius:3px;">$1</code>')
-    .replace(/^- (.*)$/gm, '• $1')
-    .replace(/\n/g, '<br>');
+  
+  // Используем marked.js для красивого рендера
+  let formatted = marked.parse(text);
+  
   const now = new Date().toLocaleString('ru-RU', { hour12: false });
   const headerHtml = `<div class="report-header">
     <span class="model-tag">${model}</span>
@@ -1974,7 +2090,6 @@ function renderReportInUi(model, text) {
 }
 
 async function doFetchOnce(modelId, sysPrompt, userReq) {
-  // Воркеру больше не передаём errCsvUrl — справочник уже в system prompt.
   const res = await fetch(`${AI_WORKER_URL}/v1/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1993,8 +2108,7 @@ async function doFetchOnce(modelId, sysPrompt, userReq) {
 
 async function generateAiReport() {
   if (!filteredRows.length) { showToast('Сначала загрузите лог-файл!'); return; }
-  const modelId = document.getElementById('aiModelSelect').value;
-  if (!modelId) { showToast('Модель не выбрана'); return; }
+  if (!aiSelectedModelId) { showToast('Модель не выбрана'); return; }
   const ctx = buildReportContext();
   if (!ctx) return;
   aiReportRequest = { userText: ctx.userRequest };
@@ -2002,7 +2116,7 @@ async function generateAiReport() {
     { role: 'system', content: ctx.systemPrompt },
     { role: 'user', content: ctx.userRequest }
   ];
-  await runReport(modelId, ctx.systemPrompt, ctx.userRequest);
+  await runReport(aiSelectedModelId, ctx.systemPrompt, ctx.userRequest);
 }
 
 async function refineAiReport() {
@@ -2010,8 +2124,7 @@ async function refineAiReport() {
   const input = document.getElementById('aiInput');
   const text = input.value.trim();
   if (!text) { showToast('Введите уточнение'); return; }
-  const modelId = document.getElementById('aiModelSelect').value;
-  if (!modelId) { showToast('Модель не выбрана'); return; }
+  if (!aiSelectedModelId) { showToast('Модель не выбрана'); return; }
   const sysPrompt = (aiMessages.find(m => m.role === 'system') || { content: '' }).content;
   const newUser = `${aiReportRequest ? aiReportRequest.userText : ''}\n\nУточнение оператора: ${text}`;
   input.value = '';
@@ -2020,20 +2133,19 @@ async function refineAiReport() {
     { role: 'user', content: newUser }
   ];
   aiReportRequest = { userText: newUser };
-  await runReport(modelId, sysPrompt, newUser);
+  await runReport(aiSelectedModelId, sysPrompt, newUser);
 }
 
 async function regenerateAiReport() {
   if (!aiMessages.length) { generateAiReport(); return; }
-  const modelId = document.getElementById('aiModelSelect').value;
-  if (!modelId) { showToast('Модель не выбрана'); return; }
+  if (!aiSelectedModelId) { showToast('Модель не выбрана'); return; }
   const sysPrompt = (aiMessages.find(m => m.role === 'system') || { content: '' }).content;
   const userText = aiReportRequest ? aiReportRequest.userText : ((aiMessages.find(m => m.role === 'user') || { content: '' }).content);
   aiMessages = [
     { role: 'system', content: sysPrompt },
     { role: 'user', content: userText }
   ];
-  await runReport(modelId, sysPrompt, userText);
+  await runReport(aiSelectedModelId, sysPrompt, userText);
 }
 
 async function runReport(modelId, sysPrompt, userText) {
@@ -2060,7 +2172,16 @@ async function runReport(modelId, sysPrompt, userText) {
   } catch (err) {
     document.getElementById(lid).remove();
     setAiStatus('Ошибка: ' + err.message);
-    c.insertAdjacentHTML('beforeend', `<div class="chat-msg chat-ai">❌ ${err.message}</div>`);
+    c.insertAdjacentHTML('beforeend', `<div class="chat-msg chat-ai" style="border-color: #ef4444; color: #ef4444;">❌ Ошибка: ${err.message}</div>`);
+    
+    // Автоматическое скрытие модели при ошибке
+    if (!aiPrefs.hidden.includes(modelId)) {
+        aiPrefs.hidden.push(modelId);
+        aiPrefs.favs = aiPrefs.favs.filter(i => i !== modelId);
+        saveAiPrefs();
+        renderAiModelDropdown(); // Перерисовываем список
+        showToast('Модель дала сбой и была скрыта');
+    }
   } finally {
     document.getElementById('aiRegenBtn').disabled = false;
     document.getElementById('aiSendBtn').disabled = false;
