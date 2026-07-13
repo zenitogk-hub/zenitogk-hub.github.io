@@ -344,6 +344,16 @@
   .chat-actions button { cursor: pointer; background: none; border: none; color: inherit; padding: 0; font-weight: 500; }
   .chat-actions button:hover { opacity: 1; text-decoration: underline; }
   .chat-ai b { color: #60a5fa; font-weight: 600; }
+
+  /* === AI REPORT MODE (patched) === */
+  .chat-ai .report-header { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; font-size:11px; opacity:0.7; }
+  .chat-ai .report-header .model-tag { background:#1f2937; padding:2px 6px; border-radius:4px; font-family:monospace; }
+  .ai-toolbar { display:flex; gap:6px; padding:6px; border-top:1px solid var(--border-color); background:var(--bg-primary); }
+  .ai-toolbar button { background:var(--bg-tertiary); color:var(--text-primary); border:1px solid var(--border-color); padding:6px 10px; border-radius:6px; font-size:12px; cursor:pointer; flex:1; }
+  .ai-toolbar button:active { opacity:0.7; }
+  .ai-toolbar button:disabled { opacity:0.4; cursor:not-allowed; }
+  .ai-status-line { font-size:11px; opacity:0.7; padding:4px 6px; text-align:center; min-height:18px; }
+
 </style>
 </head>
 <body>
@@ -477,21 +487,28 @@
   </div>
 
   <div id="aiView" style="display:none;" class="flex flex-col h-full p-2">
-    <div class="mb-2 flex flex-shrink-0">
-      <select id="aiModelSelect" class="w-full text-xs !py-2"><option value="">Загрузка моделей ИИ...</option></select>
-    </div>
-    <div id="aiChatHistory" class="flex-1 scroll-area p-3 mb-2 rounded-lg border flex flex-col gap-2" style="background: var(--bg-secondary); border-color: var(--border-color);">
-      <div class="text-center text-sm my-auto flex flex-col items-center justify-center h-full" style="color: var(--text-muted);" id="aiEmptyState">
-        <div class="text-5xl mb-3">🤖</div>
-        <p class="mb-5 px-4">Я ИИ-диагност лифтов. Помогу проанализировать логи и ошибки.</p>
-        <button onclick="generateAiReport()" class="btn-primary" style="background: #10b981; font-weight: bold; width: 80%;">📊 Сгенерировать диагностический отчет по логу</button>
-      </div>
-    </div>
-    <div class="flex gap-2 flex-shrink-0">
-      <textarea id="aiInput" class="flex-1 text-sm p-2 rounded-lg border resize-none" style="background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary); min-height: 44px; max-height: 120px;" placeholder="Задайте вопрос ИИ..."></textarea>
-      <button onclick="sendAiMessage()" class="btn-primary flex items-center justify-center !px-4" id="aiSendBtn" style="border-radius: 8px;">➤</button>
+  <div class="mb-2 flex flex-shrink-0 gap-1">
+    <select id="aiModelSelect" class="text-xs !py-2 flex-1"><option value="">Загрузка моделей ИИ...</option></select>
+    <button onclick="regenerateAiReport()" id="aiRegenBtn" class="btn-secondary text-xs !py-2 !px-3" title="Перегенерировать отчёт" disabled>🔄</button>
+  </div>
+  <div id="aiChatHistory" class="flex-1 scroll-area p-3 mb-2 rounded-lg border flex flex-col gap-2" style="background: var(--bg-secondary); border-color: var(--border-color);">
+    <div class="text-center text-sm my-auto flex flex-col items-center justify-center h-full" style="color: var(--text-muted);" id="aiEmptyState">
+      <div class="text-5xl mb-3">🤖</div>
+      <p class="mb-2 px-4">Я ИИ-диагност лифтов серии СЛ.</p>
+      <p class="mb-5 px-4 text-xs" style="opacity:0.7;">Откройте лог-файл и нажмите кнопку ниже, чтобы получить диагностический отчёт.</p>
+      <button onclick="generateAiReport()" class="btn-primary" style="background: #10b981; font-weight: bold; width: 80%;">📊 Сгенерировать диагностический отчёт</button>
     </div>
   </div>
+  <div class="ai-status-line" id="aiStatusLine"></div>
+  <div class="ai-toolbar flex-shrink-0">
+    <button onclick="copyAiReport()">📋 Копировать</button>
+    <button onclick="downloadAiReport()">📄 Сохранить .txt</button>
+  </div>
+  <div class="flex gap-2 flex-shrink-0 mt-1">
+    <textarea id="aiInput" class="flex-1 text-sm p-2 rounded-lg border resize-none" style="background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary); min-height: 38px; max-height: 80px;" placeholder="Уточнение (необязательно). Отправка заменит текущий отчёт."></textarea>
+    <button onclick="refineAiReport()" class="btn-primary flex items-center justify-center !px-3" id="aiSendBtn" style="border-radius: 8px;">➤</button>
+  </div>
+</div>
 
 </main>
 <nav class="flex border-t flex-shrink-0" style="background: var(--tab-bg); border-color: var(--tab-border); padding-bottom: env(safe-area-inset-bottom);">
@@ -1570,11 +1587,14 @@ async function sendUploadFiles() {
 }
 
 
-// ============ НОВЫЙ БЛОК: ИНТЕГРАЦИЯ С ИИ (Вкладка AI) ============
-// --- ВАЖНО: Замените этот URL на URL вашего НОВОГО развернутого Cloudflare Worker ---
-const AI_WORKER_URL = 'https://aiworker.zenitogk.workers.dev'; 
+// ============ AI: ДИАГНОСТИЧЕСКИЙ ОТЧЁТ (report mode) ============
+const AI_WORKER_URL = 'https://aiworker.zenitogk.workers.dev';
 
-let aiMessages = [];
+let aiMessages = [];          // [{role, content}] — не копим длинную историю
+let aiReportRequest = null;    // фиксированный user-запрос для регенерации
+let aiReportText = '';         // последний отчёт (для копирования/сохранения)
+let aiReportModel = '';        // модель, которой сгенерирован отчёт
+let aiReportDate = '';         // когда сгенерирован
 let aiModelsLoaded = false;
 
 async function loadAiModels() {
@@ -1586,10 +1606,9 @@ async function loadAiModels() {
     const data = await res.json();
     sel.innerHTML = '';
     const validModels = data.models.filter(m => m.available !== false && !m.paidOnly);
-    
     if (validModels.length === 0) {
-       sel.innerHTML = '<option value="">Нет доступных бесплатных моделей</option>';
-       return;
+      sel.innerHTML = '<option value="">Нет доступных бесплатных моделей</option>';
+      return;
     }
     validModels.forEach(m => {
       sel.innerHTML += `<option value="${m.id}">${m.label}</option>`;
@@ -1601,210 +1620,472 @@ async function loadAiModels() {
   }
 }
 
-// Сборка преданалитики из текущего лога
-function generateAiReport() {
-  if (filteredRows.length === 0) {
-    showToast('Сначала загрузите лог-файл!');
-    return;
+// =====================================================================
+// УНИВЕРСАЛЬНЫЙ SYSTEM PROMPT
+// =====================================================================
+const AI_BASE_SYSTEM_PROMPT = `Ты — инженер-диагност лифтов серии «СЛ» (Система Лифт), работающий в паре с оператором. Твоя задача — по фрагменту лога и справочнику ошибок выдать ОДИН структурированный диагностический отчёт. Не задавай уточняющих вопросов. Не веди диалог. Выдай финальный отчёт, который оператор скопирует и использует.
+
+═══════════════════════════════════════════════════════════════════════
+ФОРМАТ ЛОГА
+═══════════════════════════════════════════════════════════════════════
+CSV с разделителем ';', UTF-8 (допускается Windows-1251), заголовок строк:
+  ВРЕМЯ;СОБЫТИЕ;СООБЩЕНИЕ;РЕЖИМ;ЭТАЖ ТЕКУЩ.;НАПРАВЛ.;ЭТАЖ НАПРАВ.;
+  ДТО;ЦБ;ВЕС;СКОРОСТЬ;М/С;ЭНКОД.;ДВЕРЬ 1;ДВЕРЬ 2
+Всего 17 колонок (FIXED_COLS=17); колонки 16-17 — резерв/служебные.
+Между файлами в общем потоке — служебная строка "Дата: DD.MM.YYYY".
+ВРЕМЯ — формат HH:MM:SS.mmm (миллисекунды, 3 знака).
+
+═══════════════════════════════════════════════════════════════════════
+ЗНАЧЕНИЯ КОЛОНОК
+═══════════════════════════════════════════════════════════════════════
+1. ВРЕМЯ       — метка времени HH:MM:SS.mmm
+2. СОБЫТИЕ     — код типа события (см. словарь ниже)
+3. СООБЩЕНИЕ   — подтип / детальное описание
+4. РЕЖИМ       — NR (Нормальная Работа), SR (Смешанная/Сервисная — ревизионная), EVAC (эвакуация)
+5. ЭТАЖ ТЕКУЩ. — текущий этаж кабины: "DD" ("03", "12"), "П1"/"П2" (подвальные), "-1"..."-4"
+6. НАПРАВЛ.    — DN (вниз) или UP (вверх)
+7. ЭТАЖ НАПРАВ.— целевой этаж
+8. ДТО         — датчик точной остановки: 0 или 1 (1 = в зоне точной остановки, можно открывать двери)
+9. ЦБ          — центральный блок (служебный, 0/1/15…)
+10. ВЕС         — загрузка кабины, напр. "15kg", "0", "--"
+11. СКОРОСТЬ    — задание скорости (код/уровень)
+12. М/С         — мгновенная скорость в м/с (число)
+13. ЭНКОД.      — значение энкодера (импульсы, число)
+14. ДВЕРЬ 1     — Closed | Closing | Opened | Opening
+15. ДВЕРЬ 2     — Closed | Closing | Opened | Opening (для двухдверных/проходных)
+
+═══════════════════════════════════════════════════════════════════════
+СЛОВАРЬ СОБЫТИЙ (колонка 2)
+═══════════════════════════════════════════════════════════════════════
+ENGINE      Главный привод (лебёдка). СООБЩЕНИЕ:
+              START          — пуск двигателя (поездка начата)
+              STOP           — останов двигателя (целевой этаж достигнут)
+              SPEED          — серия замеров скорости (в строках 3..15 лежат
+                               ~13 мгновенных значений скорости — для графика)
+              NEW SPEED      — команда смены скорости, промежуточная точка
+              FILE           — связано с файлом прогонов
+            Типовая поездка в логе:
+              ENGINE;START; <откуда>;<dir>;<куда>...
+              ENGINE;SPEED; v1;v2;...;v13
+              ... промежуточные события (BUTTONS/CALL/DTO/...) ...
+              [возможно ENGINE;NEW SPEED]
+              ENGINE;SPEED; v1;v2;...;v13
+              ENGINE;STOP; <достигнутый этаж>
+
+DTO         Датчик точной остановки: IN (вошли в зону) | OUT (вышли).
+DVE         Датчик верхней этажности (только верхний этаж): IN | OUT.
+DNE         Датчик нижней этажности (только нижний этаж): IN | OUT.
+DOOR1       Дверь кабины №1. СООБЩЕНИЕ: NEW STATE (новое состояние в ДВЕРЬ 1)
+            или OPEN/CLOSE/OPENING/CLOSING.
+DOOR2       Дверь кабины №2. Аналогично DOOR1, значения в ДВЕРЬ 2.
+BUTTONS     Служебные кнопки. СООБЩЕНИЕ: OPEN ON/OFF, CLOSE ON/OFF, CANCEL ON/OFF.
+CALL        Нажата кнопка вызова с этажа. СООБЩЕНИЕ=этаж, НАПРАВЛ.=UP/DN.
+            (В логе встречается и DOWN — считать как DN.)
+ORDER       Нажата кнопка приказа в кабине. СООБЩЕНИЕ=целевой этаж.
+POS         Позиционирование. СООБЩЕНИЕ: START или "SET Floor <N>".
+MODE        Смена режима. СООБЩЕНИЕ: NEW. В колонке РЕЖИМ — новое значение: NR/SR/EVAC.
+MULTIRUN    Режим прогона (авто-тест):
+              START                       — прогон включён
+              STOP;Cycles <N>             — прогон выключён, N рейсов
+                                           (значение N в колонке 14 / ДВЕРЬ 2)
+MAIN        Включение/пересброс питания КЦ. СООБЩЕНИЕ пусто.
+LOG         Действие с лог-файлом.
+SD          Операция с SD-картой.
+ERROR       Зарегистрирована ошибка. СООБЩЕНИЕ = 4-значный код. Расшифровка — в справочнике.
+ERROR C     Критическая ошибка (стоп лифта, требует ресет). СООБЩЕНИЕ = код.
+ERROR R     Самосбрасывающаяся ошибка. СООБЩЕНИЕ = код.
+WARNING     Предупреждение. СООБЩЕНИЕ = код.
+ERROR CLEAR / ERROR C CLEAR / ERROR R CLEAR / WARNING CLEAR
+            Сброс соответствующего состояния.
+CORR        Корректировка (юстировка).
+
+═══════════════════════════════════════════════════════════════════════
+СПРАВОЧНИК ОШИБОК (будет приложен под заголовком "СПРАВОЧНИК (релевантный)")
+═══════════════════════════════════════════════════════════════════════
+Формат записи:
+  КОД: <описание>
+    Причина 1: <…>
+    Решение 1: <…>
+Коды 4-значные, "X" в позициях 2-3 — шаблон ("01XX" = любая ошибка группы 01).
+Если точного кода нет — ищи шаблон с теми же первыми двумя цифрами.
+
+═══════════════════════════════════════════════════════════════════════
+ФОРМАТ ОТВЁТА
+═══════════════════════════════════════════════════════════════════════
+Строго в таком виде (Markdown), без лишних слов до и после:
+
+## 1. Общая картина
+- Тип системы / режим работы / даты / объём лога — 2-4 буллета.
+- Сколько поездок совершено (число ENGINE;START), сколько прерваны.
+- Если ошибок нет: "Лог чистый, замечаний нет." Перечисли ключевые события.
+
+## 2. Список зафиксированных ошибок и предупреждений
+| # | Время | Тип | Код | Расшифровка (кратко) |
+|---|-------|-----|-----|----------------------|
+| 1 | 14:08:23 | ERROR C | 0108 | Отсутствует «ДК» при закрытых дверях |
+…
+Если ошибок нет — таблицу опусти.
+
+## 3. Детальный разбор каждой проблемы
+### 3.1. Код 0108, время 14:08:23
+- **Контекст (что было за 1-3 сек до ошибки):** кабина на этаже X, направление Y, скорость Z м/с, состояние дверей, последние DTO/ENGINE/CALL/ORDER.
+- **Расшифровка по справочнику:** (если есть точная запись — её, иначе — наиболее подходящий шаблон XX).
+- **Возможные причины (от наиболее вероятной):**
+  1. …
+  2. …
+- **Рекомендуемые действия:**
+  1. …
+  2. …
+
+### 3.2. … (по числу проблем)
+
+## 4. Аномалии вне кодов ошибок
+(если в логе есть: пропуски событий, долгое время между START/STOP,
+расхождение ДТО и текущего этажа, разные состояния DOOR1/DOOR2,
+ложные срабатывания ДВЕ/ДНЕ не на крайних этажах, ENGINE;STOP не на
+целевом этаже, рейсы MULTIRUN с аномальной длительностью и т.п.)
+Если аномалий нет — раздел опусти.
+
+## 5. Краткое резюме для диспетчера
+2-4 строки: что произошло, насколько критично, что делать прямо сейчас.
+
+═══════════════════════════════════════════════════════════════════════
+ПРАВИЛА
+═══════════════════════════════════════════════════════════════════════
+- Используй русский язык.
+- Не выдумывай коды/причины — если в справочнике нет, пиши «нет в базе» и
+  опирайся на инженерную логику.
+- Учитывай режим: в SR часть «ошибок» (ДШ/ДК, ручные двери) — норма.
+- В MULTIRUN — это авто-тест, не пассажирская поездка.
+- Считай Δt между ключевыми событиями, если это проясняет картину.
+- Цитируй конкретные строки лога в обоснованиях (с временем).
+- Ответ — один отчёт, без «Если нужно уточнить…» и прочих подсказок.
+`;
+
+// =====================================================================
+// ФОРМИРОВАНИЕ КОНТЕКСТА
+// =====================================================================
+
+// Возвращает массив уникальных 4-значных кодов ошибок/предупреждений
+function collectErrorCodes(errorEntries) {
+  const set = new Set();
+  for (const e of errorEntries) {
+    const m = (e.type && e.message) ? e.message.trim() : '';
+    if (/^[0-9X]{4}$/.test(m)) set.add(m);
   }
-  
-  // Собираем общую сводку
-  const totalRows = filteredRows.filter(r => r[0] && !r[0].startsWith('Дата:')).length;
-  const startCount = filteredRows.filter(r => r[1] === 'ENGINE' && r[2] === 'START').length;
-  
-  // Собираем ошибки и контекст перед ними
-  let errorContextStr = '';
-  if (errorEntries.length > 0) {
-     errorEntries.forEach(e => {
-        let startIdx = Math.max(0, e.rowIndex - 5);
-        let ctx = [];
-        for (let i = startIdx; i <= e.rowIndex; i++) {
-           const r = filteredRows[i];
-           if (r[0] && !r[0].startsWith('Дата:')) {
-              // Время | Событие | Текст | Режим | Этаж | Направление
-              ctx.push(`[${r[0]}] ${r[1]}: ${r[2]} (Реж:${r[3]||'--'}, Эт:${r[4]||'--'}, Напр:${r[5]||'--'})`);
-           }
-        }
-        errorContextStr += `🔥 ОШИБКА ${e.type} (строка ${e.rowIndex}):\n${ctx.join('\n')}\n\n`;
-     });
-  } else {
-     errorContextStr = 'Ошибок в логе не обнаружено.';
-  }
-
-  // Формируем системный промпт (преданалитику)
-  const systemPrompt = `Ты опытный инженер-диагност лифтового оборудования.
-Твоя задача: проанализировать сводку по логу работы лифта и выдать структурированный диагностический отчет (общая картина, возможные причины сбоев, рекомендации).
-
-СТАТИСТИКА:
-Всего записей (строк): ${totalRows}
-Количество запусков двигателя: ${startCount}
-Количество зафиксированных ошибок: ${errorEntries.length}
-
-ДЕТАЛИЗАЦИЯ ПО ОШИБКАМ И ИХ КОНТЕКСТ (последние 5 событий до сбоя):
-${errorContextStr}`;
-
-  document.getElementById('aiEmptyState').style.display = 'none';
-  
-  // Добавляем системный промпт как первый невидимый контекст, если чат пуст
-  if (aiMessages.length === 0) {
-     aiMessages.push({ role: 'system', content: systemPrompt });
-  }
-
-  const userReq = "Сгенерируй полный диагностический отчет по загруженному логу работы лифта.";
-  addMessageToUI('user', userReq);
-  aiMessages.push({ role: 'user', content: userReq });
-  
-  fetchAiResponse();
+  return [...set];
 }
 
-function sendAiMessage() {
+// Возвращает индекс предыдущего ENGINE;START в массиве строк (или -1)
+function findPrevEngineStart(rows, idx) {
+  for (let i = idx - 1; i >= 0; i--) {
+    if (rows[i] && rows[i][1] === 'ENGINE' && rows[i][2] === 'START') return i;
+  }
+  return -1;
+}
+
+// Компактный справочник: только коды, реально встречающиеся в логе
+function buildCompactErrReference(errorDB, codes) {
+  if (!codes || !codes.length) return '(ошибок в логе не обнаружено)';
+  const db = errorDB || {};
+  const wanted = new Set(codes);
+  for (const c of codes) if (c.length === 4) wanted.add(c.substr(0, 2) + 'XX');
+  const lines = [];
+  const seen = new Set();
+  for (const c of codes) {
+    if (seen.has(c)) continue;
+    seen.add(c);
+    const rec = db[c];
+    if (rec) {
+      lines.push(`КОД ${c}: ${rec.desc || ''}`);
+      const max = Math.max((rec.causes||[]).length, (rec.solutions||[]).length);
+      for (let i = 0; i < max; i++) {
+        const cau = (rec.causes||[])[i] || '';
+        const sol = (rec.solutions||[])[i] || '';
+        if (cau) lines.push(`    Причина ${i+1}: ${cau}`);
+        if (sol) lines.push(`    Решение ${i+1}: ${sol}`);
+      }
+    } else {
+      const tpl = c.substr(0, 2) + 'XX';
+      const recT = db[tpl];
+      if (recT && !seen.has(tpl)) {
+        seen.add(tpl);
+        lines.push(`КОД ${c} (шаблон ${tpl}): ${recT.desc || ''}`);
+        const max = Math.max((recT.causes||[]).length, (recT.solutions||[]).length);
+        for (let i = 0; i < max; i++) {
+          const cau = (recT.causes||[])[i] || '';
+          const sol = (recT.solutions||[])[i] || '';
+          if (cau) lines.push(`    Причина ${i+1}: ${cau}`);
+          if (sol) lines.push(`    Решение ${i+1}: ${sol}`);
+        }
+      } else {
+        lines.push(`КОД ${c}: нет в базе err.csv`);
+      }
+    }
+  }
+  return lines.join('\n');
+}
+
+function fmtRow(r) {
+  if (!r || !r.length) return '';
+  const t = r[0] || '';
+  const ev = r[1] || '';
+  const msg = r[2] || '';
+  const mode = r[3] || '--';
+  const fl = r[4] || '--';
+  const dir = r[5] || '--';
+  const tgt = r[6] || '--';
+  const dto = r[7] || '0';
+  const ms = (r[11] !== undefined && r[11] !== '') ? `${r[11]}м/с` : '';
+  const d1 = r[13] || '';
+  const d2 = r[14] || '';
+  return `[${t}] ${ev}; ${msg} | Реж:${mode}, Эт:${fl}, Напр:${dir}, Цель:${tgt}, ДТО:${dto}${ms?', '+ms:''}, Д1:${d1}, Д2:${d2}`;
+}
+
+function buildStatsBlock(rows, errorEntries) {
+  const dateSet = new Set();
+  let startCount = 0, stopCount = 0, errorC = 0, errorR = 0, errorN = 0, warn = 0, main = 0, pos = 0, multirun = 0;
+  let cyclesTotal = 0;
+  for (const r of rows) {
+    if (!r || !r.length) continue;
+    if ((r[0]||'').startsWith('Дата:')) { dateSet.add((r[0]||'').substr(6)); continue; }
+    if (!r[0]) continue;
+    if (r[1] === 'ENGINE' && r[2] === 'START') startCount++;
+    else if (r[1] === 'ENGINE' && r[2] === 'STOP') stopCount++;
+    else if (r[1] === 'ERROR C') errorC++;
+    else if (r[1] === 'ERROR R') errorR++;
+    else if (r[1] === 'ERROR') errorN++;
+    else if (r[1] === 'WARNING') warn++;
+    else if (r[1] === 'MAIN') main++;
+    else if (r[1] === 'POS' && r[2] === 'START') pos++;
+    else if (r[1] === 'MULTIRUN' && r[2] && r[2].indexOf('STOP') === 0) {
+      multirun++;
+      const d2 = r[14] || '';
+      const m = d2.match(/Cycles\s+(\d+)/);
+      if (m) cyclesTotal += parseInt(m[1], 10) || 0;
+    }
+  }
+  const totalRows = rows.filter(r => r[0] && !(r[0]||'').startsWith('Дата:')).length;
+  const dates = [...dateSet].sort();
+  return [
+    `- Записей в логе (без маркеров дат): ${totalRows}`,
+    `- Даты в логе: ${dates.length ? dates.join(', ') : 'нет'}`,
+    `- Запусков двигателя (ENGINE;START): ${startCount}, остановов (ENGINE;STOP): ${stopCount}`,
+    `- Включений КЦ (MAIN): ${main}, входов в режим позиционирования (POS;START): ${pos}`,
+    `- Прогонов (MULTIRUN): ${multirun}, всего рейсов в прогонах: ${cyclesTotal}`,
+    `- Ошибок критических (ERROR C): ${errorC}`,
+    `- Ошибок самосбрасывающихся (ERROR R): ${errorR}`,
+    `- Прочих ошибок (ERROR): ${errorN}`,
+    `- Предупреждений (WARNING): ${warn}`,
+    `- Всего событий-ошибок/предупреждений: ${errorEntries.length}`
+  ].join('\n');
+}
+
+function buildErrorsContext(rows, errorEntries, opts) {
+  const ctxAfter = opts && opts.ctxAfter !== undefined ? opts.ctxAfter : 3;
+  const maxRows = opts && opts.maxRows ? opts.maxRows : 200;
+  if (!errorEntries.length) return 'Ошибок в логе не обнаружено.';
+  const out = [];
+  for (let i = 0; i < errorEntries.length; i++) {
+    const e = errorEntries[i];
+    const idx = e.rowIndex;
+    if (idx < 0 || idx >= rows.length) continue;
+    const prevStart = findPrevEngineStart(rows, idx);
+    const from = prevStart >= 0 ? prevStart : Math.max(0, idx - 30);
+    const to = Math.min(rows.length - 1, idx + ctxAfter);
+    let realTo = to;
+    if ((to - from + 1) > maxRows) realTo = from + maxRows - 1;
+    const block = [];
+    if (prevStart >= 0) {
+      block.push(`(Контекст: всё с предыдущего ENGINE;START, индекс ${prevStart}, до ошибки, плюс ${ctxAfter} строк после)`);
+    } else {
+      block.push(`(Контекст: предыдущего ENGINE;START не найдено, взяты ${idx - from + 1} строк до ошибки)`);
+    }
+    for (let j = from; j <= realTo; j++) {
+      const r = rows[j];
+      if (!r || !r.length) continue;
+      if ((r[0]||'').startsWith('Дата:')) {
+        block.push(`--- ${r[0]} ---`);
+      } else {
+        block.push(fmtRow(r));
+      }
+    }
+    out.push(`🔥 ПРОБЛЕМА #${i+1}: ${e.type}${e.message ? ' "'+e.message+'"' : ''} @ ${e.time || rows[idx][0]}\n${block.join('\n')}`);
+  }
+  return out.join('\n\n');
+}
+
+function buildReportContext() {
+  if (!filteredRows.length) return null;
+  const errorCodes = collectErrorCodes(errorEntries);
+  const stats = buildStatsBlock(filteredRows, errorEntries);
+  const errs = buildErrorsContext(filteredRows, errorEntries, { ctxAfter: 3, maxRows: 200 });
+  const ref = buildCompactErrReference(errorDB, errorCodes);
+  const systemPrompt =
+    AI_BASE_SYSTEM_PROMPT + '\n\n' +
+    '══════════════ СВОДКА ПО ЛОГУ ══════════════\n' + stats + '\n\n' +
+    '══════════════ СПРАВОЧНИК (релевантный, из err.csv) ══════════════\n' + ref + '\n\n' +
+    '══════════════ ДЕТАЛИЗАЦИЯ ПО ОШИБКАМ И КОНТЕКСТ ══════════════\n' + errs + '\n\n' +
+    '══════════════ КОНЕЦ КОНТЕКСТА. Выдай отчёт строго в формате из system prompt. ══════════════';
+  return {
+    systemPrompt,
+    userRequest: 'Сгенерируй полный диагностический отчёт по загруженному логу работы лифта. Используй формат, заданный в system prompt.',
+    errorCodes
+  };
+}
+
+// =====================================================================
+// UI / ОТЧЁТ
+// =====================================================================
+
+function setAiStatus(text) {
+  const el = document.getElementById('aiStatusLine');
+  if (el) el.textContent = text || '';
+}
+
+function clearReportInUi() {
+  const c = document.getElementById('aiChatHistory');
+  c.querySelectorAll('.chat-msg').forEach(n => n.remove());
+}
+
+function renderReportInUi(model, text) {
+  const c = document.getElementById('aiChatHistory');
+  document.getElementById('aiEmptyState').style.display = 'none';
+  clearReportInUi();
+  const formatted = String(text)
+    .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+    .replace(/^## (.*)$/gm, '<b style="font-size:14px;display:block;margin-top:8px;">$1</b>')
+    .replace(/^# (.*)$/gm, '<b style="font-size:15px;display:block;margin-top:10px;">$1</b>')
+    .replace(/`([^`]+)`/g, '<code style="background:#1f2937;padding:1px 4px;border-radius:3px;">$1</code>')
+    .replace(/^- (.*)$/gm, '• $1')
+    .replace(/\n/g, '<br>');
+  const now = new Date().toLocaleString('ru-RU', { hour12: false });
+  const headerHtml = `<div class="report-header">
+    <span class="model-tag">${model}</span>
+    <span>${now}</span>
+  </div>`;
+  const html = `<div class="chat-msg chat-ai">
+    ${headerHtml}
+    <div>${formatted}</div>
+  </div>`;
+  c.insertAdjacentHTML('beforeend', html);
+  c.scrollTop = c.scrollHeight;
+}
+
+async function doFetchOnce(modelId, sysPrompt, userReq) {
+  // Воркеру больше не передаём errCsvUrl — справочник уже в system prompt.
+  const res = await fetch(`${AI_WORKER_URL}/v1/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: modelId, messages: [
+      { role: 'system', content: sysPrompt },
+      { role: 'user', content: userReq }
+    ] })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || err.error || ('HTTP ' + res.status));
+  }
+  const data = await res.json();
+  return data.text || '';
+}
+
+async function generateAiReport() {
+  if (!filteredRows.length) { showToast('Сначала загрузите лог-файл!'); return; }
+  const modelId = document.getElementById('aiModelSelect').value;
+  if (!modelId) { showToast('Модель не выбрана'); return; }
+  const ctx = buildReportContext();
+  if (!ctx) return;
+  aiReportRequest = { userText: ctx.userRequest };
+  aiMessages = [
+    { role: 'system', content: ctx.systemPrompt },
+    { role: 'user', content: ctx.userRequest }
+  ];
+  await runReport(modelId, ctx.systemPrompt, ctx.userRequest);
+}
+
+async function refineAiReport() {
+  if (!aiMessages.length) { showToast('Сначала сгенерируйте отчёт'); return; }
   const input = document.getElementById('aiInput');
   const text = input.value.trim();
-  if (!text) return;
-  
-  document.getElementById('aiEmptyState').style.display = 'none';
-  addMessageToUI('user', text);
-  aiMessages.push({ role: 'user', content: text });
+  if (!text) { showToast('Введите уточнение'); return; }
+  const modelId = document.getElementById('aiModelSelect').value;
+  if (!modelId) { showToast('Модель не выбрана'); return; }
+  const sysPrompt = (aiMessages.find(m => m.role === 'system') || { content: '' }).content;
+  const newUser = `${aiReportRequest ? aiReportRequest.userText : ''}\n\nУточнение оператора: ${text}`;
   input.value = '';
-  
-  fetchAiResponse();
+  aiMessages = [
+    { role: 'system', content: sysPrompt },
+    { role: 'user', content: newUser }
+  ];
+  aiReportRequest = { userText: newUser };
+  await runReport(modelId, sysPrompt, newUser);
 }
 
-async function fetchAiResponse() {
+async function regenerateAiReport() {
+  if (!aiMessages.length) { generateAiReport(); return; }
   const modelId = document.getElementById('aiModelSelect').value;
-  if (!modelId) {
-    showToast('Модель не выбрана');
-    return;
-  }
-  
+  if (!modelId) { showToast('Модель не выбрана'); return; }
+  const sysPrompt = (aiMessages.find(m => m.role === 'system') || { content: '' }).content;
+  const userText = aiReportRequest ? aiReportRequest.userText : ((aiMessages.find(m => m.role === 'user') || { content: '' }).content);
+  aiMessages = [
+    { role: 'system', content: sysPrompt },
+    { role: 'user', content: userText }
+  ];
+  await runReport(modelId, sysPrompt, userText);
+}
+
+async function runReport(modelId, sysPrompt, userText) {
+  document.getElementById('aiRegenBtn').disabled = true;
   document.getElementById('aiSendBtn').disabled = true;
   document.getElementById('aiSendBtn').innerHTML = '...';
-  const loadingId = addLoadingBubble();
-
-  // Формируем URL для err.csv, чтобы воркер мог его скачать
-  const currentUrl = window.location.href.split('?')[0].replace(/#.*$/, '');
-  const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/'));
-  const errCsvUrl = baseUrl + '/err.csv';
-
+  const c = document.getElementById('aiChatHistory');
+  document.getElementById('aiEmptyState').style.display = 'none';
+  c.querySelectorAll('.chat-msg').forEach(n => n.remove());
+  const lid = 'ai-loading-' + Date.now();
+  c.insertAdjacentHTML('beforeend', `<div id="${lid}" class="chat-msg chat-ai"><div class="animate-pulse">⏳ ИИ анализирует…</div></div>`);
+  c.scrollTop = c.scrollHeight;
+  setAiStatus(`Модель: ${modelId} • Генерация…`);
+  const t0 = performance.now();
   try {
-    const res = await fetch(`${AI_WORKER_URL}/v1/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-         model: modelId, 
-         messages: aiMessages,
-         errCsvUrl: errCsvUrl // Указание для воркера подтянуть справочник!
-      })
-    });
-    
-    document.getElementById(loadingId).remove();
-    
-    if (!res.ok) {
-       const errData = await res.json().catch(()=>({}));
-       throw new Error(errData.message || 'Ошибка сети/Воркера');
-    }
-    
-    const data = await res.json();
-    aiMessages.push({ role: 'assistant', content: data.text });
-    addMessageToUI('assistant', data.text);
-
+    const text = await doFetchOnce(modelId, sysPrompt, userText);
+    document.getElementById(lid).remove();
+    renderReportInUi(modelId, text);
+    aiReportText = text;
+    aiReportModel = modelId;
+    aiReportDate = new Date().toISOString();
+    const dt = ((performance.now() - t0) / 1000).toFixed(1);
+    setAiStatus(`Модель: ${modelId} • Готово за ${dt} сек • ${text.length} символов`);
   } catch (err) {
-    document.getElementById(loadingId).remove();
-    addMessageToUI('assistant', '❌ Ошибка: ' + err.message);
-    aiMessages.pop(); // удаляем последний запрос юзера из памяти, чтобы можно было повторить
+    document.getElementById(lid).remove();
+    setAiStatus('Ошибка: ' + err.message);
+    c.insertAdjacentHTML('beforeend', `<div class="chat-msg chat-ai">❌ ${err.message}</div>`);
   } finally {
+    document.getElementById('aiRegenBtn').disabled = false;
     document.getElementById('aiSendBtn').disabled = false;
     document.getElementById('aiSendBtn').innerHTML = '➤';
   }
 }
 
-function addMessageToUI(role, text) {
-  const container = document.getElementById('aiChatHistory');
-  const isUser = role === 'user';
-  const cssClass = isUser ? 'chat-user' : 'chat-ai';
-  
-  // Простая замена маркдауна для красоты
-  const formattedText = text
-       .replace(/</g, '&lt;').replace(/>/g, '&gt;')
-       .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-       .replace(/\*(.*?)\*/g, '<i>$1</i>')
-       .replace(/\n/g, '<br>');
-
-  const idx = aiMessages.length; // индекс для кнопок
-  let actionsHtml = '';
-  
-  if (isUser) {
-     actionsHtml = `<div class="chat-actions">
-        <button onclick="editAiMessage(${idx})" title="Редактировать">✏️ Изменить</button>
-     </div>`;
-  } else {
-     actionsHtml = `<div class="chat-actions">
-        <button onclick="copyAiMessage(this)" data-raw="${text.replace(/"/g, '&quot;')}" title="Копировать">📋 Копировать</button>
-     </div>`;
-  }
-
-  const html = `<div class="chat-msg ${cssClass}">
-     <div>${formattedText}</div>
-     ${actionsHtml}
-  </div>`;
-  
-  container.innerHTML += html;
-  container.scrollTop = container.scrollHeight;
+function copyAiReport() {
+  if (!aiReportText) { showToast('Сначала сгенерируйте отчёт'); return; }
+  navigator.clipboard.writeText(aiReportText).then(() => showToast('Отчёт скопирован'));
 }
 
-function addLoadingBubble() {
-  const container = document.getElementById('aiChatHistory');
-  const id = 'ai-loading-' + Date.now();
-  const html = `<div id="${id}" class="chat-msg chat-ai flex items-center gap-2">
-     <div class="animate-pulse">⏳ ИИ анализирует...</div>
-  </div>`;
-  container.innerHTML += html;
-  container.scrollTop = container.scrollHeight;
-  return id;
-}
-
-function copyAiMessage(btn) {
-  const text = btn.getAttribute('data-raw');
-  navigator.clipboard.writeText(text).then(() => {
-     showToast('Сообщение скопировано');
-  });
-}
-
-function editAiMessage(idx) {
-  const msg = aiMessages[idx];
-  if (!msg) return;
-  document.getElementById('aiInput').value = msg.content;
-  // Откатываем историю до этого сообщения
-  aiMessages = aiMessages.slice(0, idx);
-  redrawAiChat();
-}
-
-function redrawAiChat() {
-  const container = document.getElementById('aiChatHistory');
-  // Очищаем, оставляем только empty state (скрытый)
-  const emptyStateHtml = `<div class="text-center text-sm my-auto flex flex-col items-center justify-center h-full" style="color: var(--text-muted);" id="aiEmptyState" style="display:none;">
-        <div class="text-5xl mb-3">🤖</div>
-        <p class="mb-5 px-4">Я ИИ-диагност лифтов. Помогу проанализировать логи и ошибки.</p>
-        <button onclick="generateAiReport()" class="btn-primary" style="background: #10b981; font-weight: bold; width: 80%;">📊 Сгенерировать диагностический отчет по логу</button>
-      </div>`;
-  container.innerHTML = emptyStateHtml;
-  
-  document.getElementById('aiEmptyState').style.display = aiMessages.filter(m => m.role !== 'system').length > 0 ? 'none' : 'flex';
-
-  aiMessages.forEach((m, idx) => {
-     if (m.role === 'system') return; // не рисуем системный промпт
-     
-     const isUser = m.role === 'user';
-     const cssClass = isUser ? 'chat-user' : 'chat-ai';
-     const formattedText = m.content.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>').replace(/\n/g, '<br>');
-     
-     let actionsHtml = isUser 
-         ? `<div class="chat-actions"><button onclick="editAiMessage(${idx})" title="Редактировать">✏️ Изменить</button></div>`
-         : `<div class="chat-actions"><button onclick="copyAiMessage(this)" data-raw="${m.content.replace(/"/g, '&quot;')}" title="Копировать">📋 Копировать</button></div>`;
-     
-     container.innerHTML += `<div class="chat-msg ${cssClass}"><div>${formattedText}</div>${actionsHtml}</div>`;
-  });
-  container.scrollTop = container.scrollHeight;
+function downloadAiReport() {
+  if (!aiReportText) { showToast('Сначала сгенерируйте отчёт'); return; }
+  const head = `СЛ LogViewer — Диагностический отчёт\nМодель: ${aiReportModel}\nДата: ${aiReportDate}\nЗаписей: ${filteredRows.length}, ошибок: ${errorEntries.length}\n\n`;
+  const blob = new Blob([head + aiReportText], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').substr(0, 19);
+  a.download = `sl-report-${stamp}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 </script>
 </body>
