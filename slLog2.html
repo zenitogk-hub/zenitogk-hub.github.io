@@ -532,10 +532,6 @@
     <button onclick="copyAiReport()">📋 Копировать</button>
     <button onclick="downloadAiReport()">📄 Сохранить .txt</button>
   </div>
-  <div class="flex gap-2 flex-shrink-0 mt-1">
-    <textarea id="aiInput" class="flex-1 text-sm p-2 rounded-lg border resize-none" style="background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary); min-height: 38px; max-height: 80px;" placeholder="Уточнение (необязательно). Отправка заменит текущий отчёт."></textarea>
-    <button onclick="refineAiReport()" class="btn-primary flex items-center justify-center !px-3" id="aiSendBtn" style="border-radius: 8px;">➤</button>
-  </div>
 </div>
 
 </main>
@@ -819,6 +815,9 @@ async function handleFiles(e) {
   updateUI();
   showToast(`Загружено строк: ${allRows.length}`);
   e.target.value = '';
+  // При смене лога: если ранее был построен ИИ-отчёт, помечаем его как устаревший.
+  // Теперь при перегенерации будет использоваться контекст НОВОГО лога, а не старого.
+  if (typeof markAiReportStale === 'function') markAiReportStale();
 }
 function makeRow(first) { const r = [first]; for (let i = 1; i < FIXED_COLS; i++) r.push(''); return r; }
 function extractDate(filename) {
@@ -1271,6 +1270,7 @@ function processRowForMonitor(row) {
   const weight = row[9], door1 = row[13], door2 = row[14];
   if (mode === 'NR') monitorState.mode = 'НР';
   else if (mode === 'SR') monitorState.mode = 'СР';
+  else if (mode === 'LD') monitorState.mode = 'ПОГРУЗКА';
   if (weight) monitorState.weight = weight;
   if (dir === 'UP' || dir === 'DN') monitorState.direction = dir;
   if (floor && isValidFloor(floor)) monitorState.floor = floor;
@@ -1344,7 +1344,7 @@ function addEventToArea(row) {
   let line = '';
   const shortTime = time.length >= 8 ? time.substr(0, 8) : time;
   if (ev === 'MODE' && text === 'NEW') {
-    const modeName = mode === 'SR' ? 'СР' : mode === 'NR' ? 'НР' : mode === 'EVAC' ? 'ЭВАКУАЦИЯ' : mode;
+    const modeName = mode === 'SR' ? 'СР' : mode === 'NR' ? 'НР' : mode === 'EVAC' ? 'ЭВАКУАЦИЯ' : mode === 'LD' ? 'ПОГРУЗКА' : mode;
     line = `<span class="event-time">${shortTime}</span> <span class="event-mode">Режим ${modeName}</span>`;
   } else if (ev === 'POS' && text.startsWith('SET Floor')) {
     line = `<span class="event-time">${shortTime}</span> <span class="event-pos">Позиционирование</span>`;
@@ -1628,9 +1628,11 @@ const AI_WORKER_URL = 'https://aiworker.zenitogk.workers.dev';
 
 let aiMessages = [];          // [{role, content}]
 let aiReportRequest = null;    // фиксированный user-запрос
-let aiReportText = '';         
-let aiReportModel = '';        
-let aiReportDate = '';         
+let aiReportText = '';
+let aiReportModel = '';
+let aiReportDate = '';
+let aiReportLogSignature = ''; // сигнатура лога, по которому построен отчёт (для отслеживания «устаревания»)
+let aiReportStale = false;     // true — отчёт построен по предыдущему логу
 let aiModelsLoaded = false;
 let allAvailableModels = [];
 let aiSelectedModelId = '';
@@ -1644,50 +1646,96 @@ function saveAiPrefs() {
 function renderAiModelDropdown() {
   const dropdown = document.getElementById('aiModelDropdown');
   const boxText = document.getElementById('aiModelSelectedText');
-  
+
   if (allAvailableModels.length === 0) {
     boxText.textContent = "Нет доступных моделей";
     dropdown.innerHTML = "";
     return;
   }
-  
-  // Сортировка: избранные -> обычные -> скрытые (внизу, полупрозрачные)
+
+  // Сортировка:
+  //   1. Доступные модели (available !== false) — сверху, в своём порядке.
+  //      Внутри группы: сначала избранные, потом по алфавиту.
+  //   2. Избранные + недоступные — остаются НА СВОЁМ МЕСТЕ (не уходят вниз),
+  //      просто становятся серыми и сохраняют звезду.
+  //   3. Не избранные + недоступные (или явно скрытые) — уходят вниз списка.
+  // Таким образом, требование «модель со звездой не перемещается вниз,
+  // просто становится серой и никуда не перемещается» выполняется.
   const sorted = [...allAvailableModels].sort((a, b) => {
+    const aAvail = a.available !== false;
+    const bAvail = b.available !== false;
     const aFav = aiPrefs.favs.includes(a.id);
     const bFav = aiPrefs.favs.includes(b.id);
     const aHid = aiPrefs.hidden.includes(a.id);
     const bHid = aiPrefs.hidden.includes(b.id);
-    
-    if (aHid && !bHid) return 1;
-    if (!aHid && bHid) return -1;
-    if (aFav && !bFav) return -1;
-    if (!aFav && bFav) return 1;
-    return a.label.localeCompare(b.label);
+
+    // «Эффективная» доступность: избранная модель даже если недоступна —
+    // остаётся «на своём месте» (считаем её «эффективно доступной» для сортировки).
+    const aEffAvail = aAvail || aFav;
+    const bEffAvail = bAvail || bFav;
+
+    if (aEffAvail && !bEffAvail) return -1;
+    if (!aEffAvail && bEffAvail) return 1;
+
+    // Обе в одной группе (либо обе «эффективно доступны», либо обе «внизу»)
+    if (aEffAvail && bEffAvail) {
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      return a.label.localeCompare(b.label);
+    } else {
+      // Группа «внизу»: сначала скрытые явно, потом остальные, потом по алфавиту
+      if (aHid && !bHid) return -1;
+      if (!aHid && bHid) return 1;
+      return a.label.localeCompare(b.label);
+    }
   });
-  
+
   let html = '';
   sorted.forEach(m => {
     const isFav = aiPrefs.favs.includes(m.id);
     const isHid = aiPrefs.hidden.includes(m.id);
-    const avgText = m.avgTimeMs ? `<span class="text-[10px] ml-2 opacity-50">~${(m.avgTimeMs/1000).toFixed(1)}с</span>` : '';
-    const classNames = `ai-model-option ${isHid ? 'hidden-model' : ''}`;
-    
+    const isAvail = m.available !== false;
+    const isGrayed = !isAvail || isHid; // серый = либо недоступна, либо явно скрыта
+    const avgText = m.pingLatency ? `<span class="text-[10px] ml-2 opacity-50">~${m.pingLatency.toFixed(1)}с</span>`
+                     : (m.avgTimeMs ? `<span class="text-[10px] ml-2 opacity-50">~${(m.avgTimeMs/1000).toFixed(1)}с</span>` : '');
+    const classNames = `ai-model-option ${isGrayed ? 'hidden-model' : ''}`;
+
+    // Звезда: всегда видна. Для избранной — активная. Для не избранной — кликабельна.
+    const starHtml = `<span class="ai-icon-btn ${isFav ? 'active-star' : ''}" onclick="toggleFavModel(event, '${m.id}')" title="${isFav ? 'Убрать из избранного' : 'В избранное'}">★</span>`;
+
+    // Кнопка скрыть/восстановить: для избранных моделей НЕ показываем ❌
+    // (требование: «с избранной не снимается звезда и она не перемещается»).
+    let hideHtml;
+    if (isFav) {
+      hideHtml = `<span class="ai-icon-btn" style="opacity:0.25; cursor:not-allowed;" title="Избранную модель нельзя скрыть">—</span>`;
+    } else {
+      hideHtml = `<span class="ai-icon-btn" onclick="toggleHideModel(event, '${m.id}')" title="${isHid ? 'Восстановить' : 'Скрыть'}">${isHid ? '👁️' : '❌'}</span>`;
+    }
+
+    // Метка недоступности: «(недоступна)» — красным. Для избранной — серая (т.к. она осталась на месте).
+    let unavailText = '';
+    if (!isAvail) {
+      unavailText = isFav
+        ? ' <span class="text-[10px]" style="color:#9ca3af;">(недоступна)</span>'
+        : ' <span class="text-[10px] text-red-400">(недоступна)</span>';
+    }
+
     html += `
       <div class="${classNames}">
-        <span class="ai-icon-btn ${isFav ? 'active-star' : ''}" onclick="toggleFavModel(event, '${m.id}')" title="${isFav ? 'Убрать из избранного' : 'В избранное'}">★</span>
+        ${starHtml}
         <div class="flex-1 px-2 truncate cursor-pointer" onclick="selectModel('${m.id}', '${m.label.replace(/'/g, "\\'")}')">
-          <span class="text-xs">${m.label}</span>${avgText}
+          <span class="text-xs">${m.label}</span>${avgText}${unavailText}
         </div>
-        <span class="ai-icon-btn" onclick="toggleHideModel(event, '${m.id}')" title="${isHid ? 'Восстановить' : 'Скрыть'}">${isHid ? '👁️' : '❌'}</span>
+        ${hideHtml}
       </div>
     `;
   });
-  
+
   dropdown.innerHTML = html;
-  
-  // Автовыбор первой не скрытой, если еще не выбрана
+
+  // Автовыбор первой «эффективно доступной» (реально доступной), если еще не выбрана
   if (!aiSelectedModelId || !allAvailableModels.find(m => m.id === aiSelectedModelId)) {
-    const firstValid = sorted.find(m => !aiPrefs.hidden.includes(m.id)) || sorted[0];
+    const firstValid = sorted.find(m => m.available !== false) || sorted[0];
     if (firstValid) selectModel(firstValid.id, firstValid.label);
   } else {
     const current = allAvailableModels.find(m => m.id === aiSelectedModelId);
@@ -1703,23 +1751,33 @@ function selectModel(id, label) {
 
 function toggleFavModel(e, id) {
   e.stopPropagation();
+  let action;
   if (aiPrefs.favs.includes(id)) {
     aiPrefs.favs = aiPrefs.favs.filter(i => i !== id);
+    action = 'remove';
   } else {
     aiPrefs.favs.push(id);
     aiPrefs.hidden = aiPrefs.hidden.filter(i => i !== id); // убираем из скрытых, если там была
+    action = 'add';
   }
   saveAiPrefs();
+  // Синхронизируем с воркером (как и статистика времени) — без блокировки UI
+  saveFavToWorker(id, action);
   renderAiModelDropdown();
 }
 
 function toggleHideModel(e, id) {
   e.stopPropagation();
+  // Защита: избранную модель нельзя явно скрыть — на ней остаётся звезда,
+  // и при недоступности она лишь становится серой, никуда не уходя.
+  if (aiPrefs.favs.includes(id)) {
+    showToast('Избранную модель нельзя скрыть. Сначала уберите звезду.');
+    return;
+  }
   if (aiPrefs.hidden.includes(id)) {
     aiPrefs.hidden = aiPrefs.hidden.filter(i => i !== id);
   } else {
     aiPrefs.hidden.push(id);
-    aiPrefs.favs = aiPrefs.favs.filter(i => i !== id); // убираем из избранных
     if (aiSelectedModelId === id) aiSelectedModelId = ''; // сброс выбора
   }
   saveAiPrefs();
@@ -1727,20 +1785,112 @@ function toggleHideModel(e, id) {
 }
 
 async function loadAiModels() {
-  if (aiModelsLoaded) return;
   const boxText = document.getElementById('aiModelSelectedText');
+
+  // 1. Сначала подтягиваем избранное с воркера (как и статистику времени)
+  //    и мерджим с локальным localStorage.
+  await loadFavsFromWorker();
+
   try {
     const res = await fetch(`${AI_WORKER_URL}/v1/models`);
     if (!res.ok) throw new Error('API Error');
     const data = await res.json();
-    
-    allAvailableModels = data.models.filter(m => m.available !== false && !m.paidOnly);
+
+    // Получаем ВСЕ модели (включая недоступные и платные), чтобы:
+    //   - избранные, ставшие недоступными, оставались в списке на своём месте;
+    //   - недоступные обычные уезжали вниз и становились серыми.
+    allAvailableModels = data.models.filter(m => !m.paidOnly);
     aiModelsLoaded = true;
     renderAiModelDropdown();
+
+    // 2. Параллельный пинг всех моделей в фоне (см. задача.md, раздел «Как это работает в связке»).
+    //    Воркер при флаге isPing отдаёт max_tokens=1, поэтому пинг лёгкий и быстрый.
+    pingAllModelsInBackground();
   } catch (err) {
     boxText.textContent = 'Ошибка загрузки моделей. Проверьте AI_WORKER_URL';
     console.error("AI Models fetch error:", err);
   }
+}
+
+// ===== Параллельный пинг моделей (задача.md) =====
+async function pingSingleModel(modelId) {
+  const t0 = performance.now();
+  try {
+    const response = await fetch(`${AI_WORKER_URL}/v1/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: modelId,
+        messages: [{ role: 'user', content: 'ping' }],
+        isPing: true // воркер при этом флаге ставит max_tokens=1
+      })
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    if (data.error) throw new Error(data.message || 'Model error');
+    const dt = (performance.now() - t0) / 1000;
+    return { available: true, latency: dt };
+  } catch (err) {
+    return { available: false, latency: null };
+  }
+}
+
+async function pingAllModelsInBackground() {
+  if (!allAvailableModels.length) return;
+  // Запускаем пинги параллельно через Promise.allSettled — не блокируем UI.
+  const promises = allAvailableModels.map(m => pingSingleModel(m.id));
+  const results = await Promise.allSettled(promises);
+
+  let changed = false;
+  results.forEach((r, idx) => {
+    const m = allAvailableModels[idx];
+    if (!m) return;
+    if (r.status === 'fulfilled') {
+      if (m.available !== r.value.available) { m.available = r.value.available; changed = true; }
+      if (r.value.latency !== null) { m.pingLatency = r.value.latency; changed = true; }
+    } else {
+      if (m.available !== false) { m.available = false; changed = true; }
+    }
+  });
+  if (changed) renderAiModelDropdown();
+}
+
+// ===== Синхронизация избранного с воркером (как статистика времени) =====
+function getDeviceId() {
+  let id = null;
+  try { id = localStorage.getItem('sl_device_id'); } catch(e) {}
+  if (!id) {
+    id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+    try { localStorage.setItem('sl_device_id', id); } catch(e) {}
+  }
+  return id;
+}
+
+async function loadFavsFromWorker() {
+  try {
+    const res = await fetch(`${AI_WORKER_URL}/v1/favorites?deviceId=${encodeURIComponent(getDeviceId())}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && Array.isArray(data.favs)) {
+      // Мерджим: объединение локальных и серверных избранных (без дублей).
+      const localFavs = (aiPrefs && Array.isArray(aiPrefs.favs)) ? aiPrefs.favs : [];
+      const merged = [...new Set([...(data.favs || []), ...localFavs])];
+      if (!aiPrefs) aiPrefs = { favs: [], hidden: [] };
+      aiPrefs.favs = merged;
+      saveAiPrefs();
+    }
+  } catch(e) { /* тихо — работаем с локальными */ }
+}
+
+function saveFavToWorker(modelId, action) {
+  // fire-and-forget: не блокируем UI при клике по звезде.
+  try {
+    fetch(`${AI_WORKER_URL}/v1/favorites`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId: getDeviceId(), modelId, action })
+    }).catch(() => {});
+  } catch(e) {}
 }
 
 // =====================================================================
@@ -1764,7 +1914,7 @@ CSV с разделителем ';', UTF-8 (допускается Windows-1251)
 1. ВРЕМЯ       — метка времени HH:MM:SS.mmm
 2. СОБЫТИЕ     — код типа события (см. словарь ниже)
 3. СООБЩЕНИЕ   — подтип / детальное описание
-4. РЕЖИМ       — NR (Нормальная Работа), SR (Смешанная/Сервисная — ревизионная), EVAC (эвакуация)
+4. РЕЖИМ       — NR (Нормальная Работа), SR (Смешанная/Сервисная — ревизионная), EVAC (эвакуация), LD (Loading / Погрузка — режим загрузки/погрузки кабины, в т.ч. при перевозке крупногабаритных грузов или при ручной загрузке)
 5. ЭТАЖ ТЕКУЩ. — текущий этаж кабины: "DD" ("03", "12"), "П1"/"П2" (подвальные), "-1"..."-4"
 6. НАПРАВЛ.    — DN (вниз) или UP (вверх)
 7. ЭТАЖ НАПРАВ.— целевой этаж
@@ -1806,7 +1956,12 @@ CALL        Нажата кнопка вызова с этажа. СООБЩЕН
             (В логе встречается и DOWN — считать как DN.)
 ORDER       Нажата кнопка приказа в кабине. СООБЩЕНИЕ=целевой этаж.
 POS         Позиционирование. СООБЩЕНИЕ: START или "SET Floor <N>".
-MODE        Смена режима. СООБЩЕНИЕ: NEW. В колонке РЕЖИМ — новое значение: NR/SR/EVAC.
+MODE        Смена режима. СООБЩЕНИЕ: NEW. В колонке РЕЖИМ — новое значение: NR/SR/EVAC/LD.
+            LD — режим «Погрузка» (Loading): кабина используется для загрузки/разгрузки,
+            при этом двери могут удерживаться открытыми дольше обычного, а часть
+            служебных событий (ДШ/ДК, ручное управление дверями) — штатная норма.
+            Учитывай это при анализе: в LD «ошибки» дверей не считаются критичными,
+            если не сопровождаются ERROR/ERROR C кодами.
 MULTIRUN    Режим прогона (авто-тест):
               START                       — прогон включён
               STOP;Cycles <N>             — прогон выключён, N рейсов
@@ -2116,29 +2271,32 @@ async function generateAiReport() {
     { role: 'system', content: ctx.systemPrompt },
     { role: 'user', content: ctx.userRequest }
   ];
+  aiReportStale = false;
+  removeStaleNotice();
   await runReport(aiSelectedModelId, ctx.systemPrompt, ctx.userRequest);
 }
 
-async function refineAiReport() {
-  if (!aiMessages.length) { showToast('Сначала сгенерируйте отчёт'); return; }
-  const input = document.getElementById('aiInput');
-  const text = input.value.trim();
-  if (!text) { showToast('Введите уточнение'); return; }
-  if (!aiSelectedModelId) { showToast('Модель не выбрана'); return; }
-  const sysPrompt = (aiMessages.find(m => m.role === 'system') || { content: '' }).content;
-  const newUser = `${aiReportRequest ? aiReportRequest.userText : ''}\n\nУточнение оператора: ${text}`;
-  input.value = '';
-  aiMessages = [
-    { role: 'system', content: sysPrompt },
-    { role: 'user', content: newUser }
-  ];
-  aiReportRequest = { userText: newUser };
-  await runReport(aiSelectedModelId, sysPrompt, newUser);
-}
-
 async function regenerateAiReport() {
-  if (!aiMessages.length) { generateAiReport(); return; }
   if (!aiSelectedModelId) { showToast('Модель не выбрана'); return; }
+  // Если лог сменился с момента последней генерации (или отчёта еще не было) —
+  // собираем контекст по НОВОМУ логу, а не используем старый system prompt / userText.
+  if (!filteredRows.length) { showToast('Сначала загрузите лог-файл!'); return; }
+
+  const needRebuild = aiReportStale || !aiMessages.length;
+  if (needRebuild) {
+    const ctx = buildReportContext();
+    if (!ctx) return;
+    aiReportRequest = { userText: ctx.userRequest };
+    aiMessages = [
+      { role: 'system', content: ctx.systemPrompt },
+      { role: 'user', content: ctx.userRequest }
+    ];
+    aiReportStale = false;
+    removeStaleNotice();
+    await runReport(aiSelectedModelId, ctx.systemPrompt, ctx.userRequest);
+    return;
+  }
+
   const sysPrompt = (aiMessages.find(m => m.role === 'system') || { content: '' }).content;
   const userText = aiReportRequest ? aiReportRequest.userText : ((aiMessages.find(m => m.role === 'user') || { content: '' }).content);
   aiMessages = [
@@ -2150,8 +2308,6 @@ async function regenerateAiReport() {
 
 async function runReport(modelId, sysPrompt, userText) {
   document.getElementById('aiRegenBtn').disabled = true;
-  document.getElementById('aiSendBtn').disabled = true;
-  document.getElementById('aiSendBtn').innerHTML = '...';
   const c = document.getElementById('aiChatHistory');
   document.getElementById('aiEmptyState').style.display = 'none';
   c.querySelectorAll('.chat-msg').forEach(n => n.remove());
@@ -2167,26 +2323,72 @@ async function runReport(modelId, sysPrompt, userText) {
     aiReportText = text;
     aiReportModel = modelId;
     aiReportDate = new Date().toISOString();
+    aiReportLogSignature = currentLogSignature();
+    aiReportStale = false;
+    removeStaleNotice();
     const dt = ((performance.now() - t0) / 1000).toFixed(1);
     setAiStatus(`Модель: ${modelId} • Готово за ${dt} сек • ${text.length} символов`);
   } catch (err) {
     document.getElementById(lid).remove();
     setAiStatus('Ошибка: ' + err.message);
     c.insertAdjacentHTML('beforeend', `<div class="chat-msg chat-ai" style="border-color: #ef4444; color: #ef4444;">❌ Ошибка: ${err.message}</div>`);
-    
-    // Автоматическое скрытие модели при ошибке
-    if (!aiPrefs.hidden.includes(modelId)) {
-        aiPrefs.hidden.push(modelId);
-        aiPrefs.favs = aiPrefs.favs.filter(i => i !== modelId);
-        saveAiPrefs();
-        renderAiModelDropdown(); // Перерисовываем список
-        showToast('Модель дала сбой и была скрыта');
+
+    // При сбое: если модель избранная — НЕ снимаем звезду и НЕ прячем её в hidden.
+    // Она просто станет серой (available=false) и останется на своём месте.
+    // Если модель не избранная — старое поведение: добавляем в hidden.
+    const isFav = aiPrefs.favs.includes(modelId);
+    if (isFav) {
+      const m = allAvailableModels.find(x => x.id === modelId);
+      if (m) { m.available = false; }
+      saveAiPrefs();
+      renderAiModelDropdown();
+      showToast('Избранная модель дала сбой. Звезда сохранена, модель помечена как недоступная.');
+    } else if (!aiPrefs.hidden.includes(modelId)) {
+      aiPrefs.hidden.push(modelId);
+      saveAiPrefs();
+      renderAiModelDropdown();
+      showToast('Модель дала сбой и была скрыта');
     }
   } finally {
     document.getElementById('aiRegenBtn').disabled = false;
-    document.getElementById('aiSendBtn').disabled = false;
-    document.getElementById('aiSendBtn').innerHTML = '➤';
   }
+}
+
+// Сигнатура текущего лога (для отслеживания «устаревания» отчёта при смене лога)
+function currentLogSignature() {
+  // Достаточно кол-ва строк, числа ошибок и первой даты — чтобы понять, что лог сменился.
+  try {
+    return [
+      allRows.length,
+      filteredRows.length,
+      errorEntries.length,
+      (allRows.find(r => (r[0]||'').startsWith('Дата: ')) || [''])[0] || ''
+    ].join('|');
+  } catch(e) { return String(Date.now()); }
+}
+
+function markAiReportStale() {
+  // Если есть готовый отчёт и сигнатура лога сменилась — помечаем как устаревший.
+  if (!aiReportText) return;
+  const sig = currentLogSignature();
+  if (aiReportLogSignature && sig !== aiReportLogSignature) {
+    aiReportStale = true;
+    addStaleNotice();
+  }
+}
+
+function addStaleNotice() {
+  const c = document.getElementById('aiChatHistory');
+  if (!c || document.getElementById('aiStaleNotice')) return;
+  const html = `<div id="aiStaleNotice" class="chat-msg" style="background: #f59e0b; color: #000; text-align: center; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; max-width: 100%;">
+    ⚠️ Лог изменён. Этот отчёт построен по <b>предыдущему</b> логу. Нажмите 🔄, чтобы пересобрать отчёт по <b>новому</b> логу.
+  </div>`;
+  c.insertAdjacentHTML('afterbegin', html);
+}
+
+function removeStaleNotice() {
+  const n = document.getElementById('aiStaleNotice');
+  if (n) n.remove();
 }
 
 function copyAiReport() {
