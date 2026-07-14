@@ -1696,8 +1696,16 @@ function renderAiModelDropdown() {
     const isHid = aiPrefs.hidden.includes(m.id);
     const isAvail = m.available !== false;
     const isGrayed = !isAvail || isHid; // серый = либо недоступна, либо явно скрыта
-    const avgText = m.pingLatency ? `<span class="text-[10px] ml-2 opacity-50">~${m.pingLatency.toFixed(1)}с</span>`
-                     : (m.avgTimeMs ? `<span class="text-[10px] ml-2 opacity-50">~${(m.avgTimeMs/1000).toFixed(1)}с</span>` : '');
+    // Два разных тайминга: пинг (мгновенная проверка сейчас) и среднее по реальным вызовам.
+    // Показываем оба, если есть, раздельно.
+    const timeParts = [];
+    if (typeof m.pingLatency === 'number' && m.pingLatency > 0) {
+      timeParts.push(`<span class="text-[10px] opacity-60" title="Время ответа на пинг (1 токен)">⚡${m.pingLatency.toFixed(1)}с</span>`);
+    }
+    if (m.avgTimeMs && m.avgTimeMs > 0) {
+      timeParts.push(`<span class="text-[10px] opacity-60" title="Среднее время реальных генераций">⌀${(m.avgTimeMs/1000).toFixed(1)}с</span>`);
+    }
+    const avgText = timeParts.length ? '<span class="ml-2 inline-flex gap-2 items-center">' + timeParts.join('') + '</span>' : '';
     const classNames = `ai-model-option ${isGrayed ? 'hidden-model' : ''}`;
 
     // Звезда: всегда видна. Для избранной — активная. Для не избранной — кликабельна.
