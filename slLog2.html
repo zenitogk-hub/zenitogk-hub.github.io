@@ -517,6 +517,7 @@
       <div id="aiModelDropdown" class="absolute left-0 right-0 top-full mt-1 border rounded-lg shadow-lg z-50 hidden max-h-64 overflow-y-auto" style="background: var(--modal-bg); border-color: var(--border-color);">
          </div>
     </div>
+    <button onclick="refreshAiModels()" id="aiRefreshBtn" class="btn-secondary text-xs !py-2 !px-3 h-full" title="Обновить список моделей и пинг">🔃</button>
     <button onclick="regenerateAiReport()" id="aiRegenBtn" class="btn-secondary text-xs !py-2 !px-3 h-full" title="Перегенерировать отчёт" disabled>🔄</button>
   </div>
   <div id="aiChatHistory" class="flex-1 scroll-area p-3 mb-2 rounded-lg border flex flex-col gap-2" style="background: var(--bg-secondary); border-color: var(--border-color);">
@@ -715,6 +716,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const saved = getTheme();
   setTheme(saved);
   loadErrCsvAuto();
+  // Авто-пинг моделей ИИ при загрузке страницы.
+  // Делаем с небольшой задержкой, чтобы не мешать первичному рендеру.
+  setTimeout(() => { if (typeof loadAiModels === 'function') loadAiModels(); }, 800);
 });
 
 // ============ STATE ============
@@ -818,6 +822,11 @@ async function handleFiles(e) {
   // При смене лога: если ранее был построен ИИ-отчёт, помечаем его как устаревший.
   // Теперь при перегенерации будет использоваться контекст НОВОГО лога, а не старого.
   if (typeof markAiReportStale === 'function') markAiReportStale();
+  // При открытии лога — авто-пинг моделей (если список уже загружен).
+  // Скрытые модели, которые ответят, вернутся в общий список.
+  if (typeof pingAllModelsInBackground === 'function' && allAvailableModels.length > 0) {
+    setTimeout(() => pingAllModelsInBackground(), 200);
+  }
 }
 function makeRow(first) { const r = [first]; for (let i = 1; i < FIXED_COLS; i++) r.push(''); return r; }
 function extractDate(filename) {
@@ -1637,10 +1646,37 @@ let aiModelsLoaded = false;
 let allAvailableModels = [];
 let aiSelectedModelId = '';
 
-let aiPrefs = JSON.parse(localStorage.getItem('sl_ai_prefs') || '{"favs":[],"hidden":[]}');
+let aiPrefs = JSON.parse(localStorage.getItem('sl_ai_prefs') || '{"favs":[],"hidden":[],"sizeLimited":[]}');
+if (!Array.isArray(aiPrefs.sizeLimited)) aiPrefs.sizeLimited = [];
 
 function saveAiPrefs() {
   localStorage.setItem('sl_ai_prefs', JSON.stringify(aiPrefs));
+}
+
+// Детектор ошибок «контекст не влезает в модель» / «rate-limit» —
+// это НЕ бан модели, а естественное ограничение конкретной модели.
+// Их нельзя вязать с обычным «hidden» — иначе будет цикл «скрыли→пинг→восстановили→опять скрыли».
+function classifyAiError(errMsg) {
+  const m = String(errMsg || '').toLowerCase();
+  if (!m) return 'error';
+  // Размер контекста / запрос слишком большой
+  if (m.includes('request too large') ||
+      m.includes('tokens per minute') ||
+      m.includes('tpm limit') ||
+      m.includes('too many tokens') ||
+      m.includes('context length') ||
+      m.includes('maximum context length') ||
+      m.includes('context_length_exceeded') ||
+      m.includes('request exceeds') ||
+      m.includes('reduce the length') ||
+      m.includes('prompt is too long')) {
+    return 'size_limit';
+  }
+  // Временные квоты / rate limit
+  if (m.includes('rate limit') || m.includes('429') || m.includes('tpm ') || m.includes('quota exceeded') || m.includes('try again later') || m.includes('resource_exhausted')) {
+    return 'rate_limit';
+  }
+  return 'error';
 }
 
 function renderAiModelDropdown() {
@@ -1655,12 +1691,13 @@ function renderAiModelDropdown() {
 
   // Сортировка:
   //   1. Доступные модели (available !== false) — сверху, в своём порядке.
-  //      Внутри группы: сначала избранные, потом по алфавиту.
+  //      Внутри группы: сначала избранные, потом неизбранные.
+  //      Внутри каждой подгруппы — по СРЕДНЕМУ времени ответа (avgTimeMs) по возрастанию
+  //      (быстрее выше). Модели без статистики (avgTimeMs=0) уходят в конец подгруппы.
   //   2. Избранные + недоступные — остаются НА СВОЁМ МЕСТЕ (не уходят вниз),
   //      просто становятся серыми и сохраняют звезду.
   //   3. Не избранные + недоступные (или явно скрытые) — уходят вниз списка.
-  // Таким образом, требование «модель со звездой не перемещается вниз,
-  // просто становится серой и никуда не перемещается» выполняется.
+  const avgForSort = (m) => (m.avgTimeMs && m.avgTimeMs > 0) ? m.avgTimeMs : Number.MAX_SAFE_INTEGER;
   const sorted = [...allAvailableModels].sort((a, b) => {
     const aAvail = a.available !== false;
     const bAvail = b.available !== false;
@@ -1679,8 +1716,14 @@ function renderAiModelDropdown() {
 
     // Обе в одной группе (либо обе «эффективно доступны», либо обе «внизу»)
     if (aEffAvail && bEffAvail) {
+      // Сначала избранные
       if (aFav && !bFav) return -1;
       if (!aFav && bFav) return 1;
+      // Внутри подгруппы (fav или non-fav) — сортируем по среднему времени ASC
+      const aAvg = avgForSort(a);
+      const bAvg = avgForSort(b);
+      if (aAvg !== bAvg) return aAvg - bAvg;
+      // При равенстве — по алфавиту
       return a.label.localeCompare(b.label);
     } else {
       // Группа «внизу»: сначала скрытые явно, потом остальные, потом по алфавиту
@@ -1721,8 +1764,14 @@ function renderAiModelDropdown() {
     }
 
     // Метка недоступности: «(недоступна)» — красным. Для избранной — серая (т.к. она осталась на месте).
+    // Для sizeLimited — спецметка: «⚠️ контекст мал».
+    const isSizeLimited = Array.isArray(aiPrefs.sizeLimited) && aiPrefs.sizeLimited.includes(m.id);
     let unavailText = '';
-    if (!isAvail) {
+    if (isSizeLimited) {
+      unavailText = isFav
+        ? ' <span class="text-[10px]" style="color:#9ca3af;" title="Контекст отчёта не вмещается в модель">⚠️ мал контекст</span>'
+        : ' <span class="text-[10px]" style="color:#f59e0b;" title="Контекст отчёта не вмещается в модель">⚠️ мал контекст</span>';
+    } else if (!isAvail) {
       unavailText = isFav
         ? ' <span class="text-[10px]" style="color:#9ca3af;">(недоступна)</span>'
         : ' <span class="text-[10px] text-red-400">(недоступна)</span>';
@@ -1784,6 +1833,13 @@ function toggleHideModel(e, id) {
   }
   if (aiPrefs.hidden.includes(id)) {
     aiPrefs.hidden = aiPrefs.hidden.filter(i => i !== id);
+    // Ручное восстановление — даём модели ещё один шанс (контекст мог стать меньше)
+    if (Array.isArray(aiPrefs.sizeLimited) && aiPrefs.sizeLimited.includes(id)) {
+      aiPrefs.sizeLimited = aiPrefs.sizeLimited.filter(i => i !== id);
+      // Сбросим и локальный флаг доступности, чтобы пинг перепроверил
+      const m = allAvailableModels.find(x => x.id === id);
+      if (m) m.available = null;
+    }
   } else {
     aiPrefs.hidden.push(id);
     if (aiSelectedModelId === id) aiSelectedModelId = ''; // сброс выбора
@@ -1850,17 +1906,55 @@ async function pingAllModelsInBackground() {
   const results = await Promise.allSettled(promises);
 
   let changed = false;
+  let restoredCount = 0;
   results.forEach((r, idx) => {
     const m = allAvailableModels[idx];
     if (!m) return;
-    if (r.status === 'fulfilled') {
-      if (m.available !== r.value.available) { m.available = r.value.available; changed = true; }
-      if (r.value.latency !== null) { m.pingLatency = r.value.latency; changed = true; }
+    const isSizeLimited = Array.isArray(aiPrefs.sizeLimited) && aiPrefs.sizeLimited.includes(m.id);
+    if (r.status === 'fulfilled' && r.value.available) {
+      if (isSizeLimited) {
+        // Пинг проходит, но реальный запрос не влезает — НЕ восстанавливаем.
+        if (m.available !== false) { m.available = false; changed = true; }
+        // Латентность всё равно покажем (для информации)
+        if (r.value.latency !== null) { m.pingLatency = r.value.latency; changed = true; }
+      } else {
+        if (m.available !== r.value.available) { m.available = r.value.available; changed = true; }
+        if (r.value.latency !== null) { m.pingLatency = r.value.latency; changed = true; }
+        // ВАЖНО: если модель была скрыта (вручную или автопри ошибке),
+        // и сейчас ответила на пинг — возвращаем её в общий список наверх.
+        if (aiPrefs.hidden.includes(m.id)) {
+          aiPrefs.hidden = aiPrefs.hidden.filter(x => x !== m.id);
+          saveAiPrefs();
+          changed = true;
+          restoredCount++;
+        }
+      }
     } else {
       if (m.available !== false) { m.available = false; changed = true; }
     }
   });
-  if (changed) renderAiModelDropdown();
+  if (changed) {
+    renderAiModelDropdown();
+    if (restoredCount > 0) {
+      showToast('♻️ Восстановлено ' + restoredCount + ' скрытых моделей');
+    }
+  }
+}
+
+// Ручное обновление: перепинг всех моделей (в т.ч. для возврата скрытых)
+async function refreshAiModels() {
+  const btn = document.getElementById('aiRefreshBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳'; }
+  try {
+    if (!allAvailableModels.length) {
+      // моделей нет — пробуем полную загрузку с воркера
+      await loadAiModels();
+    } else {
+      await pingAllModelsInBackground();
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '🔃'; }
+  }
 }
 
 // ===== Синхронизация избранного с воркером (как статистика времени) =====
@@ -2341,17 +2435,34 @@ async function runReport(modelId, sysPrompt, userText) {
     setAiStatus('Ошибка: ' + err.message);
     c.insertAdjacentHTML('beforeend', `<div class="chat-msg chat-ai" style="border-color: #ef4444; color: #ef4444;">❌ Ошибка: ${err.message}</div>`);
 
-    // При сбое: если модель избранная — НЕ снимаем звезду и НЕ прячем её в hidden.
-    // Она просто станет серой (available=false) и останется на своём месте.
-    // Если модель не избранная — старое поведение: добавляем в hidden.
+    const errType = classifyAiError(err.message); // 'size_limit' | 'rate_limit' | 'error'
     const isFav = aiPrefs.favs.includes(modelId);
-    if (isFav) {
+
+    if (errType === 'size_limit' || errType === 'rate_limit') {
+      // Модель жива, но в данный момент не справляется (контекст/квота).
+      // НЕ прячем её, чтобы не было цикла «скрыли→пинг→восстановили→опять скрыли».
+      // Просто помечаем локально как недоступную и кладём в sizeLimited.
+      if (!aiPrefs.sizeLimited.includes(modelId)) {
+        aiPrefs.sizeLimited.push(modelId);
+        saveAiPrefs();
+      }
+      const m = allAvailableModels.find(x => x.id === modelId);
+      if (m && m.available !== false) { m.available = false; }
+      renderAiModelDropdown();
+      if (errType === 'size_limit') {
+        showToast('⚠️ Контекст отчёта не вмещается в модель. Выберите модель побольше.');
+      } else {
+        showToast('⏳ Превышен лимит запросов. Попробуйте позже или другую модель.');
+      }
+    } else if (isFav) {
+      // Избранная + реальная ошибка (не размер/квота) — НЕ снимаем звезду, НЕ прячем.
       const m = allAvailableModels.find(x => x.id === modelId);
       if (m) { m.available = false; }
       saveAiPrefs();
       renderAiModelDropdown();
       showToast('Избранная модель дала сбой. Звезда сохранена, модель помечена как недоступная.');
     } else if (!aiPrefs.hidden.includes(modelId)) {
+      // Обычная + реальная ошибка — скрываем
       aiPrefs.hidden.push(modelId);
       saveAiPrefs();
       renderAiModelDropdown();
