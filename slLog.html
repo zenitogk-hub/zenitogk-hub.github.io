@@ -15,6 +15,7 @@
 <title>СЛ LogViewer Mobile</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   :root {
     --bg-primary: #111827;
@@ -208,6 +209,7 @@
   .scroll-area { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
   .scroll-area::-webkit-scrollbar { width: 4px; }
   .scroll-area::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+  
   .log-card { background: var(--log-card-bg); border-left: 3px solid var(--log-card-border); transition: transform 0.1s, background 0.3s; padding: 6px 8px; margin-bottom: 2px; }
   .log-card:active { transform: scale(0.98); }
   .log-card.selected { border-left-color: #3b82f6; background: #1e3a5f; }
@@ -217,13 +219,16 @@
   .log-card.error-c { border-left-color: var(--error-c-border); background: var(--error-c-bg); }
   .log-card.error-r { border-left-color: var(--error-r-border); background: var(--error-r-bg); }
   .log-card.warning { border-left-color: var(--warning-border); background: var(--warning-bg); }
+  
   .tab-btn { flex: 1; padding: 10px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--tab-inactive); transition: all 0.2s; background: transparent; border: none; cursor: pointer; }
   .tab-btn.active { color: var(--tab-active); }
   .tab-btn svg { width: 22px; height: 22px; }
   .tab-btn span { font-size: 10px; }
+  
   .modal-overlay { position: fixed; inset: 0; background: var(--modal-overlay); z-index: 50; display: none; align-items: center; justify-content: center; }
   .modal-overlay.show { display: flex; }
   .modal-content { background: var(--modal-bg); width: 95%; max-width: 500px; max-height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: background 0.3s; }
+  
   .shaft-floor { display: grid; grid-template-columns: 40px 32px 32px 32px 40px 24px 32px; gap: 2px; height: 38px; align-items: center; background: var(--shaft-bg); border-bottom: 1px solid var(--shaft-border); }
   .shaft-floor-num { background: var(--shaft-num-bg); color: var(--shaft-num-text); height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
   .shaft-call-btn { height: 17px; display: flex; align-items: center; justify-content: center; background: var(--shaft-call-bg); color: var(--shaft-call-text); font-size: 10px; border-radius: 2px; }
@@ -233,13 +238,16 @@
   .shaft-dir { background: var(--shaft-ind-bg); color: var(--shaft-ind-text); height: 100%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
   .shaft-sensor { background: var(--shaft-sensor-bg); height: 100%; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--shaft-sensor-text); }
   .shaft-sensor.active { background: var(--shaft-sensor-active); }
+  
   .door-indicator { display: flex; gap: 2px; padding: 4px; background: var(--shaft-bg); border-radius: 4px; }
   .door-cell { width: 8px; height: 24px; background: var(--door-cell-bg); border-radius: 1px; }
   .door-cell.yellow { background: var(--door-cell-yellow); }
+  
   .status-ind { padding: 2px 6px; border-radius: 3px; font-size: 10px; background: var(--status-ind-bg); color: var(--status-ind-text); }
   .status-ind.active-main { background: var(--status-active-main); color: #000; }
   .status-ind.active-pos { background: var(--status-active-pos); color: #000; }
   .status-ind.active-multi { background: var(--status-active-multi); color: #000; }
+  
   .event-line { font-family: 'Segoe UI', monospace; font-size: 14px !important; line-height: 1.4; padding: 2px 8px; border-bottom: 1px solid var(--event-border); }
   .event-time { color: var(--text-secondary); }
   .event-error { color: #ef4444; font-weight: bold; }
@@ -247,14 +255,18 @@
   .event-mode { color: #10b981; }
   .event-pos { color: #3b82f6; }
   .event-multirun { color: #f97316; }
-  input, select { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; font-size: 14px; width: 100%; transition: background 0.3s, color 0.3s, border-color 0.3s; }
-  input:focus, select:focus { outline: none; border-color: #3b82f6; }
+  
+  input, select, textarea { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 10px; font-size: 14px; width: 100%; transition: background 0.3s, color 0.3s, border-color 0.3s; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #3b82f6; }
+  
   .btn-primary { background: #3b82f6; color: white; padding: 10px 16px; border-radius: 8px; font-weight: 500; font-size: 14px; border: none; cursor: pointer; }
   .btn-primary:active { background: #2563eb; }
   .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); padding: 10px 16px; border-radius: 8px; font-weight: 500; font-size: 14px; border: none; cursor: pointer; transition: background 0.3s; }
   .btn-secondary:active { opacity: 0.8; }
+  
   .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--toast-bg); color: var(--text-primary); padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none; border: 1px solid var(--toast-border); }
   .toast.show { opacity: 1; }
+  
   .badge { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 500; border: 1px solid; white-space: nowrap; flex-shrink: 0; }
   .badge-stop { background: var(--badge-stop-bg); border-color: var(--badge-stop-border); color: var(--badge-stop-text); }
   .badge-start { background: var(--badge-start-bg); border-color: var(--badge-start-border); color: var(--badge-start-text); }
@@ -265,8 +277,8 @@
   .badge-blue { background: var(--badge-blue-bg); border-color: var(--badge-blue-border); color: var(--badge-blue-text); }
   .badge-green { background: var(--badge-green-bg); border-color: var(--badge-green-border); color: var(--badge-green-text); }
   .badge-purple { background: var(--badge-purple-bg); border-color: var(--badge-purple-border); color: var(--badge-purple-text); }
-  .log-time { font-size: 12px; font-family: 'Segoe UI', monospace; font-weight: var(--log-text-weight); flex-shrink: 0; color: var(--log-meta-text); letter-spacing: -0.3px !important; min-width: 40px; display: inline-block;}
   
+  .log-time { font-size: 12px; font-family: 'Segoe UI', monospace; font-weight: var(--log-text-weight); flex-shrink: 0; color: var(--log-meta-text); letter-spacing: -0.3px !important; min-width: 40px; display: inline-block;}
   .meta-badges-container { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; flex: 1; min-width: 0; }
   .meta-badge { display: inline-flex; align-items: center; padding: 1px 4px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 9px; color: var(--text-secondary); background: transparent; white-space: nowrap; }
   
@@ -275,10 +287,12 @@
   .theme-icon { transition: transform 0.3s; display: inline-block; font-size: 12px; }
   .theme-icon.spin { animation: spin 0.4s ease; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  
   #appContainer { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
   #mainContent { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   #mainContent::-webkit-scrollbar { width: 4px; }
   #mainContent::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+  
   .install-banner { position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #3b82f6, #1e40af); color: white; padding: 12px 16px; display: none; align-items: center; gap: 12px; z-index: 60; box-shadow: 0 2px 8px rgba(0,0,0,0.3); animation: slideDown 0.3s ease; }
   .install-banner.show { display: flex; }
   .install-banner .banner-icon { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
@@ -287,6 +301,7 @@
   .install-banner .banner-btn { background: white; color: #1e40af; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; flex-shrink: 0; }
   .install-banner .banner-close { background: none; border: none; color: white; font-size: 20px; cursor: pointer; padding: 4px 8px; opacity: 0.8; }
   @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+  
   .ios-hint-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 70; display: none; align-items: center; justify-content: center; padding: 20px; }
   .ios-hint-modal.show { display: flex; }
   .ios-hint-content { background: var(--modal-bg); border-radius: 16px; padding: 24px; max-width: 340px; width: 100%; text-align: center; }
@@ -294,14 +309,17 @@
   .ios-hint-content .steps { text-align: left; margin: 16px 0; font-size: 14px; line-height: 1.8; color: var(--text-secondary); }
   .ios-hint-content .steps .step-icon { display: inline-block; width: 24px; text-align: center; margin-right: 8px; }
   .ios-hint-content .close-btn { background: var(--bg-tertiary); color: var(--text-primary); border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+  
   .error-item { display: flex; align-items: center; gap: 8px; border-radius: 8px; border-left: 4px solid; background: var(--error-list-bg); cursor: pointer; transition: transform 0.1s; }
   .error-item:active { transform: scale(0.98); }
   .error-item .error-info { flex: 1; min-width: 0; }
   .error-item .eye-btn { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); border-radius: 6px; font-size: 16px; cursor: pointer; border: none; color: var(--text-primary); }
   .error-item .eye-btn:active { opacity: 0.7; }
+  
   .error-full-info { background: var(--error-info-bg); border-radius: 8px; padding: 12px; margin-top: 12px; }
   .error-full-info .cause-row { padding: 8px 10px; background: var(--bg-secondary); border-radius: 6px; margin-bottom: 6px; font-size: 12px; line-height: 1.4; }
   .error-full-info .cause-row:last-child { margin-bottom: 0; }
+  
   .cloud-modal-content { background: var(--modal-bg); width: 95%; max-width: 600px; max-height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
   .cloud-url-input { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; font-size: 13px; width: 100%; font-family: monospace; }
   .cloud-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
@@ -318,6 +336,45 @@
   .cloud-toolbar button { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
   .cloud-progress { height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden; margin-top: 8px; display: none; }
   .cloud-progress-bar { height: 100%; background: #3b82f6; width: 0%; transition: width 0.3s; }
+
+  /* AI CHAT CSS */
+  .chat-msg { margin-bottom: 12px; max-width: 95%; padding: 12px 16px; border-radius: 12px; font-size: 13px; line-height: 1.5; word-wrap: break-word; position: relative; }
+  .chat-user { background: #3b82f6; color: white; margin-left: auto; border-bottom-right-radius: 2px; max-width: 85%; }
+  .chat-ai { background: var(--bg-tertiary); color: var(--text-primary); margin-right: auto; border-bottom-left-radius: 2px; border: 1px solid var(--border-color); width: 100%; }
+  .chat-actions { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; opacity: 0.6; justify-content: flex-end; }
+  .chat-actions button { cursor: pointer; background: none; border: none; color: inherit; padding: 0; font-weight: 500; }
+  .chat-actions button:hover { opacity: 1; text-decoration: underline; }
+  
+  /* Красивый рендер Markdown для ответов ИИ */
+  .chat-ai h1, .chat-ai h2, .chat-ai h3 { font-weight: bold; margin-top: 12px; margin-bottom: 6px; color: var(--text-primary); }
+  .chat-ai h2 { font-size: 1.2em; border-bottom: 1px solid var(--border-color); padding-bottom: 3px; }
+  .chat-ai h3 { font-size: 1.1em; color: #60a5fa; }
+  .chat-ai ul { list-style-type: disc; margin-left: 20px; margin-bottom: 8px; }
+  .chat-ai ol { list-style-type: decimal; margin-left: 20px; margin-bottom: 8px; }
+  .chat-ai table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; background: var(--bg-secondary); }
+  .chat-ai th, .chat-ai td { border: 1px solid var(--border-color); padding: 6px 8px; text-align: left; }
+  .chat-ai th { background: var(--bg-primary); color: var(--text-primary); }
+  .chat-ai p { margin-bottom: 8px; }
+  .chat-ai pre { background: var(--bg-primary); padding: 8px; border-radius: 6px; overflow-x: auto; margin-bottom: 8px; border: 1px solid var(--border-color); }
+  .chat-ai code { font-family: monospace; background: var(--bg-primary); padding: 2px 4px; border-radius: 4px; color: #fca5a5; font-size: 0.9em; }
+  .chat-ai pre code { color: inherit; background: transparent; padding: 0; }
+
+  /* AI REPORT MODE */
+  .chat-ai .report-header { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; font-size:11px; opacity:0.7; }
+  .chat-ai .report-header .model-tag { background:#1f2937; padding:2px 6px; border-radius:4px; font-family:monospace; }
+  .ai-toolbar { display:flex; gap:6px; padding:6px; border-top:1px solid var(--border-color); background:var(--bg-primary); }
+  .ai-toolbar button { background:var(--bg-tertiary); color:var(--text-primary); border:1px solid var(--border-color); padding:6px 10px; border-radius:6px; font-size:12px; cursor:pointer; flex:1; }
+  .ai-toolbar button:active { opacity:0.7; }
+  .ai-toolbar button:disabled { opacity:0.4; cursor:not-allowed; }
+  .ai-status-line { font-size:11px; opacity:0.7; padding:4px 6px; text-align:center; min-height:18px; }
+
+  /* Custom Model Dropdown */
+  .ai-model-option { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; cursor: pointer; border-bottom: 1px solid var(--border-color); }
+  .ai-model-option:hover { background: var(--bg-tertiary); }
+  .ai-model-option.hidden-model { opacity: 0.5; background: var(--bg-primary); }
+  .ai-icon-btn { cursor: pointer; font-size: 14px; opacity: 0.6; padding: 0 4px; transition: 0.2s; }
+  .ai-icon-btn:hover { opacity: 1; transform: scale(1.1); }
+  .ai-icon-btn.active-star { color: #f59e0b; opacity: 1; }
 </style>
 </head>
 <body>
@@ -380,7 +437,9 @@
     <div class="mt-4 text-xs" style="color: var(--text-muted); max-width: 280px;">💡 Нажмите на логотип <b>СЛ</b> для смены темы</div>
     <div class="mt-2 text-xs" style="color: var(--text-muted); max-width: 280px;">📲 Нажмите 📲 чтобы установить приложение</div>
   </div>
+  
   <div id="logView" style="display:none;" class="pb-2"></div>
+  
   <div id="graphView" style="display:none;" class="p-3">
     <div class="rounded-lg p-3 mb-3" style="background: var(--bg-secondary);">
       <div class="flex justify-between items-center mb-2">
@@ -398,6 +457,7 @@
     </div>
     <div id="graphEmpty" class="text-center py-10 text-sm" style="color: var(--text-muted);">Выберите блок ENGINE;START в логе</div>
   </div>
+  
   <div id="monitorView" style="display:none;" class="p-2">
     <div class="rounded-lg p-2 mb-2" style="background: var(--bg-secondary);">
       <div class="flex justify-between items-center mb-2">
@@ -430,6 +490,7 @@
       <div class="scroll-area rounded p-1" id="eventsArea" style="max-height: 150px; font-family: monospace; background: var(--event-bg);"></div>
     </div>
   </div>
+  
   <div id="errorsView" style="display:none;" class="p-3">
     <div class="mb-3"><input type="text" id="errorSearch" placeholder="Код ошибки (4 символа)" maxlength="4" oninput="searchError()"></div>
     <div class="rounded-lg p-3" id="errorDisplay" style="background: var(--error-display-bg);">
@@ -445,6 +506,35 @@
       <div class="text-xs" style="color: var(--text-muted);" id="errStatus">Ожидание загрузки err.csv...</div>
     </div>
   </div>
+
+  <div id="aiView" style="display:none;" class="flex flex-col h-full p-2">
+  <div class="mb-2 flex flex-shrink-0 gap-1 items-center z-40">
+    <div class="relative flex-1" id="aiModelContainer">
+      <div id="aiModelSelectBox" class="text-xs !py-2 px-3 border rounded-lg flex justify-between items-center cursor-pointer font-medium" style="background: var(--bg-input); border-color: var(--border-color); color: var(--text-primary);" onclick="document.getElementById('aiModelDropdown').classList.toggle('hidden')">
+         <span id="aiModelSelectedText" class="truncate flex-1">Загрузка моделей ИИ...</span>
+         <span class="ml-2 opacity-70">▼</span>
+      </div>
+      <div id="aiModelDropdown" class="absolute left-0 right-0 top-full mt-1 border rounded-lg shadow-lg z-50 hidden max-h-64 overflow-y-auto" style="background: var(--modal-bg); border-color: var(--border-color);">
+         </div>
+    </div>
+    <button onclick="refreshAiModels()" id="aiRefreshBtn" class="btn-secondary text-xs !py-2 !px-3 h-full" title="Обновить список моделей и пинг">🔃</button>
+    <button onclick="regenerateAiReport()" id="aiRegenBtn" class="btn-secondary text-xs !py-2 !px-3 h-full" title="Перегенерировать отчёт" disabled>🔄</button>
+  </div>
+  <div id="aiChatHistory" class="flex-1 scroll-area p-3 mb-2 rounded-lg border flex flex-col gap-2" style="background: var(--bg-secondary); border-color: var(--border-color);">
+    <div class="text-center text-sm my-auto flex flex-col items-center justify-center h-full" style="color: var(--text-muted);" id="aiEmptyState">
+      <div class="text-5xl mb-3">🤖</div>
+      <p class="mb-2 px-4">Я ИИ-диагност лифтов серии СЛ.</p>
+      <p class="mb-5 px-4 text-xs" style="opacity:0.7;">Откройте лог-файл и нажмите кнопку ниже, чтобы получить диагностический отчёт.</p>
+      <button onclick="generateAiReport()" class="btn-primary" style="background: #10b981; font-weight: bold; width: 80%;">📊 Сгенерировать отчёт</button>
+    </div>
+  </div>
+  <div class="ai-status-line" id="aiStatusLine"></div>
+  <div class="ai-toolbar flex-shrink-0">
+    <button onclick="copyAiReport()">📋 Копировать</button>
+    <button onclick="downloadAiReport()">📄 Сохранить .txt</button>
+  </div>
+</div>
+
 </main>
 <nav class="flex border-t flex-shrink-0" style="background: var(--tab-bg); border-color: var(--tab-border); padding-bottom: env(safe-area-inset-bottom);">
   <button class="tab-btn active" onclick="switchTab('log')" data-tab="log">
@@ -463,10 +553,13 @@
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
     <span>Ошибки</span>
   </button>
+  <button class="tab-btn" onclick="switchTab('ai')" data-tab="ai">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    <span>Ai</span>
+  </button>
 </nav>
 </div>
 
-<!-- Модалка просмотра строки -->
 <div class="modal-overlay" id="rowModal" onclick="if(event.target===this)closeModal('rowModal')">
   <div class="modal-content">
     <div class="p-3 border-b flex justify-between items-center" style="border-color: var(--border-header);">
@@ -477,7 +570,6 @@
   </div>
 </div>
 
-<!-- Модалка скачивания файлов из облака -->
 <div class="modal-overlay" id="cloudModal" onclick="if(event.target===this)closeModal('cloudModal')">
   <div class="cloud-modal-content">
     <div class="p-3 border-b flex justify-between items-center" style="border-color: var(--border-header);">
@@ -494,14 +586,11 @@
       </div>
       <button onclick="downloadSelectedLogs()" class="btn-primary text-xs w-full mt-3" id="cloudLoadBtn" style="display: none; background: #10b981;">⬇️ Открыть выбранные файлы в логере</button>
       <button onclick="downloadFilesToDisk()" class="btn-primary text-xs w-full mt-2" id="cloudSaveBtn" style="display: none; background: #3b82f6;">💾 Скачать выбранные файлы на ПК</button>
-      <div class="mt-4 text-[11px]" style="color: var(--text-muted);">
-        💡 Сначала отображаются 10 самых свежих файлов. Ниже можно раскрыть нужную папку, отметить логи галочками и открыть их в парсере.
-      </div>
+      <div class="mt-4 text-[11px]" style="color: var(--text-muted);">💡 Сначала отображаются 10 самых свежих файлов. Ниже можно раскрыть нужную папку, отметить логи галочками и открыть их в парсере.</div>
     </div>
   </div>
 </div>
 
-<!-- Модалка загрузки файлов в облако (НОВОЕ) -->
 <div class="modal-overlay" id="uploadModal" onclick="if(event.target===this)closeModal('uploadModal')">
   <div class="cloud-modal-content">
     <div class="p-3 border-b flex justify-between items-center" style="border-color: var(--border-header);">
@@ -511,24 +600,15 @@
     <div class="p-3 scroll-area" style="flex:1;">
       <div class="mb-3">
         <label class="text-xs mb-1 block" style="color: var(--text-secondary);">Выберите папку назначения:</label>
-        <select id="uploadFolderSelect" class="w-full text-xs !py-2">
-          <option value="">Загрузка списка папок...</option>
-        </select>
+        <select id="uploadFolderSelect" class="w-full text-xs !py-2"><option value="">Загрузка списка папок...</option></select>
       </div>
-      
       <button onclick="document.getElementById('uploadFileInput').click()" class="btn-secondary text-xs w-full mb-3" style="font-weight: bold;">📎 Прикрепить файлы</button>
       <input type="file" id="uploadFileInput" accept=".csv" multiple style="display:none" onchange="handleUploadAttach(event)">
-      
-      <div id="uploadFilesWrap" class="mb-3 p-2 rounded" style="background: var(--bg-input); max-height: 35vh; overflow-y: auto; border: 1px solid var(--border-color); display: none;">
-         <!-- Сюда попадут выбранные файлы -->
-      </div>
-
+      <div id="uploadFilesWrap" class="mb-3 p-2 rounded" style="background: var(--bg-input); max-height: 35vh; overflow-y: auto; border: 1px solid var(--border-color); display: none;"></div>
       <div class="cloud-progress mt-2 mb-3" id="uploadProgress" style="display:none;">
         <div class="cloud-progress-bar" id="uploadProgressBar"></div>
       </div>
-      
       <button onclick="sendUploadFiles()" class="btn-primary text-xs w-full" id="uploadSendBtn" style="background: #3b82f6; font-weight: bold;">🚀 Отправить файлы</button>
-      
       <div id="uploadStatus" class="text-xs mt-3 text-center" style="color: var(--text-muted);"></div>
     </div>
   </div>
@@ -553,9 +633,7 @@ function registerServiceWorker() {
       e.respondWith(
         caches.open('sl-logviewer-v1').then(cache => 
           cache.match(e.request).then(r => r || fetch(e.request).then(resp => {
-            if (resp && resp.status === 200 && resp.type === 'basic') {
-              cache.put(e.request, resp.clone());
-            }
+            if (resp && resp.status === 200 && resp.type === 'basic') { cache.put(e.request, resp.clone()); }
             return resp;
           }).catch(() => cache.match('/')))
         )
@@ -564,9 +642,7 @@ function registerServiceWorker() {
   `;
   const blob = new Blob([swCode], { type: 'application/javascript' });
   const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl, { scope: '/' }).catch(err => {
-    console.log('SW registration failed:', err.message);
-  });
+  navigator.serviceWorker.register(swUrl, { scope: '/' }).catch(err => { console.log('SW failed:', err.message); });
 }
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -598,14 +674,17 @@ function showInstallHint() {
   else showToast('Меню браузера → "Добавить на главный экран"');
 }
 function closeIosHint() { document.getElementById('iosHintModal').classList.remove('show'); }
-if (isStandalone) {
-  const ib = document.getElementById('installHeaderBtn');
-  if (ib) ib.style.display = 'none';
-}
-try {
-  if (localStorage.getItem('sl-install-dismissed') === '1') installBanner.classList.remove('show');
-} catch(e) {}
+if (isStandalone) { const ib = document.getElementById('installHeaderBtn'); if (ib) ib.style.display = 'none'; }
+try { if (localStorage.getItem('sl-install-dismissed') === '1') installBanner.classList.remove('show'); } catch(e) {}
 if ('serviceWorker' in navigator) window.addEventListener('load', registerServiceWorker);
+
+// Закрытие выпадающего списка ИИ при клике вне
+document.addEventListener('click', (e) => {
+  const container = document.getElementById('aiModelContainer');
+  if (container && !container.contains(e.target)) {
+    document.getElementById('aiModelDropdown').classList.add('hidden');
+  }
+});
 
 // ============ THEME ============
 let currentTheme = 'dark';
@@ -636,6 +715,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const saved = getTheme();
   setTheme(saved);
   loadErrCsvAuto();
+  // Авто-пинг моделей ИИ при загрузке страницы.
+  setTimeout(() => { if (typeof loadAiModels === 'function') loadAiModels(); }, 800);
 });
 
 // ============ STATE ============
@@ -690,22 +771,17 @@ function parseErrCsv(text) {
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) continue;
-    if (trimmed.includes('{{') || trimmed.includes('}}')) {
-      currentCode = null;
-      continue;
-    }
+    if (trimmed.includes('{{') || trimmed.includes('}}')) { currentCode = null; continue; }
     const parts = trimmed.split(';').map(p => p.trim().replace(/^"|"$/g, ''));
     const codePart = parts[0] || '';
     const namePart = parts[1] || '';
     const causePart = parts[2] || '';
     const solPart = parts[3] || '';
-
     if (codePart && /^[0-9A-ZX]{4}$/.test(codePart.substr(0,4))) {
       currentCode = codePart.substr(0,4);
       if (!errorDB[currentCode]) errorDB[currentCode] = { desc: namePart, causes: [], solutions: [] };
       else if (namePart && !errorDB[currentCode].desc) errorDB[currentCode].desc = namePart;
     }
-
     if (currentCode && (causePart || solPart)) {
       errorDB[currentCode].causes.push(causePart);
       errorDB[currentCode].solutions.push(solPart);
@@ -741,6 +817,11 @@ async function handleFiles(e) {
   updateUI();
   showToast(`Загружено строк: ${allRows.length}`);
   e.target.value = '';
+  // При смене лога: если ранее был построен ИИ-отчёт, помечаем его как устаревший.
+  if (typeof markAiReportStale === 'function') markAiReportStale();
+  if (typeof pingAllModelsInBackground === 'function' && allAvailableModels.length > 0) {
+    setTimeout(() => pingAllModelsInBackground(), 200);
+  }
 }
 function makeRow(first) { const r = [first]; for (let i = 1; i < FIXED_COLS; i++) r.push(''); return r; }
 function extractDate(filename) {
@@ -776,17 +857,13 @@ function populateFilters() {
       if (row[2]) msgs.add(row[2]);
     }
   }
-  
   const dateSel = document.getElementById('dateFilter');
   const eventSel = document.getElementById('eventFilter');
   const msgSel = document.getElementById('msgFilter');
-  
   dateSel.innerHTML = '<option value="">Все даты</option>';
   [...dates].sort().forEach(d => dateSel.innerHTML += `<option value="${d}">${d}</option>`);
-  
   eventSel.innerHTML = '<option value="">Все события</option>';
   [...events].sort().forEach(e => eventSel.innerHTML += `<option value="${e}">${e}</option>`);
-  
   if (msgSel) {
     const msgOptions = ['<option value="">Все сообщения</option>'];
     [...msgs].sort().forEach(m => {
@@ -818,6 +895,7 @@ function applyFilters() {
     filteredRows.push(row);
   }
   renderLog(); updateStatus(); buildErrorList();
+  if (typeof markAiReportStale === 'function') markAiReportStale(); // ИИ теперь знает, что фильтр изменился
 }
 function shouldShowMessageBadge(ev, text) {
   if (!text || text === ev) return false;
@@ -862,13 +940,10 @@ function renderLog() {
     else if (ev === 'WARNING') cls += ' warning';
     
     const evColor = getEventColor(ev);
-    
-    // Формируем бейджи дополнительных параметров (для мобильных)
     let metaHtmlMobile = '';
+    
     const metaPartsMobile = [];
-    const pushBadge = (str) => {
-      metaPartsMobile.push(`<span class="meta-badge">${str}</span>`);
-    };
+    const pushBadge = (str) => { metaPartsMobile.push(`<span class="meta-badge">${str}</span>`); };
     
     if (floor && floor !== '63') pushBadge(`Э:${floor}`);
     if (dir) pushBadge(dir === 'UP' ? '▲' : dir === 'DN' ? '▼' : dir);
@@ -881,19 +956,14 @@ function renderLog() {
     if (weight && weight !== '0') pushBadge(`В:${weight}`);
     if (door1) pushBadge(`Д1:${door1}`);
     if (door2) pushBadge(`Д2:${door2}`);
-
-    if (metaPartsMobile.length) {
-      metaHtmlMobile = `<div class="meta-badges-container md:hidden">${metaPartsMobile.join('')}</div>`;
-    }
+    if (metaPartsMobile.length) { metaHtmlMobile = `<div class="meta-badges-container md:hidden">${metaPartsMobile.join('')}</div>`; }
 
     let badgeHtml = '';
     let displayText = text;
-
     if (shouldShowMessageBadge(ev, text)) {
       const badgeClass = getMessageBadgeClass(ev, text);
       let badgeText = text;
       let postBadgeText = '';
-
       if (ev === 'ENGINE' && text.startsWith('SPEED')) {
         badgeText = 'SPEED';
         postBadgeText = text.substring(5).trim();
@@ -901,16 +971,11 @@ function renderLog() {
         const code = extractErrorCode(text);
         if (code) badgeText = code;
       }
-      
       badgeHtml = `<span class="badge ${badgeClass}">${badgeText}</span>`;
-      
-      if (postBadgeText) {
-        badgeHtml += `<span class="text-[10px] ml-1 truncate max-w-[120px]" style="color:var(--text-secondary);">${postBadgeText}</span>`;
-      }
+      if (postBadgeText) { badgeHtml += `<span class="text-[10px] ml-1 truncate max-w-[120px]" style="color:var(--text-secondary);">${postBadgeText}</span>`; }
     }
 
     const titleAttr = (text && !badgeHtml) ? ` title="${text.replace(/"/g,'&quot;')}"` : '';
-
     const pcCols = `<div class="hidden md:flex flex-1 items-center gap-3 text-xs" style="color: var(--text-secondary);">
         <span class="truncate flex-1 min-w-[150px]" title="${text.replace(/"/g,'&quot;')}">${displayText}</span>
         <span class="w-12">${floor && floor !== '63' ? `Э:${floor}` : ''}</span>
@@ -920,7 +985,6 @@ function renderLog() {
         <span class="w-20">${door1 ? `Д1:${door1}` : ''}</span>
         <span class="w-20">${door2 ? `Д2:${door2}` : ''}</span>
     </div>`;
-
     html += `<div class="${cls} flex flex-col md:flex-row md:items-center gap-1 md:gap-3 overflow-hidden cursor-pointer" onclick="selectRow(${idx})">
       <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 md:w-[340px] flex-shrink-0 w-full"${titleAttr}>
         <span class="log-time">${time.length >= 8 ? time.substr(0,8) : time}</span>
@@ -1018,16 +1082,20 @@ function updateStatus() {
   if (dateArr.length === 1) document.getElementById('headerInfo').textContent = `Лог за ${dateArr[0]}`;
   else if (dateArr.length > 1) document.getElementById('headerInfo').textContent = `${dateArr[0]} — ${dateArr[dateArr.length-1]}`;
 }
+
+// ==== ТАБЫ ====
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.getElementById('logView').style.display = tab === 'log' ? 'block' : 'none';
   document.getElementById('graphView').style.display = tab === 'graph' ? 'block' : 'none';
   document.getElementById('monitorView').style.display = tab === 'monitor' ? 'block' : 'none';
   document.getElementById('errorsView').style.display = tab === 'errors' ? 'block' : 'none';
+  document.getElementById('aiView').style.display = tab === 'ai' ? 'flex' : 'none';
   document.getElementById('welcomeScreen').style.display = 'none';
   if (tab === 'graph') renderGraph();
   if (tab === 'monitor') renderShaft();
   if (tab === 'errors') document.getElementById('errDbCount').textContent = Object.keys(errorDB).length;
+  if (tab === 'ai') loadAiModels();
 }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 function parseTimeToMs(t) {
@@ -1035,6 +1103,7 @@ function parseTimeToMs(t) {
   try { return (parseInt(t.substr(0,2))*3600 + parseInt(t.substr(3,2))*60 + parseInt(t.substr(6,2)))*1000 + parseInt(t.substr(9,3)); }
   catch { return 0; }
 }
+
 function findSpeedBlocks() {
   speedBlocks = [];
   for (let i = 0; i < filteredRows.length; i++) {
@@ -1124,6 +1193,7 @@ function renderGraph() {
 function prevBlock() { if (currentBlockIndex > 0) { currentBlockIndex--; renderGraph(); } }
 function nextBlock() { if (currentBlockIndex < speedBlocks.length - 1) { currentBlockIndex++; renderGraph(); } }
 function currentBlock() { renderGraph(); }
+
 function extractFloors() {
   const floors = new Set();
   for (const row of allRows) {
@@ -1205,6 +1275,7 @@ function processRowForMonitor(row) {
   const weight = row[9], door1 = row[13], door2 = row[14];
   if (mode === 'NR') monitorState.mode = 'НР';
   else if (mode === 'SR') monitorState.mode = 'СР';
+  else if (mode === 'LD') monitorState.mode = 'ПОГРУЗКА';
   if (weight) monitorState.weight = weight;
   if (dir === 'UP' || dir === 'DN') monitorState.direction = dir;
   if (floor && isValidFloor(floor)) monitorState.floor = floor;
@@ -1218,8 +1289,7 @@ function processRowForMonitor(row) {
     else { monitorState.callUp[text] = true; monitorState.callDown[text] = true; }
   }
   else if (ev === 'ENGINE' && text === 'STOP' && target && isValidFloor(target)) {
-    monitorState.callUp[target] = false;
-    monitorState.callDown[target] = false; monitorState.orders.delete(target);
+    monitorState.callUp[target] = false; monitorState.callDown[target] = false; monitorState.orders.delete(target);
   }
   else if (ev === 'BUTTONS') {
     if (text === 'OPEN ON') monitorState.open = true;
@@ -1232,10 +1302,8 @@ function processRowForMonitor(row) {
   else if (ev === 'DOOR1' && text === 'NEW STATE') monitorState.door1[floor] = door1;
   else if (ev === 'DOOR2' && text === 'NEW STATE') monitorState.door2[floor] = door2;
   else if (ev === 'MAIN') monitorState.main = true;
-  else if (ev === 'POS') { if (text === 'START') monitorState.pos = true;
-  else if (text.startsWith('SET Floor')) monitorState.pos = false; }
-  else if (ev === 'MULTIRUN') { if (text === 'START') monitorState.multirun = true;
-  else if (text.startsWith('STOP')) monitorState.multirun = false; }
+  else if (ev === 'POS') { if (text === 'START') monitorState.pos = true; else if (text.startsWith('SET Floor')) monitorState.pos = false; }
+  else if (ev === 'MULTIRUN') { if (text === 'START') monitorState.multirun = true; else if (text.startsWith('STOP')) monitorState.multirun = false; }
   if (door1 && floor) monitorState.door1[floor] = door1;
   if (door2 && floor) monitorState.door2[floor] = door2;
 }
@@ -1281,7 +1349,7 @@ function addEventToArea(row) {
   let line = '';
   const shortTime = time.length >= 8 ? time.substr(0, 8) : time;
   if (ev === 'MODE' && text === 'NEW') {
-    const modeName = mode === 'SR' ? 'СР' : mode === 'NR' ? 'НР' : mode === 'EVAC' ? 'ЭВАКУАЦИЯ' : mode;
+    const modeName = mode === 'SR' ? 'СР' : mode === 'NR' ? 'НР' : mode === 'EVAC' ? 'ЭВАКУАЦИЯ' : mode === 'LD' ? 'ПОГРУЗКА' : mode;
     line = `<span class="event-time">${shortTime}</span> <span class="event-mode">Режим ${modeName}</span>`;
   } else if (ev === 'POS' && text.startsWith('SET Floor')) {
     line = `<span class="event-time">${shortTime}</span> <span class="event-pos">Позиционирование</span>`;
@@ -1308,8 +1376,7 @@ function searchError() {
   const display = document.getElementById('errorDisplay');
   if (input.length < 4) { display.innerHTML = '<div class="text-center text-sm py-6" style="color: var(--text-muted);">Введите 4 символа кода</div>'; return; }
   let code = input, info = errorDB[code];
-  if (!info && code.length === 4) { const template = code.substr(0, 2) + 'XX';
-  if (errorDB[template]) info = errorDB[template]; }
+  if (!info && code.length === 4) { const template = code.substr(0, 2) + 'XX'; if (errorDB[template]) info = errorDB[template]; }
   const special = specialEvents[code];
   if (info) {
     let causesHtml = '';
@@ -1350,9 +1417,7 @@ function buildErrorList() {
   list.innerHTML = errorEntries.slice(-20).reverse().map(e => {
     const code = extractErrorCode(e.message);
     let cleanMsg = e.message;
-    if (code && cleanMsg.startsWith(code)) {
-      cleanMsg = cleanMsg.substring(code.length).trim();
-    }
+    if (code && cleanMsg.startsWith(code)) cleanMsg = cleanMsg.substring(code.length).trim();
     const msg = cleanMsg.length > 40 ? cleanMsg.substr(0, 37) + '...' : cleanMsg;
     const color = e.type === 'ERROR C' ? 'red' : e.type === 'ERROR R' ? 'orange' : e.type === 'WARNING' ? 'blue' : 'red';
     const shortTime = e.time.length >= 8 ? e.time.substr(0,8) : e.time;
@@ -1412,13 +1477,8 @@ updateSpeed();
 // ============ CLOUD LOADER & UPLOADER ============
 const WORKER_URL = 'https://sl-log-proxy.zenitogk.workers.dev';
 const NC_TOKEN = 'mMwPSLCWMs4PM5o';
+function showCloudModal() { document.getElementById('cloudModal').classList.add('show'); }
 
-// Модалка для СКАЧИВАНИЯ из облака
-function showCloudModal() {
-  document.getElementById('cloudModal').classList.add('show');
-}
-
-// Получение списка файлов (для скачивания)
 async function loadCloudExplorer() {
   const status = document.getElementById('cloudStatus');
   const wrap = document.getElementById('cloudFilesWrap');
@@ -1427,29 +1487,16 @@ async function loadCloudExplorer() {
   const scanBtn = document.getElementById('cloudScanBtn');
   
   status.textContent = '🔄 Чтение дерева каталогов...';
-  wrap.style.display = 'none';
-  loadBtn.style.display = 'none';
-  saveBtn.style.display = 'none';
-  scanBtn.disabled = true;
-
+  wrap.style.display = 'none'; loadBtn.style.display = 'none'; saveBtn.style.display = 'none'; scanBtn.disabled = true;
   try {
     const res = await fetch(`${WORKER_URL}?token=${NC_TOKEN}`);
     const data = await res.json();
-    
-    if (!data.success || !data.files.length) {
-      status.textContent = '⚠️ Файлы CSV не найдены.';
-      scanBtn.disabled = false;
-      return;
-    }
-
+    if (!data.success || !data.files.length) { status.textContent = '⚠️ Файлы CSV не найдены.'; scanBtn.disabled = false; return; }
     const files = data.files;
     files.sort((a, b) => b.timestamp - a.timestamp);
     const top10 = files.slice(0, 10);
     const folders = {};
-    files.forEach(f => {
-      if (!folders[f.folder]) folders[f.folder] = [];
-      folders[f.folder].push(f);
-    });
+    files.forEach(f => { if (!folders[f.folder]) folders[f.folder] = []; folders[f.folder].push(f); });
     const labelStyle = "display: flex; align-items: center; gap: 8px; margin: 2px 0; padding: 3px 4px; cursor: pointer; border-radius: 4px; transition: background 0.2s;";
     const checkboxStyle = "margin: 0; width: 14px; height: 14px; flex-shrink: 0; cursor: pointer;";
     const hoverEffect = "this.style.background='rgba(156, 163, 175, 0.1)'";
@@ -1463,14 +1510,10 @@ async function loadCloudExplorer() {
         <span style="line-height: 1;">${f.name} <span style="color:var(--text-muted); font-size:10px; margin-left: 4px;">[${f.folder}]</span></span>
       </label>`;
     });
-    html += '</div>';
-
-    html += '<strong style="color:#60a5fa; display:block; margin-bottom: 6px;">📁 Все папки:</strong>';
+    html += '</div><strong style="color:#60a5fa; display:block; margin-bottom: 6px;">📁 Все папки:</strong>';
     for (const folderName in folders) {
       html += `<details style="margin: 4px 0;">
-        <summary style="font-weight: 600; outline: none; cursor: pointer; padding: 4px 0; display: flex; align-items: center; gap: 6px; user-select: none;">
-          📁 ${folderName} <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(${folders[folderName].length} файлов)</span>
-        </summary>
+        <summary style="font-weight: 600; outline: none; cursor: pointer; padding: 4px 0; display: flex; align-items: center; gap: 6px; user-select: none;">📁 ${folderName} <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(${folders[folderName].length} файлов)</span></summary>
         <div style="margin-left: 8px; border-left: 1px dashed #4b5563; padding-left: 12px; margin-top: 4px;">`;
       folders[folderName].forEach(f => {
         html += `<label style="${labelStyle}" onmouseover="${hoverEffect}" onmouseout="${leaveEffect}">
@@ -1480,175 +1523,84 @@ async function loadCloudExplorer() {
       });
       html += `</div></details>`;
     }
-
-    wrap.innerHTML = html;
-    wrap.style.display = 'block';
-    loadBtn.style.display = 'block';
-    saveBtn.style.display = 'block';
+    wrap.innerHTML = html; wrap.style.display = 'block'; loadBtn.style.display = 'block'; saveBtn.style.display = 'block';
     status.textContent = `✅ Найдено файлов: ${files.length}. Выберите нужные.`;
-    
-  } catch (err) {
-    status.textContent = `❌ Ошибка сети: ${err.message}`;
-  } finally {
-    scanBtn.disabled = false;
-  }
+  } catch (err) { status.textContent = `❌ Ошибка сети: ${err.message}`; } finally { scanBtn.disabled = false; }
 }
 
-// Скачивание файлов в интерфейс (дописанная функция)
 async function downloadSelectedLogs() {
   const checkboxes = document.querySelectorAll('.nc-file-cb:checked');
   const status = document.getElementById('cloudStatus');
   const progress = document.getElementById('cloudProgress');
   const bar = document.getElementById('cloudProgressBar');
-  if (checkboxes.length === 0) {
-    alert('Пожалуйста, выберите хотя бы один файл галочкой.');
-    return;
-  }
+  if (checkboxes.length === 0) { alert('Пожалуйста, выберите хотя бы один файл галочкой.'); return; }
 
   status.textContent = `⏳ Подготовка к загрузке ${checkboxes.length} файлов...`;
-  progress.style.display = 'block';
-  bar.style.width = '0%';
-  
-  const filesToParse = [];
-  let downloaded = 0;
-  let skipped = 0;
-
+  progress.style.display = 'block'; bar.style.width = '0%';
+  const filesToParse = []; let downloaded = 0; let skipped = 0;
   for (let i = 0; i < checkboxes.length; i++) {
-    const cb = checkboxes[i];
-    const path = cb.value;
-    const name = cb.getAttribute('data-name');
-    const folderName = cb.getAttribute('data-folder');
-
+    const cb = checkboxes[i], path = cb.value, name = cb.getAttribute('data-name'), folderName = cb.getAttribute('data-folder');
     status.textContent = `📥 Скачивание: ${name} ...`;
     try {
       const res = await fetch(`${WORKER_URL}?token=${NC_TOKEN}&file=${encodeURIComponent(path)}`);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const text = await res.text();
-      
       if (text && text.length > 0 && !text.includes('<!DOCTYPE html>')) {
         const fileObj = new File([text], name, { type: 'text/csv' });
-        fileObj.folder = folderName;
-        filesToParse.push(fileObj);
-        downloaded++;
+        fileObj.folder = folderName; filesToParse.push(fileObj); downloaded++;
       }
-    } catch (e) {
-      skipped++;
-    }
+    } catch (e) { skipped++; }
     bar.style.width = Math.round(((i + 1) / checkboxes.length) * 100) + '%';
   }
-  
   progress.style.display = 'none';
   status.textContent = `✅ Загружено: ${downloaded}. Ошибок: ${skipped}`;
-  
-  if (filesToParse.length > 0) {
-    showToast(`Парсинг ${filesToParse.length} файлов...`);
-    const e = { target: { files: filesToParse } };
-    await handleFiles(e);
-    closeModal('cloudModal');
-  }
+  if (filesToParse.length > 0) { showToast(`Парсинг ${filesToParse.length} файлов...`); const e = { target: { files: filesToParse } }; await handleFiles(e); closeModal('cloudModal'); }
 }
 
-// Прямое скачивание файлов из NextCloud на диск (дописанная функция)
 async function downloadFilesToDisk() {
   const checkboxes = document.querySelectorAll('.nc-file-cb:checked');
-  if (checkboxes.length === 0) {
-    alert('Пожалуйста, выберите хотя бы один файл галочкой.');
-    return;
-  }
-  
+  if (checkboxes.length === 0) { alert('Пожалуйста, выберите хотя бы один файл галочкой.'); return; }
   for (let i = 0; i < checkboxes.length; i++) {
-    const cb = checkboxes[i];
-    const path = cb.value;
-    const name = cb.getAttribute('data-name');
-    
+    const cb = checkboxes[i], path = cb.value, name = cb.getAttribute('data-name');
     try {
       const res = await fetch(`${WORKER_URL}?token=${NC_TOKEN}&file=${encodeURIComponent(path)}`);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const blob = await res.blob();
-      
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
+      const a = document.createElement('a'); a.style.display = 'none'; a.href = url;
       a.download = name;
-      document.body.appendChild(a);
-      a.click();
-      
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (e) {
-      console.error("Ошибка при скачивании на диск:", e);
-    }
+      document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); document.body.removeChild(a);
+    } catch (e) { console.error("Ошибка при скачивании на диск:", e); }
   }
   showToast('✅ Скачивание на диск завершено');
 }
 
-
-// --- НОВЫЙ БЛОК: ЗАГРУЗКА В ОБЛАКО (UPLOAD) ---
-
 let filesToUpload = [];
-
-// Открытие модалки отправки в облако и подгрузка списка папок
 async function showUploadModal() {
   document.getElementById('uploadModal').classList.add('show');
-  const select = document.getElementById('uploadFolderSelect');
-  const status = document.getElementById('uploadStatus');
-  
-  // Загружаем список папок только один раз
+  const select = document.getElementById('uploadFolderSelect'), status = document.getElementById('uploadStatus');
   if (select.options.length <= 1) {
     status.textContent = '🔄 Загрузка списка папок...';
     try {
-      const res = await fetch(`${WORKER_URL}?token=${NC_TOKEN}&action=folders`);
-      const data = await res.json();
-      
+      const res = await fetch(`${WORKER_URL}?token=${NC_TOKEN}&action=folders`); const data = await res.json();
       if (data.success) {
         select.innerHTML = '<option value="">(Корневая папка)</option>';
-        data.folders.forEach(f => {
-          select.innerHTML += `<option value="${f.name}">${f.name}</option>`;
-        });
+        data.folders.forEach(f => { select.innerHTML += `<option value="${f.name}">${f.name}</option>`; });
         status.textContent = '✅ Список папок загружен';
-      } else {
-        status.textContent = '❌ Ошибка: ' + (data.error || 'Неизвестная ошибка');
-      }
-    } catch(e) {
-      status.textContent = '❌ Ошибка сети: ' + e.message;
-    }
+      } else { status.textContent = '❌ Ошибка: ' + (data.error || 'Неизвестная ошибка'); }
+    } catch(e) { status.textContent = '❌ Ошибка сети: ' + e.message; }
   }
 }
-
-// Прикрепление файлов
 function handleUploadAttach(e) {
-  const files = Array.from(e.target.files);
-  if (!files.length) return;
-  
-  // Исключаем дубликаты по имени
-  files.forEach(f => {
-    if (!filesToUpload.find(existing => existing.name === f.name)) {
-      filesToUpload.push(f);
-    }
-  });
-  
-  renderUploadList();
-  e.target.value = ''; // сброс инпута
+  const files = Array.from(e.target.files); if (!files.length) return;
+  files.forEach(f => { if (!filesToUpload.find(existing => existing.name === f.name)) filesToUpload.push(f); });
+  renderUploadList(); e.target.value = '';
 }
-
-// Удаление прикрепленного файла
-function removeUploadFile(idx) {
-  filesToUpload.splice(idx, 1);
-  renderUploadList();
-}
-
-// Отрисовка списка файлов с крестиками
+function removeUploadFile(idx) { filesToUpload.splice(idx, 1); renderUploadList(); }
 function renderUploadList() {
   const wrap = document.getElementById('uploadFilesWrap');
-  if (filesToUpload.length === 0) {
-    wrap.style.display = 'none';
-    wrap.innerHTML = '';
-    return;
-  }
-  
-  wrap.style.display = 'block';
-  let html = '';
+  if (filesToUpload.length === 0) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  wrap.style.display = 'block'; let html = '';
   filesToUpload.forEach((f, i) => {
     html += `<div class="cloud-file-item" style="border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 6px 4px;">
       <span class="cloud-file-name" style="flex:1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${f.name} <span class="cloud-file-size" style="color:var(--text-muted); font-size: 11px;">(${(f.size/1024).toFixed(1)} KB)</span></span>
@@ -1657,68 +1609,859 @@ function renderUploadList() {
   });
   wrap.innerHTML = html;
 }
-
-// Отправка файлов на сервер через PUT
 async function sendUploadFiles() {
-  if (filesToUpload.length === 0) {
-    showToast('Нет прикрепленных файлов!');
+  if (filesToUpload.length === 0) { showToast('Нет прикрепленных файлов!'); return; }
+  const select = document.getElementById('uploadFolderSelect'), folder = select.value;
+  const status = document.getElementById('uploadStatus'), progress = document.getElementById('uploadProgress'), bar = document.getElementById('uploadProgressBar'), btn = document.getElementById('uploadSendBtn');
+  status.textContent = `🚀 Отправка ${filesToUpload.length} файлов...`; progress.style.display = 'block'; btn.disabled = true;
+  let uploadedCount = 0, errorCount = 0;
+  for (let i = 0; i < filesToUpload.length; i++) {
+    const file = filesToUpload[i], path = folder ? `${folder}/${file.name}` : file.name;
+    status.textContent = `Отправка: ${file.name} ...`; bar.style.width = Math.round((i / filesToUpload.length) * 100) + '%';
+    try {
+      const res = await fetch(`${WORKER_URL}?token=${NC_TOKEN}&file=${encodeURIComponent(path)}`, { method: 'PUT', body: file });
+      if (res.ok) uploadedCount++; else { errorCount++; console.error('Ошибка загрузки файла', file.name, await res.text()); }
+    } catch(e) { errorCount++; console.error('Ошибка соединения для файла', file.name, e); }
+  }
+  bar.style.width = '100%'; setTimeout(() => progress.style.display = 'none', 1500);
+  btn.disabled = false;
+  status.textContent = `✅ Успешно загружено: ${uploadedCount}. ❌ Ошибок: ${errorCount}`;
+  if (errorCount === 0) { filesToUpload = []; renderUploadList(); showToast('Все файлы успешно загружены!'); } else { showToast(`Загружено: ${uploadedCount}, с ошибкой: ${errorCount}`); }
+}
+
+
+// ============ AI: ДИАГНОСТИЧЕСКИЙ ОТЧЁТ (report mode) ============
+const AI_WORKER_URL = 'https://aiworker.zenitogk.workers.dev';
+
+let aiMessages = [];
+let aiReportRequest = null;
+let aiReportText = '';
+let aiReportModel = '';
+let aiReportDate = '';
+let aiReportLogSignature = '';
+let aiReportStale = false;
+let aiModelsLoaded = false;
+let allAvailableModels = [];
+let aiSelectedModelId = '';
+let aiPrefs = JSON.parse(localStorage.getItem('sl_ai_prefs') || '{"favs":[],"hidden":[],"sizeLimited":[]}');
+if (!Array.isArray(aiPrefs.sizeLimited)) aiPrefs.sizeLimited = [];
+
+function saveAiPrefs() {
+  localStorage.setItem('sl_ai_prefs', JSON.stringify(aiPrefs));
+}
+
+function classifyAiError(errMsg) {
+  const m = String(errMsg || '').toLowerCase();
+  if (!m) return 'error';
+  if (m.includes('request too large') ||
+      m.includes('tokens per minute') ||
+      m.includes('tpm limit') ||
+      m.includes('too many tokens') ||
+      m.includes('context length') ||
+      m.includes('maximum context length') ||
+      m.includes('context_length_exceeded') ||
+      m.includes('request exceeds') ||
+      m.includes('reduce the length') ||
+      m.includes('prompt is too long')) {
+    return 'size_limit';
+  }
+  if (m.includes('rate limit') || m.includes('429') || m.includes('tpm ') || m.includes('quota exceeded') || m.includes('try again later') || m.includes('resource_exhausted')) {
+    return 'rate_limit';
+  }
+  return 'error';
+}
+
+function renderAiModelDropdown() {
+  const dropdown = document.getElementById('aiModelDropdown');
+  const boxText = document.getElementById('aiModelSelectedText');
+  if (allAvailableModels.length === 0) {
+    boxText.textContent = "Нет доступных моделей";
+    dropdown.innerHTML = "";
     return;
   }
-  
-  const select = document.getElementById('uploadFolderSelect');
-  const folder = select.value;
-  const status = document.getElementById('uploadStatus');
-  const progress = document.getElementById('uploadProgress');
-  const bar = document.getElementById('uploadProgressBar');
-  const btn = document.getElementById('uploadSendBtn');
-  
-  status.textContent = `🚀 Отправка ${filesToUpload.length} файлов...`;
-  progress.style.display = 'block';
-  btn.disabled = true;
-  
-  let uploadedCount = 0;
-  let errorCount = 0;
-  
-  for (let i = 0; i < filesToUpload.length; i++) {
-    const file = filesToUpload[i];
-    // Формируем путь (с папкой, если выбрана)
-    const path = folder ? `${folder}/${file.name}` : file.name;
+
+  const avgForSort = (m) => (m.avgTimeMs && m.avgTimeMs > 0) ? m.avgTimeMs : Number.MAX_SAFE_INTEGER;
+  const sorted = [...allAvailableModels].sort((a, b) => {
+    const aAvail = a.available !== false;
+    const bAvail = b.available !== false;
+    const aFav = aiPrefs.favs.includes(a.id);
+    const bFav = aiPrefs.favs.includes(b.id);
+    const aHid = aiPrefs.hidden.includes(a.id);
+    const bHid = aiPrefs.hidden.includes(b.id);
+
+    const aEffAvail = aAvail || aFav;
+    const bEffAvail = bAvail || bFav;
     
-    status.textContent = `Отправка: ${file.name} ...`;
-    bar.style.width = Math.round((i / filesToUpload.length) * 100) + '%';
-    
-    try {
-      const res = await fetch(`${WORKER_URL}?token=${NC_TOKEN}&file=${encodeURIComponent(path)}`, {
-        method: 'PUT',
-        body: file
-      });
-      
-      if (res.ok) {
-        uploadedCount++;
+    if (aEffAvail && !bEffAvail) return -1;
+    if (!aEffAvail && bEffAvail) return 1;
+
+    if (aEffAvail && bEffAvail) {
+      if (aFav && !bFav) return -1;
+      if (!aFav && bFav) return 1;
+      const aAvg = avgForSort(a);
+      const bAvg = avgForSort(b);
+      if (aAvg !== bAvg) return aAvg - bAvg;
+      return a.label.localeCompare(b.label);
+    } else {
+      if (aHid && !bHid) return -1;
+      if (!aHid && bHid) return 1;
+      return a.label.localeCompare(b.label);
+    }
+  });
+
+  let html = '';
+  sorted.forEach(m => {
+    const isFav = aiPrefs.favs.includes(m.id);
+    const isHid = aiPrefs.hidden.includes(m.id);
+    const isAvail = m.available !== false;
+    const isGrayed = !isAvail || isHid; 
+    const timeParts = [];
+    if (typeof m.pingLatency === 'number' && m.pingLatency > 0) {
+      timeParts.push(`<span class="text-[10px] opacity-60" title="Время ответа на пинг (1 токен)">⚡${m.pingLatency.toFixed(1)}с</span>`);
+    }
+    if (m.avgTimeMs && m.avgTimeMs > 0) {
+      timeParts.push(`<span class="text-[10px] opacity-60" title="Среднее время реальных генераций">⌀${(m.avgTimeMs/1000).toFixed(1)}с</span>`);
+    }
+    const avgText = timeParts.length ? '<span class="ml-2 inline-flex gap-2 items-center">' + timeParts.join('') + '</span>' : '';
+    const classNames = `ai-model-option ${isGrayed ? 'hidden-model' : ''}`;
+    const starHtml = `<span class="ai-icon-btn ${isFav ? 'active-star' : ''}" onclick="toggleFavModel(event, '${m.id}')" title="${isFav ? 'Убрать из избранного' : 'В избранное'}">★</span>`;
+    let hideHtml;
+    if (isFav) {
+      hideHtml = `<span class="ai-icon-btn" style="opacity:0.25; cursor:not-allowed;" title="Избранную модель нельзя скрыть">—</span>`;
+    } else {
+      hideHtml = `<span class="ai-icon-btn" onclick="toggleHideModel(event, '${m.id}')" title="${isHid ? 'Восстановить' : 'Скрыть'}">${isHid ? '👁️' : '❌'}</span>`;
+    }
+
+    const isSizeLimited = Array.isArray(aiPrefs.sizeLimited) && aiPrefs.sizeLimited.includes(m.id);
+    let unavailText = '';
+    if (isSizeLimited) {
+      unavailText = isFav
+        ? ' <span class="text-[10px]" style="color:#9ca3af;" title="Контекст отчёта не вмещается в модель">⚠️ мал контекст</span>'
+        : ' <span class="text-[10px]" style="color:#f59e0b;" title="Контекст отчёта не вмещается в модель">⚠️ мал контекст</span>';
+    } else if (!isAvail) {
+      unavailText = isFav
+        ? ' <span class="text-[10px]" style="color:#9ca3af;">(недоступна)</span>'
+        : ' <span class="text-[10px] text-red-400">(недоступна)</span>';
+    }
+
+    html += `
+      <div class="${classNames}">
+        ${starHtml}
+        <div class="flex-1 px-2 truncate cursor-pointer" onclick="selectModel('${m.id}', '${m.label.replace(/'/g, "\\'")}')">
+          <span class="text-xs">${m.label}</span>${avgText}${unavailText}
+        </div>
+        ${hideHtml}
+      </div>
+    `;
+  });
+
+  dropdown.innerHTML = html;
+
+  if (!aiSelectedModelId || !allAvailableModels.find(m => m.id === aiSelectedModelId)) {
+    const firstValid = sorted.find(m => m.available !== false) || sorted[0];
+    if (firstValid) selectModel(firstValid.id, firstValid.label);
+  } else {
+    const current = allAvailableModels.find(m => m.id === aiSelectedModelId);
+    if(current) boxText.textContent = current.label;
+  }
+}
+
+function selectModel(id, label) {
+  aiSelectedModelId = id;
+  document.getElementById('aiModelSelectedText').textContent = label;
+  document.getElementById('aiModelDropdown').classList.add('hidden');
+}
+
+function toggleFavModel(e, id) {
+  e.stopPropagation();
+  let action;
+  if (aiPrefs.favs.includes(id)) {
+    aiPrefs.favs = aiPrefs.favs.filter(i => i !== id);
+    action = 'remove';
+  } else {
+    aiPrefs.favs.push(id);
+    aiPrefs.hidden = aiPrefs.hidden.filter(i => i !== id);
+    action = 'add';
+  }
+  saveAiPrefs();
+  saveFavToWorker(id, action);
+  renderAiModelDropdown();
+}
+
+function toggleHideModel(e, id) {
+  e.stopPropagation();
+  if (aiPrefs.favs.includes(id)) {
+    showToast('Избранную модель нельзя скрыть. Сначала уберите звезду.');
+    return;
+  }
+  if (aiPrefs.hidden.includes(id)) {
+    aiPrefs.hidden = aiPrefs.hidden.filter(i => i !== id);
+    if (Array.isArray(aiPrefs.sizeLimited) && aiPrefs.sizeLimited.includes(id)) {
+      aiPrefs.sizeLimited = aiPrefs.sizeLimited.filter(i => i !== id);
+      const m = allAvailableModels.find(x => x.id === id);
+      if (m) m.available = null;
+    }
+  } else {
+    aiPrefs.hidden.push(id);
+    if (aiSelectedModelId === id) aiSelectedModelId = '';
+  }
+  saveAiPrefs();
+  renderAiModelDropdown();
+}
+
+async function loadAiModels() {
+  const boxText = document.getElementById('aiModelSelectedText');
+  await loadFavsFromWorker();
+
+  try {
+    const res = await fetch(`${AI_WORKER_URL}/v1/models`);
+    if (!res.ok) throw new Error('API Error');
+    const data = await res.json();
+    allAvailableModels = data.models.filter(m => !m.paidOnly);
+    aiModelsLoaded = true;
+    renderAiModelDropdown();
+    pingAllModelsInBackground();
+  } catch (err) {
+    boxText.textContent = 'Ошибка загрузки моделей. Проверьте AI_WORKER_URL';
+    console.error("AI Models fetch error:", err);
+  }
+}
+
+async function pingSingleModel(modelId) {
+  const t0 = performance.now();
+  try {
+    const response = await fetch(`${AI_WORKER_URL}/v1/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: modelId,
+        messages: [{ role: 'user', content: 'ping' }],
+        isPing: true
+      })
+    });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    if (data.error) throw new Error(data.message || 'Model error');
+    const dt = (performance.now() - t0) / 1000;
+    return { available: true, latency: dt };
+  } catch (err) {
+    return { available: false, latency: null };
+  }
+}
+
+async function pingAllModelsInBackground() {
+  if (!allAvailableModels.length) return;
+  const promises = allAvailableModels.map(m => pingSingleModel(m.id));
+  const results = await Promise.allSettled(promises);
+
+  let changed = false;
+  let restoredCount = 0;
+  results.forEach((r, idx) => {
+    const m = allAvailableModels[idx];
+    if (!m) return;
+    const isSizeLimited = Array.isArray(aiPrefs.sizeLimited) && aiPrefs.sizeLimited.includes(m.id);
+    if (r.status === 'fulfilled' && r.value.available) {
+      if (isSizeLimited) {
+        if (m.available !== false) { m.available = false; changed = true; }
+        if (r.value.latency !== null) { m.pingLatency = r.value.latency; changed = true; }
       } else {
-        errorCount++;
-        console.error('Ошибка загрузки файла', file.name, await res.text());
+        if (m.available !== r.value.available) { m.available = r.value.available; changed = true; }
+        if (r.value.latency !== null) { m.pingLatency = r.value.latency; changed = true; }
+        if (aiPrefs.hidden.includes(m.id)) {
+          aiPrefs.hidden = aiPrefs.hidden.filter(x => x !== m.id);
+          saveAiPrefs();
+          changed = true;
+          restoredCount++;
+        }
       }
-    } catch(e) {
-      errorCount++;
-      console.error('Ошибка соединения для файла', file.name, e);
+    } else {
+      if (m.available !== false) { m.available = false; changed = true; }
+    }
+  });
+  if (changed) {
+    renderAiModelDropdown();
+    if (restoredCount > 0) {
+      showToast('♻️ Восстановлено ' + restoredCount + ' скрытых моделей');
     }
   }
-  
-  bar.style.width = '100%';
-  setTimeout(() => progress.style.display = 'none', 1500);
-  btn.disabled = false;
-  
-  status.textContent = `✅ Успешно загружено: ${uploadedCount}. ❌ Ошибок: ${errorCount}`;
-  
-  if (errorCount === 0) {
-    filesToUpload = [];
-    renderUploadList();
-    showToast('Все файлы успешно загружены!');
-  } else {
-    showToast(`Загружено: ${uploadedCount}, с ошибкой: ${errorCount}`);
+}
+
+async function refreshAiModels() {
+  const btn = document.getElementById('aiRefreshBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳'; }
+  try {
+    if (!allAvailableModels.length) {
+      await loadAiModels();
+    } else {
+      await pingAllModelsInBackground();
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '🔃'; }
   }
+}
+
+function getDeviceId() {
+  let id = null;
+  try { id = localStorage.getItem('sl_device_id'); } catch(e) {}
+  if (!id) {
+    id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+    try { localStorage.setItem('sl_device_id', id); } catch(e) {}
+  }
+  return id;
+}
+
+async function loadFavsFromWorker() {
+  try {
+    const res = await fetch(`${AI_WORKER_URL}/v1/favorites?deviceId=${encodeURIComponent(getDeviceId())}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && Array.isArray(data.favs)) {
+      const localFavs = (aiPrefs && Array.isArray(aiPrefs.favs)) ? aiPrefs.favs : [];
+      const merged = [...new Set([...(data.favs || []), ...localFavs])];
+      if (!aiPrefs) aiPrefs = { favs: [], hidden: [] };
+      aiPrefs.favs = merged;
+      saveAiPrefs();
+    }
+  } catch(e) { /* тихо — работаем с локальными */ }
+}
+
+function saveFavToWorker(modelId, action) {
+  try {
+    fetch(`${AI_WORKER_URL}/v1/favorites`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId: getDeviceId(), modelId, action })
+    }).catch(() => {});
+  } catch(e) {}
+}
+
+// =====================================================================
+// УНИВЕРСАЛЬНЫЙ SYSTEM PROMPT
+// =====================================================================
+const AI_BASE_SYSTEM_PROMPT = `Ты — инженер-диагност лифтов серии «СЛ» (Система Лифт), работающий в паре с оператором.
+Твоя задача — по фрагменту лога и справочнику ошибок выдать ОДИН структурированный диагностический отчёт. Не задавай уточняющих вопросов.
+Не веди диалог. Выдай финальный отчёт, который оператор скопирует и использует. Отвечай только в формате Markdown.
+═══════════════════════════════════════════════════════════════════════
+ФОРМАТ ЛОГА
+═══════════════════════════════════════════════════════════════════════
+CSV с разделителем ';', UTF-8 (допускается Windows-1251), заголовок строк:
+  ВРЕМЯ;СОБЫТИЕ;СООБЩЕНИЕ;РЕЖИМ;ЭТАЖ ТЕКУЩ.;НАПРАВЛ.;ЭТАЖ НАПРАВ.;
+  ДТО;ЦБ;ВЕС;СКОРОСТЬ;М/С;ЭНКОД.;ДВЕРЬ 1;ДВЕРЬ 2
+Всего 17 колонок (FIXED_COLS=17); колонки 16-17 — резерв/служебные.
+Между файлами в общем потоке — служебная строка "Дата: DD.MM.YYYY".
+ВРЕМЯ — формат HH:MM:SS.mmm (миллисекунды, 3 знака).
+
+═══════════════════════════════════════════════════════════════════════
+ЗНАЧЕНИЯ КОЛОНОК
+═══════════════════════════════════════════════════════════════════════
+1. ВРЕМЯ       — метка времени HH:MM:SS.mmm
+2. СОБЫТИЕ     — код типа события (см. словарь ниже)
+3. СООБЩЕНИЕ   — подтип / детальное описание
+4. РЕЖИМ       — NR (Нормальная Работа), SR (Смешанная/Сервисная — ревизионная), EVAC (эвакуация), LD (Loading / Погрузка — режим загрузки/погрузки кабины, в т.ч. при перевозке крупногабаритных грузов или при ручной загрузке)
+5. ЭТАЖ ТЕКУЩ. — текущий этаж кабины: "DD" ("03", "12"), "П1"/"П2" (подвальные), "-1"..."-4"
+6. НАПРАВЛ.    — DN (вниз) или UP (вверх)
+7. ЭТАЖ НАПРАВ.— целевой этаж
+8. ДТО         — датчик точной остановки: 0 или 1 (1 = в зоне точной остановки, можно открывать двери)
+9. ЦБ          — центральный блок (служебный, 0/1/15…)
+10. ВЕС         — загрузка кабины, напр. "15kg", "0", "--"
+11. СКОРОСТЬ    — задание скорости (код/уровень)
+12. М/С         — мгновенная скорость в м/с (число)
+13. ЭНКОД.      — значение энкодера (импульсы, число)
+14. ДВЕРЬ 1     — Closed | Closing | Opened | Opening
+15. ДВЕРЬ 2     — Closed | Closing | Opened | Opening (для двухдверных/проходных)
+
+═══════════════════════════════════════════════════════════════════════
+СЛОВАРЬ СОБЫТИЙ (колонка 2)
+═══════════════════════════════════════════════════════════════════════
+ENGINE      Главный привод (лебёдка). СООБЩЕНИЕ:
+              START          — пуск двигателя (поездка начата)
+              STOP           — останов двигателя (целевой этаж достигнут)
+              SPEED          — серия замеров скорости (в строках 3..15 лежат
+                                   ~13 мгновенных значений скорости — для графика)
+              NEW SPEED      — команда смены скорости, промежуточная точка
+              FILE           — связано с файлом прогонов
+            Типовая поездка в логе:
+              ENGINE;START; <откуда>;<dir>;<куда>...
+              ENGINE;SPEED; v1;v2;...;v13
+              ... промежуточные события (BUTTONS/CALL/DTO/...) ...
+              [возможно ENGINE;NEW SPEED]
+              ENGINE;SPEED; v1;v2;...;v13
+              ENGINE;STOP; <достигнутый этаж>
+
+DTO         Датчик точной остановки: IN (вошли в зону) | OUT (вышли).
+DVE         Датчик верхней этажности (только верхний этаж): IN | OUT.
+DNE         Датчик нижней этажности (только нижний этаж): IN | OUT.
+DOOR1       Дверь кабины №1. СООБЩЕНИЕ: NEW STATE (новое состояние в ДВЕРЬ 1)
+            или OPEN/CLOSE/OPENING/CLOSING.
+DOOR2       Дверь кабины №2. Аналогично DOOR1, значения в ДВЕРЬ 2.
+BUTTONS     Служебные кнопки. СООБЩЕНИЕ: OPEN ON/OFF, CLOSE ON/OFF, CANCEL ON/OFF.
+CALL        Нажата кнопка вызова с этажа. СООБЩЕНИЕ=этаж, НАПРАВЛ.=UP/DN.
+            (В логе встречается и DOWN — считать как DN.)
+ORDER       Нажата кнопка приказа в кабине. СООБЩЕНИЕ=целевой этаж.
+POS         Позиционирование. СООБЩЕНИЕ: START или "SET Floor <N>".
+MODE        Смена режима. СООБЩЕНИЕ: NEW. В колонке РЕЖИМ — новое значение: NR/SR/EVAC/LD.
+            LD — режим «Погрузка» (Loading): кабина используется для загрузки/разгрузки,
+            при этом двери могут удерживаться открытыми дольше обычного, а часть
+            служебных событий (ДШ/ДК, ручное управление дверями) — штатная норма.
+            Учитывай это при анализе: в LD «ошибки» дверей не считаются критичными,
+            если не сопровождаются ERROR/ERROR C кодами.
+MULTIRUN    Режим прогона (авто-тест):
+              START                       — прогон включён
+              STOP;Cycles <N>             — прогон выключён, N рейсов
+                                          (значение N в колонке 14 / ДВЕРЬ 2)
+MAIN        Включение/пересброс питания КЦ. СООБЩЕНИЕ пусто.
+LOG         Действие с лог-файлом.
+SD          Операция с SD-картой.
+ERROR       Зарегистрирована ошибка. СООБЩЕНИЕ = 4-значный код. Расшифровка — в справочнике.
+ERROR C     Критическая ошибка (стоп лифта, требует ресет). СООБЩЕНИЕ = код.
+ERROR R     Самосбрасывающаяся ошибка. СООБЩЕНИЕ = код.
+WARNING     Предупреждение. СООБЩЕНИЕ = код.
+ERROR CLEAR / ERROR C CLEAR / ERROR R CLEAR / WARNING CLEAR
+            Сброс соответствующего состояния.
+CORR        Корректировка (юстировка).
+═══════════════════════════════════════════════════════════════════════
+СПРАВОЧНИК ОШИБОК (будет приложен под заголовком "СПРАВОЧНИК (релевантный)")
+═══════════════════════════════════════════════════════════════════════
+Формат записи:
+  КОД: <описание>
+    Причина 1: <…>
+    Решение 1: <…>
+Коды 4-значные, "X" в позициях 2-3 — шаблон ("01XX" = любая ошибка группы 01).
+Если точного кода нет — ищи шаблон с теми же первыми двумя цифрами.
+═══════════════════════════════════════════════════════════════════════
+ФОРМАТ ОТВЁТА
+═══════════════════════════════════════════════════════════════════════
+Строго в таком виде (Markdown), без лишних слов до и после:
+
+## 1. Общая картина
+- Тип системы / режим работы / даты / объём лога — 2-4 буллета.
+- Сколько поездок совершено (число ENGINE;START), сколько прерваны.
+- Если ошибок нет: "Лог чистый, замечаний нет." Перечисли ключевые события.
+
+## 2. Список зафиксированных ошибок и предупреждений
+| # | Дата | Время | Тип | Код | Расшифровка (кратко) |
+|---|------|-------|-----|-----|----------------------|
+| 1 | 01.07.2026 | 14:08:23 | ERROR C | 0108 | Отсутствует «ДК» при закрытых дверях |
+…
+Если ошибок нет — таблицу опусти.
+
+## 3. Детальный разбор проблем (СГРУППИРОВАННЫЙ ПО КОДАМ)
+ОБЯЗАТЕЛЬНО группируй одинаковые ошибки. Если ошибка с одним кодом повторяется несколько раз, опиши её причины и рекомендации ТОЛЬКО ОДИН РАЗ, а контексты перечисли списком. Время пиши строго БЕЗ миллисекунд (формат HH:MM:SS).
+
+### 3.1. Код 0108 (зафиксирован 2 раза)
+- **Расшифровка по справочнику:** (если есть точная запись — её, иначе — наиболее подходящий шаблон XX).
+- **Возможные причины (от наиболее вероятной):**
+  1. …
+- **Рекомендуемые действия:**
+  1. …
+- **Контекст возникновения:**
+  1. [01.07.2026 14:08:23] кабина на этаже X, направление Y, скорость Z м/с, состояние дверей, последние DTO/ENGINE/CALL/ORDER.
+  2. [01.07.2026 15:10:05] кабина на этаже W, направление V...
+
+### 3.2. ... (по числу УНИКАЛЬНЫХ кодов проблем)
+
+## 4. Аномалии вне кодов ошибок
+(если в логе есть: пропуски событий, долгое время между START/STOP,
+расхождение ДТО и текущего этажа, разные состояния DOOR1/DOOR2,
+ложные срабатывания ДВЕ/ДНЕ не на крайних этажах, ENGINE;STOP не на
+целевом этаже, рейсы MULTIRUN с аномальной длительностью и т.п.)
+Если аномалий нет — раздел опусти.
+
+## 5. Краткое резюме для диспетчера
+2-4 строки: что произошло, насколько критично, что делать прямо сейчас.
+
+═══════════════════════════════════════════════════════════════════════
+ПРАВИЛА
+═══════════════════════════════════════════════════════════════════════
+- Используй русский язык.
+- СТРОГО: Везде убирай миллисекунды из времени! Пиши в формате HH:MM:SS.
+- СТРОГО: ОБЯЗАТЕЛЬНО группируй одинаковые ошибки в разделе 3, чтобы не раздувать отчёт.
+- СТРОГО: Не выдумывай коды/причины/рекомендации. Если кода нет в приложенном справочнике, так и пиши: «Нет в справочнике». КАТЕГОРИЧЕСКИ ЗАПРЕЩАЕТСЯ придумывать причины и рекомендации из головы, просто оставь эти пункты пустыми или укажи "Требуется ручной анализ".
+- Учитывай применяемый фильтр по датам (будет передан в сводке).
+- Учитывай режим: в SR часть «ошибок» (ДШ/ДК, ручные двери) — норма.
+- В MULTIRUN — это авто-тест, не пассажирская поездка.
+- Считай Δt между ключевыми событиями, если это проясняет картину.
+- Ответ — один отчёт, без «Если нужно уточнить…» и прочих подсказок.
+`;
+
+// =====================================================================
+// ФОРМИРОВАНИЕ КОНТЕКСТА
+// =====================================================================
+
+function collectErrorCodes(errorEntries) {
+  const set = new Set();
+  for (const e of errorEntries) {
+    const m = (e.type && e.message) ? e.message.trim() : '';
+    if (/^[0-9X]{4}$/.test(m)) set.add(m);
+  }
+  return [...set];
+}
+
+function findPrevEngineStart(rows, idx) {
+  for (let i = idx - 1; i >= 0; i--) {
+    if (rows[i] && rows[i][1] === 'ENGINE' && rows[i][2] === 'START') return i;
+  }
+  return -1;
+}
+
+function buildCompactErrReference(errorDB, codes) {
+  if (!codes || !codes.length) return '(ошибок в логе не обнаружено)';
+  const db = errorDB || {};
+  const wanted = new Set(codes);
+  for (const c of codes) if (c.length === 4) wanted.add(c.substr(0, 2) + 'XX');
+  const lines = [];
+  const seen = new Set();
+  for (const c of codes) {
+    if (seen.has(c)) continue;
+    seen.add(c);
+    const rec = db[c];
+    if (rec) {
+      lines.push(`КОД ${c}: ${rec.desc || ''}`);
+      const max = Math.max((rec.causes||[]).length, (rec.solutions||[]).length);
+      for (let i = 0; i < max; i++) {
+        const cau = (rec.causes||[])[i] || '';
+        const sol = (rec.solutions||[])[i] || '';
+        if (cau) lines.push(`    Причина ${i+1}: ${cau}`);
+        if (sol) lines.push(`    Решение ${i+1}: ${sol}`);
+      }
+    } else {
+      const tpl = c.substr(0, 2) + 'XX';
+      const recT = db[tpl];
+      if (recT && !seen.has(tpl)) {
+        seen.add(tpl);
+        lines.push(`КОД ${c} (шаблон ${tpl}): ${recT.desc || ''}`);
+        const max = Math.max((recT.causes||[]).length, (recT.solutions||[]).length);
+        for (let i = 0; i < max; i++) {
+          const cau = (recT.causes||[])[i] || '';
+          const sol = (recT.solutions||[])[i] || '';
+          if (cau) lines.push(`    Причина ${i+1}: ${cau}`);
+          if (sol) lines.push(`    Решение ${i+1}: ${sol}`);
+        }
+      } else {
+        lines.push(`КОД ${c}: нет в базе err.csv`);
+      }
+    }
+  }
+  return lines.join('\n');
+}
+
+function fmtRow(r) {
+  if (!r || !r.length) return '';
+  const t = r[0] || '';
+  const ev = r[1] || '';
+  const msg = r[2] || '';
+  const mode = r[3] || '--';
+  const fl = r[4] || '--';
+  const dir = r[5] || '--';
+  const tgt = r[6] || '--';
+  const dto = r[7] || '0';
+  const ms = (r[11] !== undefined && r[11] !== '') ? `${r[11]}м/с` : '';
+  const d1 = r[13] || '';
+  const d2 = r[14] || '';
+  return `[${t}] ${ev}; ${msg} | Реж:${mode}, Эт:${fl}, Напр:${dir}, Цель:${tgt}, ДТО:${dto}${ms?', '+ms:''}, Д1:${d1}, Д2:${d2}`;
+}
+
+function buildStatsBlock(rows, errorEntries) {
+  const dateSet = new Set();
+  let startCount = 0, stopCount = 0, errorC = 0, errorR = 0, errorN = 0, warn = 0, main = 0, pos = 0, multirun = 0;
+  let cyclesTotal = 0;
+  for (const r of rows) {
+    if (!r || !r.length) continue;
+    if ((r[0]||'').startsWith('Дата:')) { dateSet.add((r[0]||'').substr(6)); continue; }
+    if (!r[0]) continue;
+    if (r[1] === 'ENGINE' && r[2] === 'START') startCount++;
+    else if (r[1] === 'ENGINE' && r[2] === 'STOP') stopCount++;
+    else if (r[1] === 'ERROR C') errorC++;
+    else if (r[1] === 'ERROR R') errorR++;
+    else if (r[1] === 'ERROR') errorN++;
+    else if (r[1] === 'WARNING') warn++;
+    else if (r[1] === 'MAIN') main++;
+    else if (r[1] === 'POS' && r[2] === 'START') pos++;
+    else if (r[1] === 'MULTIRUN' && r[2] && r[2].indexOf('STOP') === 0) {
+      multirun++;
+      const d2 = r[14] || '';
+      const m = d2.match(/Cycles\s+(\d+)/);
+      if (m) cyclesTotal += parseInt(m[1], 10) || 0;
+    }
+  }
+  const totalRows = rows.filter(r => r[0] && !(r[0]||'').startsWith('Дата:')).length;
+  const dates = [...dateSet].sort();
+  return [
+    `- Записей в логе (без маркеров дат): ${totalRows}`,
+    `- Даты в логе: ${dates.length ? dates.join(', ') : 'нет'}`,
+    `- Запусков двигателя (ENGINE;START): ${startCount}, остановов (ENGINE;STOP): ${stopCount}`,
+    `- Включений КЦ (MAIN): ${main}, входов в режим позиционирования (POS;START): ${pos}`,
+    `- Прогонов (MULTIRUN): ${multirun}, всего рейсов в прогонах: ${cyclesTotal}`,
+    `- Ошибок критических (ERROR C): ${errorC}`,
+    `- Ошибок самосбрасывающихся (ERROR R): ${errorR}`,
+    `- Прочих ошибок (ERROR): ${errorN}`,
+    `- Предупреждений (WARNING): ${warn}`,
+    `- Всего событий-ошибок/предупреждений: ${errorEntries.length}`
+  ].join('\n');
+}
+
+function buildErrorsContext(rows, errorEntries, opts) {
+  const ctxAfter = opts && opts.ctxAfter !== undefined ? opts.ctxAfter : 3;
+  const maxRows = opts && opts.maxRows ? opts.maxRows : 200;
+  if (!errorEntries.length) return 'Ошибок в логе не обнаружено.';
+  const out = [];
+  for (let i = 0; i < errorEntries.length; i++) {
+    const e = errorEntries[i];
+    const idx = e.rowIndex;
+    if (idx < 0 || idx >= rows.length) continue;
+    const prevStart = findPrevEngineStart(rows, idx);
+    const from = prevStart >= 0 ? prevStart : Math.max(0, idx - 30);
+    const to = Math.min(rows.length - 1, idx + ctxAfter);
+    let realTo = to;
+    if ((to - from + 1) > maxRows) realTo = from + maxRows - 1;
+    const block = [];
+    if (prevStart >= 0) {
+      block.push(`(Контекст: всё с предыдущего ENGINE;START, индекс ${prevStart}, до ошибки, плюс ${ctxAfter} строк после)`);
+    } else {
+      block.push(`(Контекст: предыдущего ENGINE;START не найдено, взяты ${idx - from + 1} строк до ошибки)`);
+    }
+    for (let j = from; j <= realTo; j++) {
+      const r = rows[j];
+      if (!r || !r.length) continue;
+      if ((r[0]||'').startsWith('Дата:')) {
+        block.push(`--- ${r[0]} ---`);
+      } else {
+        block.push(fmtRow(r));
+      }
+    }
+    out.push(`🔥 ПРОБЛЕМА #${i+1}: [Дата: ${e.date}] ${e.type}${e.message ? ' "'+e.message+'"' : ''} @ ${e.time || rows[idx][0]}\n${block.join('\n')}`);
+  }
+  return out.join('\n\n');
+}
+
+function buildReportContext() {
+  if (!filteredRows.length) return null;
+  const errorCodes = collectErrorCodes(errorEntries);
+  const stats = buildStatsBlock(filteredRows, errorEntries);
+  const errs = buildErrorsContext(filteredRows, errorEntries, { ctxAfter: 3, maxRows: 200 });
+  const ref = buildCompactErrReference(errorDB, errorCodes);
+  const activeDateFilter = document.getElementById('dateFilter').value || 'Все даты';
+
+  const systemPrompt =
+    AI_BASE_SYSTEM_PROMPT + '\n\n' +
+    '══════════════ СВОДКА ПО ЛОГУ ══════════════\n' + 
+    `Фильтр по датам (анализировать только это): ${activeDateFilter}\n` + stats + '\n\n' +
+    '══════════════ СПРАВОЧНИК (релевантный, из err.csv) ══════════════\n' + ref + '\n\n' +
+    '══════════════ ДЕТАЛИЗАЦИЯ ПО ОШИБКАМ И КОНТЕКСТ ══════════════\n' + errs + '\n\n' +
+    '══════════════ КОНЕЦ КОНТЕКСТА. Выдай отчёт строго в формате из system prompt. ══════════════';
+  return {
+    systemPrompt,
+    userRequest: 'Сгенерируй полный диагностический отчёт по загруженному логу работы лифта. Используй формат, заданный в system prompt.',
+    errorCodes
+  };
+}
+
+// =====================================================================
+// UI / ОТЧЁТ
+// =====================================================================
+
+function setAiStatus(text) {
+  const el = document.getElementById('aiStatusLine');
+  if (el) el.textContent = text || '';
+}
+
+function clearReportInUi() {
+  const c = document.getElementById('aiChatHistory');
+  c.querySelectorAll('.chat-msg').forEach(n => n.remove());
+}
+
+function renderReportInUi(model, text) {
+  const c = document.getElementById('aiChatHistory');
+  document.getElementById('aiEmptyState').style.display = 'none';
+  clearReportInUi();
+  
+  let formatted = marked.parse(text);
+  const now = new Date().toLocaleString('ru-RU', { hour12: false });
+  const headerHtml = `<div class="report-header">
+    <span class="model-tag">${model}</span>
+    <span>${now}</span>
+  </div>`;
+  const html = `<div class="chat-msg chat-ai">
+    ${headerHtml}
+    <div>${formatted}</div>
+  </div>`;
+  c.insertAdjacentHTML('beforeend', html);
+  c.scrollTop = c.scrollHeight;
+}
+
+async function doFetchOnce(modelId, sysPrompt, userReq) {
+  const res = await fetch(`${AI_WORKER_URL}/v1/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: modelId, messages: [
+      { role: 'system', content: sysPrompt },
+      { role: 'user', content: userReq }
+    ] })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || err.error || ('HTTP ' + res.status));
+  }
+  const data = await res.json();
+  return data.text || '';
+}
+
+async function generateAiReport() {
+  if (!filteredRows.length) { showToast('Сначала загрузите лог-файл!'); return; }
+  if (!aiSelectedModelId) { showToast('Модель не выбрана'); return; }
+  const ctx = buildReportContext();
+  if (!ctx) return;
+  aiReportRequest = { userText: ctx.userRequest };
+  aiMessages = [
+    { role: 'system', content: ctx.systemPrompt },
+    { role: 'user', content: ctx.userRequest }
+  ];
+  aiReportStale = false;
+  removeStaleNotice();
+  await runReport(aiSelectedModelId, ctx.systemPrompt, ctx.userRequest);
+}
+
+async function regenerateAiReport() {
+  if (!aiSelectedModelId) { showToast('Модель не выбрана'); return; }
+  if (!filteredRows.length) { showToast('Сначала загрузите лог-файл!'); return; }
+
+  const needRebuild = aiReportStale || !aiMessages.length;
+  if (needRebuild) {
+    const ctx = buildReportContext();
+    if (!ctx) return;
+    aiReportRequest = { userText: ctx.userRequest };
+    aiMessages = [
+      { role: 'system', content: ctx.systemPrompt },
+      { role: 'user', content: ctx.userRequest }
+    ];
+    aiReportStale = false;
+    removeStaleNotice();
+    await runReport(aiSelectedModelId, ctx.systemPrompt, ctx.userRequest);
+    return;
+  }
+
+  const sysPrompt = (aiMessages.find(m => m.role === 'system') || { content: '' }).content;
+  const userText = aiReportRequest ? aiReportRequest.userText : ((aiMessages.find(m => m.role === 'user') || { content: '' }).content);
+  aiMessages = [
+    { role: 'system', content: sysPrompt },
+    { role: 'user', content: userText }
+  ];
+  await runReport(aiSelectedModelId, sysPrompt, userText);
+}
+
+async function runReport(modelId, sysPrompt, userText) {
+  document.getElementById('aiRegenBtn').disabled = true;
+  const c = document.getElementById('aiChatHistory');
+  document.getElementById('aiEmptyState').style.display = 'none';
+  c.querySelectorAll('.chat-msg').forEach(n => n.remove());
+  const lid = 'ai-loading-' + Date.now();
+  c.insertAdjacentHTML('beforeend', `<div id="${lid}" class="chat-msg chat-ai"><div class="animate-pulse">⏳ ИИ анализирует…</div></div>`);
+  c.scrollTop = c.scrollHeight;
+  setAiStatus(`Модель: ${modelId} • Генерация…`);
+  const t0 = performance.now();
+  try {
+    const text = await doFetchOnce(modelId, sysPrompt, userText);
+    document.getElementById(lid).remove();
+    renderReportInUi(modelId, text);
+    aiReportText = text;
+    aiReportModel = modelId;
+    aiReportDate = new Date().toISOString();
+    aiReportLogSignature = currentLogSignature();
+    aiReportStale = false;
+    removeStaleNotice();
+    const dt = ((performance.now() - t0) / 1000).toFixed(1);
+    setAiStatus(`Модель: ${modelId} • Готово за ${dt} сек • ${text.length} символов`);
+  } catch (err) {
+    document.getElementById(lid).remove();
+    setAiStatus('Ошибка: ' + err.message);
+    c.insertAdjacentHTML('beforeend', `<div class="chat-msg chat-ai" style="border-color: #ef4444; color: #ef4444;">❌ Ошибка: ${err.message}</div>`);
+
+    const errType = classifyAiError(err.message); 
+    const isFav = aiPrefs.favs.includes(modelId);
+
+    if (errType === 'size_limit' || errType === 'rate_limit') {
+      if (!aiPrefs.sizeLimited.includes(modelId)) {
+        aiPrefs.sizeLimited.push(modelId);
+        saveAiPrefs();
+      }
+      const m = allAvailableModels.find(x => x.id === modelId);
+      if (m && m.available !== false) { m.available = false; }
+      renderAiModelDropdown();
+      if (errType === 'size_limit') {
+        showToast('⚠️ Контекст отчёта не вмещается в модель. Выберите модель побольше.');
+      } else {
+        showToast('⏳ Превышен лимит запросов. Попробуйте позже или другую модель.');
+      }
+    } else if (isFav) {
+      const m = allAvailableModels.find(x => x.id === modelId);
+      if (m) { m.available = false; }
+      saveAiPrefs();
+      renderAiModelDropdown();
+      showToast('Избранная модель дала сбой. Звезда сохранена, модель помечена как недоступная.');
+    } else if (!aiPrefs.hidden.includes(modelId)) {
+      aiPrefs.hidden.push(modelId);
+      saveAiPrefs();
+      renderAiModelDropdown();
+      showToast('Модель дала сбой и была скрыта');
+    }
+  } finally {
+    document.getElementById('aiRegenBtn').disabled = false;
+  }
+}
+
+function currentLogSignature() {
+  try {
+    return [
+      allRows.length,
+      filteredRows.length,
+      errorEntries.length,
+      (allRows.find(r => (r[0]||'').startsWith('Дата: ')) || [''])[0] || ''
+    ].join('|');
+  } catch(e) { return String(Date.now()); }
+}
+
+function markAiReportStale() {
+  if (!aiReportText) return;
+  const sig = currentLogSignature();
+  if (aiReportLogSignature && sig !== aiReportLogSignature) {
+    aiReportStale = true;
+    addStaleNotice();
+  }
+}
+
+function addStaleNotice() {
+  const c = document.getElementById('aiChatHistory');
+  if (!c || document.getElementById('aiStaleNotice')) return;
+  const html = `<div id="aiStaleNotice" class="chat-msg" style="background: #f59e0b; color: #000; text-align: center; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; max-width: 100%;">
+    ⚠️ Лог изменён. Этот отчёт построен по <b>предыдущему</b> логу. Нажмите 🔄, чтобы пересобрать отчёт по <b>новому</b> логу.
+  </div>`;
+  c.insertAdjacentHTML('afterbegin', html);
+}
+
+function removeStaleNotice() {
+  const n = document.getElementById('aiStaleNotice');
+  if (n) n.remove();
+}
+
+function copyAiReport() {
+  if (!aiReportText) { showToast('Сначала сгенерируйте отчёт'); return; }
+  navigator.clipboard.writeText(aiReportText).then(() => showToast('Отчёт скопирован'));
+}
+
+function downloadAiReport() {
+  if (!aiReportText) { showToast('Сначала сгенерируйте отчёт'); return; }
+  const head = `СЛ LogViewer — Диагностический отчёт\nМодель: ${aiReportModel}\nДата: ${aiReportDate}\nЗаписей: ${filteredRows.length}, ошибок: ${errorEntries.length}\n\n`;
+  const blob = new Blob([head + aiReportText], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').substr(0, 19);
+  a.download = `sl-report-${stamp}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 </script>
 </body>
-  </html>
+</html>
