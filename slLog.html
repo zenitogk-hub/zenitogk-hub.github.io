@@ -531,7 +531,9 @@
   <div class="ai-status-line" id="aiStatusLine"></div>
   <div class="ai-toolbar flex-shrink-0">
     <button onclick="copyAiReport()">📋 Копировать</button>
-    <button onclick="downloadAiReport()">📄 Сохранить .txt</button>
+    <button onclick="downloadAiReport()">📄 Отчёт</button>
+    <button onclick="downloadAiPrompt()" title="Скачать текущий промт (system + user) для передачи в другую нейросеть">📥 Промт</button>
+    <button onclick="openAiChooserModal()" title="Скопировать промт и открыть Qwen / DeepSeek в новой вкладке">📤 В ИИ</button>
   </div>
 </div>
 
@@ -610,6 +612,29 @@
       </div>
       <button onclick="sendUploadFiles()" class="btn-primary text-xs w-full" id="uploadSendBtn" style="background: #3b82f6; font-weight: bold;">🚀 Отправить файлы</button>
       <div id="uploadStatus" class="text-xs mt-3 text-center" style="color: var(--text-muted);"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="aiChooserModal" onclick="if(event.target===this)closeAiChooserModal()">
+  <div class="cloud-modal-content" style="max-width: 420px;">
+    <div class="p-3 border-b flex justify-between items-center" style="border-color: var(--border-header);">
+      <div class="font-semibold text-sm">📤 Открыть в нейросети</div>
+      <button onclick="closeAiChooserModal()" class="text-xl" style="color: var(--text-secondary);">×</button>
+    </div>
+    <div class="p-3">
+      <p class="text-xs mb-3" style="color: var(--text-secondary); line-height: 1.5;">Текущий промт будет скопирован в буфер обмена, а выбранная нейросеть откроется в новой вкладке. Просто вставьте текст (<b>Ctrl+V</b> / <b>⌘+V</b>) в чат.</p>
+      <div class="grid gap-2">
+        <button onclick="sendPromptToExternal('qwen')" class="btn-primary text-sm w-full" style="background: #7c3aed; font-weight: bold; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span style="font-size: 18px;">🐪</span>
+          <span>Qwen · chat.qwen.ai</span>
+        </button>
+        <button onclick="sendPromptToExternal('deepseek')" class="btn-primary text-sm w-full" style="background: #1e40af; font-weight: bold; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span style="font-size: 18px;">🌊</span>
+          <span>DeepSeek · chat.deepseek.com</span>
+        </button>
+      </div>
+      <div class="mt-3 text-[11px] text-center" style="color: var(--text-muted); line-height: 1.4;">💡 Если вставка не сработает — нажмите «📥 Промт» и вставьте скачанный файл вручную.</div>
     </div>
   </div>
 </div>
@@ -2461,6 +2486,139 @@ function downloadAiReport() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function downloadAiPrompt() {
+  if (!filteredRows.length) { showToast('Сначала загрузите лог-файл!'); return; }
+
+  // Берём последний использованный промт из кэша сообщений, иначе собираем заново из текущего лога.
+  let systemPrompt = '';
+  let userRequest = '';
+  if (Array.isArray(aiMessages) && aiMessages.length) {
+    const sysMsg = aiMessages.find(m => m.role === 'system');
+    const userMsg = aiMessages.find(m => m.role === 'user');
+    if (sysMsg) systemPrompt = sysMsg.content || '';
+    if (userMsg) userRequest = userMsg.content || '';
+  }
+  if (!systemPrompt || !userRequest) {
+    const ctx = buildReportContext();
+    if (!ctx) { showToast('Не удалось сформировать промт'); return; }
+    systemPrompt = ctx.systemPrompt;
+    userRequest = ctx.userRequest;
+  }
+
+  const activeDateFilter = (document.getElementById('dateFilter') && document.getElementById('dateFilter').value) || 'Все даты';
+  const head =
+    `СЛ LogViewer — Промт для внешней нейросети\n` +
+    `Сформирован: ${new Date().toISOString()}\n` +
+    `Модель (для справки): ${aiSelectedModelId || aiReportModel || 'не выбрана'}\n` +
+    `Записей в логе: ${filteredRows.length}, ошибок: ${errorEntries.length}\n` +
+    `Фильтр по датам: ${activeDateFilter}\n` +
+    `\n` +
+    `══════════════ КАК ИСПОЛЬЗОВАТЬ ══════════════\n` +
+    `Ниже два блока: системная инструкция и пользовательский запрос.\n` +
+    `Большинство чат-нейросетей принимают их как единое сообщение от пользователя (system+user),\n` +
+    `либо можно передать system-блок как «инструкцию/роль», а user-блок — как «вопрос».\n` +
+    `\n` +
+    `══════════════ SYSTEM PROMPT ══════════════\n\n` +
+    systemPrompt +
+    `\n\n══════════════ USER REQUEST ══════════════\n\n` +
+    userRequest;
+
+  const blob = new Blob([head], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').substr(0, 19);
+  a.download = `sl-prompt-${stamp}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📥 Промт сохранён');
+}
+
+// =====================================================================
+// ОТПРАВКА ПРОМТА ВО ВНЕШНИЕ НЕЙРОСЕТИ (Qwen, DeepSeek)
+// =====================================================================
+
+const EXTERNAL_AI = {
+  qwen:     { label: 'Qwen',     url: 'https://chat.qwen.ai/' },
+  deepseek: { label: 'DeepSeek', url: 'https://chat.deepseek.com/' }
+};
+
+// Собирает единый текст (system + user) для вставки в обычный чат
+// (где нет отдельного поля system prompt).
+function buildCombinedPromptText() {
+  let systemPrompt = '';
+  let userRequest = '';
+  if (Array.isArray(aiMessages) && aiMessages.length) {
+    const sysMsg = aiMessages.find(m => m.role === 'system');
+    const userMsg = aiMessages.find(m => m.role === 'user');
+    if (sysMsg) systemPrompt = sysMsg.content || '';
+    if (userMsg) userRequest = userMsg.content || '';
+  }
+  if (!systemPrompt || !userRequest) {
+    if (!filteredRows.length) return null;
+    const ctx = buildReportContext();
+    if (!ctx) return null;
+    systemPrompt = ctx.systemPrompt;
+    userRequest = ctx.userRequest;
+  }
+  return systemPrompt + '\n\n────────────────────────────────────────\n\n' + userRequest;
+}
+
+function openAiChooserModal() {
+  if (!filteredRows.length) { showToast('Сначала загрузите лог-файл!'); return; }
+  document.getElementById('aiChooserModal').classList.add('show');
+}
+
+function closeAiChooserModal() {
+  document.getElementById('aiChooserModal').classList.remove('show');
+}
+
+async function sendPromptToExternal(key) {
+  const ai = EXTERNAL_AI[key];
+  if (!ai) return;
+
+  // Закрываем модалку сразу, чтобы не висела пока грузится новая вкладка
+  closeAiChooserModal();
+
+  const text = buildCombinedPromptText();
+  if (!text) { showToast('Не удалось сформировать промт'); return; }
+
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(text);
+    copied = true;
+  } catch (e) {
+    // Фолбэк для сред без доступа к Clipboard API (старые браузеры, http://, file://)
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      copied = true;
+    } catch (e2) { /* ignore */ }
+  }
+
+  // Открываем сайт в новой вкладке (noopener — чтобы чужой сайт не получил доступ к window.opener)
+  const win = window.open(ai.url, '_blank', 'noopener,noreferrer');
+
+  if (copied) {
+    if (win) {
+      showToast('✅ Промт скопирован. Вставьте в ' + ai.label + ' (Ctrl+V)');
+    } else {
+      // Браузер заблокировал попап
+      showToast('✅ Промт скопирован. Откройте ' + ai.label + ' и нажмите Ctrl+V');
+    }
+  } else {
+    showToast('⚠️ Не удалось скопировать. Скачайте через «📥 Промт»');
+  }
 }
 </script>
 </body>
